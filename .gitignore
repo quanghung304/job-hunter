@@ -1,0 +1,12 @@
+target/
+.idea/
+*.iml
+.vscode/
+.env
+config/profile.yaml
+data/
+*.log
+node_modules/
+frontend/dist/
+frontend/playwright-report/
+frontend/test-results/

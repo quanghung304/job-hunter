@@ -1,0 +1,12 @@
+# Company job boards for ATS collectors. Spec: docs/architecture/config-spec.md §4
+# The first entries are smoke-test boards seen working in public examples (Oct 2026).
+# They are NOT a target list. Task T-018 validates each entry and records the result;
+# add real remote-friendly target companies over time.
+
+companies:
+  - { name: GitLab,  ats: GREENHOUSE, slug: gitlab,  notes: smoke test }
+  - { name: Stripe,  ats: GREENHOUSE, slug: stripe,  notes: smoke test }
+  - { name: Spotify, ats: LEVER,      slug: spotify, notes: smoke test }
+  - { name: Palantir, ats: LEVER,     slug: palantir, notes: smoke test }
+  - { name: Linear,  ats: ASHBY,      slug: linear,  notes: smoke test }
+  - { name: Notion,  ats: ASHBY,      slug: notion,  notes: smoke test }

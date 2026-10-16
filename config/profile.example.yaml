@@ -1,0 +1,66 @@
+# Fictional sample profile. Copy to config/profile.yaml (git-ignored) and replace with your data.
+# Field reference: docs/architecture/config-spec.md
+# Do not put phone numbers, email or addresses here: candidate.* is sent to the LLM.
+
+id: hugh
+summaryLanguage: vi
+
+candidate:
+  headline: Backend Software Engineer (Java, Spring Boot, SQL), 4+ years, open to part-time remote work
+  yearsExperience: 4
+  residenceCountry: IT
+  city: Turin
+  timezone: Europe/Rome
+  languages:
+    - { code: vi, level: NATIVE }
+    - { code: en, level: C1 }
+  summary: |
+    - 2023–2026: Backend developer at a retail bank. Built internal platforms with
+      Java/Spring Boot and a relational database; built an OpenID Connect login service
+      used by several internal applications; led a small team.
+    - Spec-driven, AI-assisted development: writes specs, API contracts, DB design and
+      agent context files (AGENTS.md) so coding agents follow project rules.
+    - 2022–2023: Developer at a software consultancy: REST APIs, dashboards, Kafka
+      producers/consumers in microservices; worked directly with international clients.
+    - 2021–2022: PHP/Laravel and Angular developer; integrated an online payment gateway.
+    - Object storage integration through the S3 API.
+    - Education: BSc in Computer Science; currently studying part-time, so available
+      for part-time or contract work.
+  skills:
+    core: [Java, Spring Boot, REST API, Oracle, SQL, Hibernate/JPA, OAuth 2.0, OpenID Connect, IAM/SSO, Microservices]
+    secondary: [Apache Kafka, MySQL, Redis, PHP, Laravel, Symfony, Docker, JUnit, Git, S3, TypeScript, Angular]
+    learning: [Python, Data Science, Machine Learning, React]
+  domains: [banking, fintech, healthcare, education, identity and access management]
+
+preferences:
+  employmentTypes: [PART_TIME, CONTRACT, FREELANCE]
+  maxHoursPerWeek:
+  acceptRegions: [WORLDWIDE, EU, EEA, EUROPE, EMEA, IT, VN]   # review: which restrictions you can legally work under
+  timezone:
+    maxOffsetDiffHours:
+  seniority: [JUNIOR, MID, SENIOR]
+  minSalary: { amount: 10, currency: EUR, period: HOUR }
+  excludeCompanies: []
+
+prefilter:
+  maxAgeDays: 21
+  titleInclude:
+    - '\b(backend|back-end|back end)\b'
+    - '\bjava\b'
+    - '\bspring\b'
+    - '\b(software|full[- ]?stack|api|platform|integration|identity|iam)\b.*\b(engineer|developer)\b'
+  titleExclude:
+    - '\b(staff|principal|director|head of|vp|manager)\b'
+    - '\b(ios|android|unity|game|embedded|firmware|salesforce|sap)\b'
+  minSkillHits: 2
+
+notify:
+  digestMinScore: 65
+  alertMinScore: 85
+
+tracks:
+  - name: software
+    enabled: true
+  - name: tutoring          # not implemented in Phase 1 (parsed and ignored)
+    enabled: false
+    subjects: [math, physics, English, IELTS]
