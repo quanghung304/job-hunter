@@ -19,8 +19,14 @@ else
 endif
 
 # Backend on :8080 and Vite on :5173 (proxies /api) in parallel.
+# No recursive $(MAKE): it breaks when make is installed in a path with spaces (Windows).
 dev:
-	$(MAKE) -j2 dev-backend dev-frontend
+ifeq ($(FRONTEND_READY),)
+	$(NO_FRONTEND)
+	$(MVNW) spring-boot:run -Dspring-boot.run.profiles=local
+else
+	(cd frontend && npm run dev) & $(MVNW) spring-boot:run -Dspring-boot.run.profiles=local; wait
+endif
 
 dev-backend:
 	$(MVNW) spring-boot:run -Dspring-boot.run.profiles=local
