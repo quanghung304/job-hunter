@@ -14,7 +14,11 @@ in the same commit.
 - Errors: RFC 9457 Problem Details (`application/problem+json`) via Spring's
   `ProblemDetail`: `{ "type", "title", "status", "detail", "code" }` where `code` is a stable
   machine string, e.g. `ILLEGAL_STATUS_TRANSITION`, `JOB_NOT_FOUND`, `VALIDATION_FAILED`,
-  `PIPELINE_ALREADY_RUNNING`.
+  `PIPELINE_ALREADY_RUNNING`. Domain errors carry the code of their `JobHunterException`
+  (HTTP status from `httpStatus()`, default 400). Framework errors use `VALIDATION_FAILED`
+  for Bean Validation failures and otherwise the HTTP status name (`NOT_FOUND`,
+  `BAD_REQUEST`, `METHOD_NOT_ALLOWED`, ...). Unexpected errors are 500 `INTERNAL_ERROR`
+  with a generic `detail` (the exception message is only logged).
 - No auth in Phase 1; server binds to `127.0.0.1`.
 - Controllers live in the backend `api` module and call module services only.
 

@@ -1,0 +1,83 @@
+{
+  "components" : {
+    "schemas" : {
+      "MetaResponse" : {
+        "properties" : {
+          "eligibilities" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "employmentTypes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "profileId" : {
+            "type" : [ "string", "null" ]
+          },
+          "sources" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SourceSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "statuses" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "summaryLanguage" : {
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "eligibilities", "employmentTypes", "profileId", "sources", "statuses", "summaryLanguage" ],
+        "type" : "object"
+      },
+      "SourceSummaryResponse" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "name" ],
+        "type" : "object"
+      }
+    }
+  },
+  "info" : {
+    "description" : "REST API of the Job Hunter backend; see docs/architecture/api-spec.md",
+    "title" : "Job Hunter API",
+    "version" : "0.1.0"
+  },
+  "openapi" : "3.1.0",
+  "paths" : {
+    "/api/meta" : {
+      "get" : {
+        "operationId" : "meta",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MetaResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "meta-controller" ]
+      }
+    }
+  },
+  "servers" : [ {
+    "url" : "/"
+  } ]
+}

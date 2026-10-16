@@ -7,7 +7,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 
 | Done | Id | Task | Depends on | Size |
 |---|---|---|---|---|
-| [ ] | T-001 | [Backend bootstrap](T-001-bootstrap.md) | — | M |
+| [x] | T-001 | [Backend bootstrap](T-001-bootstrap.md) | — | M |
 | [ ] | T-002 | [Profile loading and validation](T-002-profile.md) | T-001 | S |
 | [ ] | T-003 | [Database schema and persistence layer](T-003-schema.md) | T-001 | M |
 | [ ] | T-004 | [Collector framework + Arbeitnow collector](T-004-collector-framework-arbeitnow.md) | T-003 | M |

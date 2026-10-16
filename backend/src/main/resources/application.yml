@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: job-hunter
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/jobhunter}
+    username: ${DB_USER:jobhunter}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: UTC
+    serialization:
+      write-dates-as-timestamps: false
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  address: 127.0.0.1
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  paths-to-match: /api/**
+  writer-with-order-by-keys: true
+  writer-with-default-pretty-printer: true
+
+# Application settings (docs/architecture/config-spec.md §2).
+# Keys are added here, with their documented defaults, by the task that first reads them.
+app: {}

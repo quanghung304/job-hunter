@@ -1,0 +1,2 @@
+-- Baseline migration: intentionally empty.
+-- The schema is created by later migrations (T-003); see docs/architecture/data-model.md.

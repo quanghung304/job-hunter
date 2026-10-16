@@ -43,14 +43,14 @@ ArchUnit) and a root `Makefile`. (Frontend scaffold is T-019.)
 Entities, collectors, LLM, any frontend code.
 
 ## Acceptance criteria
-- [ ] `docker compose up -d db && cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
+- [x] `docker compose up -d db && cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
       starts; `GET /actuator/health` is UP; `GET /api/meta` returns JSON;
       `/swagger-ui.html` loads.
-- [ ] `GET /jobs/1` (a non-API path) forwards to `index.html` (404 is acceptable only
+- [x] `GET /jobs/1` (a non-API path) forwards to `index.html` (404 is acceptable only
       while `static/index.html` does not exist — test with a test-only `index.html`).
-- [ ] `make verify` passes (backend part) without network except Docker.
-- [ ] Prompt files are on the classpath at `prompts/extract-v1.md`.
-- [ ] `docs/architecture/openapi.json` is generated and committed.
+- [x] `make verify` passes (backend part) without network except Docker.
+- [x] Prompt files are on the classpath at `prompts/extract-v1.md`.
+- [x] `docs/architecture/openapi.json` is generated and committed.
 
 ## Tests
 - `HtmlTextTest`, `ApplicationIT` (context + Flyway with Testcontainers),

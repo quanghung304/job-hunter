@@ -1,0 +1,4 @@
+# Local run: read DB_URL, DB_USER, DB_PASSWORD, ... from the repository's .env file.
+spring:
+  config:
+    import: optional:file:../.env[.properties]
