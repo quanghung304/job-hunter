@@ -40,7 +40,8 @@ LLM cost.
 
 ## Changing the profile
 
-Edit `config/profile.yaml`, restart. Prefilter and eligibility are re-evaluated
+Edit `config/profile.yaml`, restart (the app does not start without a valid profile; the
+startup error lists each invalid field). Prefilter and eligibility are re-evaluated
 automatically. To re-score active jobs with the new profile: Admin → "Re-score active jobs"
 (shows the number of LLM calls first).
 

@@ -16,7 +16,7 @@
             "type" : "array"
           },
           "profileId" : {
-            "type" : [ "string", "null" ]
+            "type" : "string"
           },
           "sources" : {
             "items" : {
@@ -31,7 +31,8 @@
             "type" : "array"
           },
           "summaryLanguage" : {
-            "type" : [ "string", "null" ]
+            "enum" : [ "vi", "en" ],
+            "type" : "string"
           }
         },
         "required" : [ "eligibilities", "employmentTypes", "profileId", "sources", "statuses", "summaryLanguage" ],

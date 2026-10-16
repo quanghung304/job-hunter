@@ -1,0 +1,30 @@
+# Test fixture for CandidateBlockTest; contact data in the summary must be redacted.
+id: test-user
+candidate:
+  headline: Backend Engineer (Java)
+  yearsExperience: 4.5
+  residenceCountry: IT
+  city: Turin
+  timezone: Europe/Rome
+  languages:
+    - { code: vi, level: NATIVE }
+    - { code: en, level: C1 }
+  summary: |
+    - 2023–2026: Java developer at a bank.
+    - Contact me at someone@example.com or +39 333 123 4567.
+  skills:
+    core: [Java, Spring Boot]
+    secondary: [Kafka]
+    learning: [React]
+  domains: [banking]
+preferences:
+  employmentTypes: [CONTRACT, PART_TIME]
+  maxHoursPerWeek: 25
+  acceptRegions: [EU, IT]
+  seniority: [MID, SENIOR]
+  minSalary: { amount: 40000, currency: EUR, period: YEAR }
+  excludeCompanies: [Evil Corp]
+prefilter:
+  titleInclude: ['\bjava\b']
+notify:
+  digestMinScore: 70

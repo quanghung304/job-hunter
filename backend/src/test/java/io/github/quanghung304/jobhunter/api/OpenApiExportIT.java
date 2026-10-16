@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
  * Keeps {@code docs/architecture/openapi.json} in sync with the code. Fails when the committed
  * file is stale; {@code -Dapi.export=true} (used by {@code make api}) rewrites it instead.
  */
-@SpringBootTest
+@SpringBootTest(properties = "app.profile.path=../config/profile.example.yaml")
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 class OpenApiExportIT {

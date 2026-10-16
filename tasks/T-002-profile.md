@@ -28,9 +28,9 @@ Phase: 1 · Depends on: T-001 · Size: S
 Hot reload (restart is fine). Multiple profiles.
 
 ## Acceptance criteria
-- [ ] App starts with `config/profile.example.yaml` copied to `config/profile.yaml`.
-- [ ] Missing required field → startup fails naming the field path.
-- [ ] `RegionMatcher` returns OK for `[EU]`, `[EMEA]`, `[WORLDWIDE]`, `[IT]` with residence IT
+- [x] App starts with `config/profile.example.yaml` copied to `config/profile.yaml`.
+- [x] Missing required field → startup fails naming the field path.
+- [x] `RegionMatcher` returns OK for `[EU]`, `[EMEA]`, `[WORLDWIDE]`, `[IT]` with residence IT
       and acceptRegions from the example; FAIL for `[US]`, `[US, CA]`; UNKNOWN for `[]`.
 
 ## Tests

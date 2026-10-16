@@ -42,4 +42,6 @@ springdoc:
 
 # Application settings (docs/architecture/config-spec.md §2).
 # Keys are added here, with their documented defaults, by the task that first reads them.
-app: {}
+app:
+  profile:
+    path: ../config/profile.yaml

@@ -10,6 +10,21 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-16 — T-002 Profile loading and validation — DONE
+- `profile`: `Profile` (nested records, defaults in compact constructors), `ProfileProvider`,
+  `YamlProfileProvider` (Jackson YAML + Bean Validation, all problems listed by field path,
+  unknown keys rejected), `RegionMatcher`/`RegionVerdict`, `CandidateBlock`,
+  `InvalidProfileFailureAnalyzer` (short "APPLICATION FAILED TO START" report).
+- Shared enums in `common.model` (`EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`)
+  because `source` may not depend on `profile`; overview.md updated.
+- Deviations: record component is `notifySettings` (`notify` is illegal), YAML key unchanged;
+  `app.profile.path` bound as String (Spring's String→Path rejects `../`); `CandidateBlock`
+  also redacts e-mails/phone numbers in free text; `/api/meta` now returns `profileId` and
+  `summaryLanguage` (openapi.json regenerated); config-spec/runbook notes added.
+- Region membership known for EU/EEA/EUROPE/EMEA only; other tokens match via acceptRegions.
+- Owner: copy `config/profile.example.yaml` to `config/profile.yaml`, or the app will not start.
+- Next: T-003.
+
 ## 2026-10-16 — T-001 Backend bootstrap — DONE
 - `backend/`: Spring Boot 3.5.16 (latest 3.x), Java 21, Maven wrapper 3.9.16; springdoc 2.9.1,
   wiremock-jetty12 3.13.2, archunit 1.5.1, jsoup 1.23.2, rome 2.1.0; profiles `live`, `with-frontend`.

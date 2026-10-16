@@ -10,8 +10,8 @@ public record MetaResponse(
         @Schema(requiredMode = REQUIRED) List<String> statuses,
         @Schema(requiredMode = REQUIRED) List<String> employmentTypes,
         @Schema(requiredMode = REQUIRED) List<String> eligibilities,
-        @Schema(requiredMode = REQUIRED, nullable = true) String profileId,
-        @Schema(requiredMode = REQUIRED, nullable = true) String summaryLanguage) {
+        @Schema(requiredMode = REQUIRED) String profileId,
+        @Schema(requiredMode = REQUIRED, allowableValues = {"vi", "en"}) String summaryLanguage) {
 
     public MetaResponse {
         sources = List.copyOf(sources);

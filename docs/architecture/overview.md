@@ -42,7 +42,7 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 
 | Package | Responsibility | May depend on |
 |---|---|---|
-| `common` | Clock, ids, text utils (HTML → text, normalization), errors | — |
+| `common` | Clock, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`) | — |
 | `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
 | `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging | common |
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry | common, source (DTOs only) |

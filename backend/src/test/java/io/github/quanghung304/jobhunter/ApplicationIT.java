@@ -11,7 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "app.profile.path=../config/profile.example.yaml")
 @Import(TestcontainersConfiguration.class)
 class ApplicationIT {
 
@@ -44,7 +45,7 @@ class ApplicationIT {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
-        assertThat(response.getBody()).contains("\"profileId\":null");
+        assertThat(response.getBody()).contains("\"profileId\":\"hugh\"", "\"summaryLanguage\":\"vi\"");
     }
 
     @Test

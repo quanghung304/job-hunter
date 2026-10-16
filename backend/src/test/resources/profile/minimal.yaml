@@ -1,0 +1,18 @@
+# Test fixture: only the required fields of config-spec §1.
+id: minimal
+candidate:
+  headline: Developer
+  yearsExperience: 2
+  residenceCountry: DE
+  timezone: Europe/Berlin
+  languages:
+    - { code: en, level: B2 }
+  summary: Builds web apps.
+  skills:
+    core: [Kotlin]
+preferences:
+  employmentTypes: [FULL_TIME]
+  acceptRegions: [EU]
+  seniority: [MID]
+prefilter:
+  titleInclude: ['developer']

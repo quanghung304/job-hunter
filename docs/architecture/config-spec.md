@@ -9,6 +9,11 @@ Two kinds of configuration:
 
 Invalid config fails startup with a message naming the field.
 
+For `profile.yaml` (loaded once at startup by `YamlProfileProvider`): every problem is listed
+with its path (e.g. `candidate.headline: must not be blank`, `prefilter.titleInclude[1]:
+invalid regex`); unknown keys are rejected to catch typos, except inside `tracks` items;
+an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the default applies.
+
 ## 1. `profile.yaml`
 
 | Field | Type | Required | Meaning |
