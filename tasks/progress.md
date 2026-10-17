@@ -10,6 +10,26 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-019 Frontend bootstrap (React) — DONE
+- Versions: Vite 8.3, React 19.3, React Router 8.4 (declarative routes), TanStack Query 5.104,
+  openapi-fetch 0.17 / openapi-typescript 7.13, Tailwind CSS 4.3 (`@tailwindcss/vite`,
+  theme in CSS), shadcn CLI 4.22 (style `radix-nova`, Radix), lucide-react 1.59, sonner 2.0,
+  @fontsource IBM Plex Sans/Mono 5.3, Vitest 5.0 + jsdom 30, RTL 16, MSW 3.0, Playwright 1.64,
+  ESLint 10 + typescript-eslint 8.71, Prettier 3.9. **TypeScript 5.9** (not 7.0/6.0):
+  typescript-eslint supports < 6.1 and openapi-typescript requires 5.x.
+- Built: tokens.css (+ `--attention-icon`, `--icon-faint`, `--on-accent`), Tailwind theme
+  mapped to tokens only, shadcn components restyled (shadcn's `--accent`/`--muted` names clash
+  with ours → our tokens win; `bg-muted` uses replaced), button variants with shortcut hint,
+  Sonner per Toast spec, shared components, AppHeader (desktop + mobile sheet; status line "—"
+  until T-014/T-022), routes + 404, dev-only `/dev/components` (excluded from builds).
+- API client: absolute same-origin base URL and per-call `fetch` (Node rejects relative URLs;
+  MSW must intercept), `ApiError` from Problem Details / network failures.
+- Makefile: frontend wired into verify/dev/run/api/e2e. Checked: `make verify`, `make run`
+  (SPA fallback on reload), Vite proxy on :5173, Playwright 2 specs, no hex in .tsx.
+- Owner: check `/dev/components` against the mockup (`make dev`, open
+  http://localhost:5173/dev/components). npm upgraded to 12.2 (was 8.14; packages want ≥ 9.5).
+- Next: T-009 (prefilter) on the backend; T-020 needs T-014.
+
 ## 2026-10-17 — T-008 We Work Remotely collector (RSS) — DONE
 - `source.weworkremotely`: `WeWorkRemotelyCollector` (configured feeds, dedupe by guid,
   per-feed failure = warning), `WeWorkRemotelyFeedParser` (hardened JDOM + Rome; WWR's own

@@ -21,7 +21,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [ ] | T-012 | [Scoring](T-012-scoring.md) | T-011 | M |
 | [ ] | T-013 | [Pipeline orchestration, scheduling, expiry](T-013-pipeline.md) | T-012 | M |
 | [ ] | T-014 | [REST API for board, job detail and admin](T-014-rest-api.md) | T-013 | M |
-| [ ] | T-019 | [Frontend bootstrap (React)](T-019-frontend-bootstrap.md) | T-001 (can run in parallel any time after T-001) | M |
+| [x] | T-019 | [Frontend bootstrap (React)](T-019-frontend-bootstrap.md) | T-001 (can run in parallel any time after T-001) | M |
 | [ ] | T-020 | [Frontend: board and job detail](T-020-frontend-board-detail.md) | T-014, T-019 | M |
 | [ ] | T-021 | [Frontend: admin page](T-021-frontend-admin.md) | T-014, T-019 | S–M |
 | [ ] | T-022 | [LLM quota alerts and model switching — backend](T-022-llm-alerts-switching-backend.md) | T-010, T-014, T-015 | M |

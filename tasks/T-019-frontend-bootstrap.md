@@ -46,11 +46,11 @@ targets wired — rendering a shell with three empty pages.
 Real page content (T-020, T-021).
 
 ## Acceptance criteria
-- [ ] `make dev` serves the shell on :5173 and the nav shows the profile id from `/api/meta`.
-- [ ] `make run` serves the same shell on :8080; reloading `/jobs/1` works (SPA fallback).
-- [ ] `make verify` runs backend and frontend checks.
-- [ ] `npm run gen:api` produces `schema.d.ts` with no manual edits.
-- [ ] No raw hex colors outside `tokens.css` (`grep -rE '#[0-9a-fA-F]{6}' src --include=*.tsx` is empty).
+- [x] `make dev` serves the shell on :5173 and the nav shows the profile id from `/api/meta`.
+- [x] `make run` serves the same shell on :8080; reloading `/jobs/1` works (SPA fallback).
+- [x] `make verify` runs backend and frontend checks.
+- [x] `npm run gen:api` produces `schema.d.ts` with no manual edits.
+- [x] No raw hex colors outside `tokens.css` (`grep -rE '#[0-9a-fA-F]{6}' src --include=*.tsx` is empty).
 - [ ] `/dev/components` matches the "Components & states" mockup (owner checks visually).
 
 ## Tests

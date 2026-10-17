@@ -1,0 +1,116 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import './styles/tokens.css';
+
+/*
+ * Tailwind theme mapped to the tokens (frontend.md "Visual design"). The default theme is
+ * cleared so only token colors exist; the default 4px spacing scale already covers
+ * 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32 (1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8).
+ */
+@theme inline {
+  --color-*: initial;
+  --color-white: var(--on-accent);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-faint: var(--line-faint);
+  --color-control-border: var(--control-border);
+  --color-neutral-fill: var(--neutral-fill);
+  --color-accent: var(--accent);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-tint-2: var(--accent-tint-2);
+  --color-accent-deep: var(--accent-deep);
+  --color-attention-bg: var(--attention-bg);
+  --color-attention-fg: var(--attention-fg);
+  --color-attention-icon: var(--attention-icon);
+  --color-eligible-bg: var(--eligible-bg);
+  --color-eligible-fg: var(--eligible-fg);
+  --color-strong: var(--strong);
+  --color-maybe-bg: var(--maybe-bg);
+  --color-icon-faint: var(--icon-faint);
+
+  /* shadcn semantic names */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-heading: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Radii: tags 3, badges 4, controls 5, cards 6, dialog 8 */
+  --radius-tag: 3px;
+  --radius-badge: 4px;
+  --radius-control: 5px;
+  --radius-card: 6px;
+  --radius-dialog: 8px;
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+
+  --shadow-toast: 0 8px 24px rgb(0 0 0 / 0.18);
+  --shadow-dialog: 0 20px 48px rgb(0 0 0 / 0.25);
+  --shadow-action-bar: 0 -6px 16px rgb(0 0 0 / 0.05);
+}
+
+@layer base {
+  * {
+    border-color: var(--line);
+  }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Numbers: scores, times, counts, money, costs, keyboard hints */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

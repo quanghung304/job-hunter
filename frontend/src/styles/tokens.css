@@ -1,0 +1,59 @@
+/*
+ * Design tokens (docs/architecture/frontend.md "Visual design"). The only file with raw
+ * colors: components use the token names through Tailwind classes (bg-surface, text-muted …).
+ * Light theme only in Phase 1; a dark theme is a later token swap.
+ */
+:root {
+  /* Surfaces */
+  --ground: #f6f6f3;
+  --surface: #ffffff;
+  --surface-muted: #fbfbf9;
+
+  /* Text */
+  --ink: #1b1d20;
+  --ink-2: #33373c;
+  --muted: #5a5f66;
+
+  /* Lines */
+  --line: #e3e3de;
+  --line-soft: #edede8;
+  --line-faint: #f1f1ec;
+  --control-border: #d9d9d3;
+  --neutral-fill: #ecece6;
+
+  /* Accent (one hue; tints = white mix 85% / 93%, deep = black mix 35%) */
+  --accent: #2f5bd3;
+  --accent-tint: #e0e6f8;
+  --accent-tint-2: #f0f4fc;
+  --accent-deep: #1f3b89;
+
+  /* States */
+  --attention-bg: #fcefd9;
+  --attention-fg: #7a4a00;
+  --attention-icon: #b56a00;
+  --eligible-bg: #e7f0ec;
+  --eligible-fg: #1f5240;
+  --strong: #3d4147;
+  --maybe-bg: #efefea;
+  --icon-faint: #9a9ea4;
+  --on-accent: #ffffff;
+
+  /* shadcn/ui variables, set from the tokens */
+  --background: var(--ground);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent);
+  --primary-foreground: var(--on-accent);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ink-2);
+  --muted-foreground: var(--muted);
+  --accent-foreground: var(--accent-deep);
+  --destructive: var(--strong);
+  --border: var(--line);
+  --input: var(--control-border);
+  --ring: var(--accent);
+  --radius: 6px;
+}

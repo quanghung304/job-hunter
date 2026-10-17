@@ -53,8 +53,9 @@ frontend/
 
 ### Color tokens
 
-Defined once as CSS variables in `src/styles/tokens.css` and mapped in
-`tailwind.config` (`colors: { ground: 'var(--ground)', … }`). Components use only these
+Defined once as CSS variables in `src/styles/tokens.css` and mapped to Tailwind (v4) colors
+in `src/index.css` with `@theme inline { --color-ground: var(--ground); … }` (the default
+Tailwind palette is cleared, so only token colors exist). Components use only these
 names — **no raw hex values in components**. shadcn's own variables (`--background`,
 `--primary`, `--border`, `--ring`, …) are set from these tokens.
 
@@ -76,11 +77,18 @@ names — **no raw hex values in components**. shadcn's own variables (`--backgr
 | `--accent-tint-2` | `#F0F4FC` | selected list row, running banner background |
 | `--accent-deep` | `#1F3B89` | text on `--accent-tint`, text links inside cards |
 | `--attention-bg` | `#FCEFD9` | "Needs check", "Unclear", Partial, warnings |
-| `--attention-fg` | `#7A4A00` | text on `--attention-bg`; warning icon stroke `#B56A00` |
+| `--attention-fg` | `#7A4A00` | text on `--attention-bg` |
+| `--attention-icon` | `#B56A00` | warning icon stroke (ErrorState, attention rows) |
 | `--eligible-bg` | `#E7F0EC` | "Eligible" tag |
 | `--eligible-fg` | `#1F5240` | text on `--eligible-bg` |
 | `--strong` | `#3D4147` | "Fail", "Ineligible", "Failed" tags (white text) |
 | `--maybe-bg` | `#EFEFEA` | score 50–69 badge (text `--ink-2`) |
+| `--icon-faint` | `#9A9EA4` | EmptyState icon |
+| `--on-accent` | `#FFFFFF` | text on `--accent`, `--strong` and `--ink` (Tailwind `white`) |
+
+`--attention-icon`, `--icon-faint` and `--on-accent` were added in T-019: the spec used
+these values inline, and inline hex is not allowed outside `tokens.css`. The text color
+`#3D4147` used by StatusTag "New" and FactChip is `--strong`.
 
 Color rules:
 - One accent hue only. Tints are derived from it (white mix 85% / 93%, black mix 35%);
@@ -134,15 +142,15 @@ transitions at all).
 | Component | Spec |
 |---|---|
 | `ScoreBadge` | Mono number in a box. Sizes: `sm` 40×32 (rows), `lg` 72×72 with band word below in 10.5px letter-spaced caps (detail; mobile 60×60). Band styles from `lib/scoreBand.ts`: EXCELLENT ≥ 85 = `--accent` bg + white; GOOD 70–84 = `--accent-tint` + `--accent-deep`; MAYBE 50–69 = `--maybe-bg` + `--ink-2`; WEAK < 50 = transparent + 1px inset `--control-border` + `--muted`; NONE (unscored) = "—" with 1px inset `--line`. |
-| `StatusTag` | New = `--line-faint` / `#3D4147`; Shortlisted, Applied = `--accent-tint` / `--accent-deep`; Interviewing, Offer = `--accent` / white; Rejected, Withdrawn = `--neutral-fill` / `--muted`. Rows show it only when status ≠ NEW. |
+| `StatusTag` | New = `--line-faint` / `--strong`; Shortlisted, Applied = `--accent-tint` / `--accent-deep`; Interviewing, Offer = `--accent` / white; Rejected, Withdrawn = `--neutral-fill` / `--muted`. Rows show it only when status ≠ NEW. |
 | `EligibilityTag` | Eligible = `--eligible-*`; Needs check (UNCERTAIN) = `--attention-*`; Ineligible = `--strong` / white. Rows show only "Needs check". |
 | `RuleResultTag` | OK = `--accent-tint` / `--accent-deep`; Unclear = `--attention-*`; Fail = `--strong` / white; 12px / 600. |
-| `FactChip` | `--line-faint` bg (`--neutral-fill` in the detail header), `#3D4147` text, 12px, radius 3px. |
+| `FactChip` | `--line-faint` bg (`--neutral-fill` in the detail header), `--strong` text, 12px, radius 3px. |
 | Buttons | Primary = `--accent` bg, white; Secondary = white, 1px `--control-border`; Quiet = transparent, `--ink-2`; Leave-app ("Apply") = `--ink` bg, white; Disabled = `--neutral-fill`, `--muted`. **Exactly one primary per view**: the next step of the status flow. Desktop action buttons show their shortcut after the label in mono at 70% opacity. |
 | `SectionCard` | `--surface`, 1px `--line`, radius 6px, padding 20/22, starts with a `SectionLabel`. |
 | `Toast` | Bottom-left 24px, `--ink` bg, white text, max-width 520px, one at a time, 5 s; every status change toast has "Undo" (outlined `--muted` button). Uses shadcn Sonner restyled. |
-| `EmptyState` | Centered inbox icon (`#9A9EA4`, 32px), bold title, one muted sentence, optional secondary button. Board empty text: "Inbox zero" / "No jobs match these filters." |
-| `ErrorState` | `--ground` box, 1px `--line`, warning icon `#B56A00`, bold title, `detail` from Problem Details, and `status · code` in mono 12px muted. Network failure variant: "Backend not reachable — Is the app running?". |
+| `EmptyState` | Centered inbox icon (`--icon-faint`, 32px), bold title, one muted sentence, optional secondary button. Board empty text: "Inbox zero" / "No jobs match these filters." |
+| `ErrorState` | `--ground` box, 1px `--line`, warning icon `--attention-icon`, bold title, `detail` from Problem Details, and `status · code` in mono 12px muted. Network failure variant: "Backend not reachable — Is the app running?". |
 | `ListSkeleton` | Rows with a 40×32 `--neutral-fill` block and three bars (12px, 10px, 10px) in `--neutral-fill`/`--line-faint`; no shimmer if reduced motion. |
 | `Kbd` | Mono 12px, 1px `--control-border` (2px bottom), radius 4px, `--surface-muted` bg. |
 

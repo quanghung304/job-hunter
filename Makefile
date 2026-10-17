@@ -1,64 +1,41 @@
 # Shortcuts for both toolchains (docs/conventions.md, "Makefile targets").
 
 MVNW := cd backend && ./mvnw
-FRONTEND_READY := $(wildcard frontend/package.json)
-NO_FRONTEND := @echo "frontend not set up yet (T-019)"
+NPM := cd frontend && npm
 
 .PHONY: verify verify-backend verify-frontend dev dev-backend dev-frontend run api e2e
 
+# Backend (unit + integration, needs Docker) then frontend (lint, typecheck, tests).
 verify: verify-backend verify-frontend
 
 verify-backend:
 	$(MVNW) verify
 
 verify-frontend:
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-else
-	cd frontend && npm ci && npm run lint && npm run typecheck && npm test
-endif
+	$(NPM) ci && npm run lint && npm run typecheck && npm test
 
-# Backend on :8080 and Vite on :5173 (proxies /api) in parallel.
+# Backend on :8080 and Vite on :5173 (proxies /api) in parallel; open http://localhost:5173.
 # No recursive $(MAKE): it breaks when make is installed in a path with spaces (Windows).
 dev:
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-	$(MVNW) spring-boot:run -Dspring-boot.run.profiles=local
-else
 	(cd frontend && npm run dev) & $(MVNW) spring-boot:run -Dspring-boot.run.profiles=local; wait
-endif
 
 dev-backend:
 	$(MVNW) spring-boot:run -Dspring-boot.run.profiles=local
 
 dev-frontend:
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-else
-	cd frontend && npm run dev
-endif
+	$(NPM) run dev
 
 # Builds the SPA into the backend and serves everything on http://localhost:8080.
 run:
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-else
-	cd frontend && npm run build
-endif
+	$(NPM) run build
 	$(MVNW) -Pwith-frontend spring-boot:run -Dspring-boot.run.profiles=local
 
-# Re-exports docs/architecture/openapi.json, then regenerates the TypeScript types.
+# Re-exports docs/architecture/openapi.json, then regenerates frontend/src/api/schema.d.ts.
 api:
 	$(MVNW) verify -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dit.test=OpenApiExportIT -Dapi.export=true
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-else
-	cd frontend && npm run gen:api
-endif
+	$(NPM) run gen:api
 
+# Playwright smoke tests against a running app (start it first with `make run`).
+# First time only: cd frontend && npx playwright install chromium
 e2e:
-ifeq ($(FRONTEND_READY),)
-	$(NO_FRONTEND)
-else
-	@echo "e2e is set up in T-019/T-020"; exit 1
-endif
+	$(NPM) run e2e

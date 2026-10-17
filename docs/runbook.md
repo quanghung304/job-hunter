@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- JDK 21, Node.js LTS (npm), Docker (Compose v2), make, Git.
+- JDK 21, Node.js LTS with npm ≥ 9.5 (`npm i -g npm@latest`), Docker (Compose v2), make, Git.
+- First `make e2e` only: `cd frontend && npx playwright install chromium`.
 - Anthropic API key; Telegram bot token + chat id (create via @BotFather, then send the bot
   a message and read the chat id from `getUpdates`).
 
