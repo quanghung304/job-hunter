@@ -80,3 +80,13 @@ app:
         - { geo: europe, industry: engineering }
         - { geo: anywhere, industry: engineering }
         - { tag: java }
+    weworkremotely:
+      enabled: true
+      max-items: 200
+      min-interval: 6h
+      base-url: https://weworkremotely.com
+      feed-delay: 2s
+      feeds:
+        - /categories/remote-back-end-programming-jobs.rss
+        - /categories/remote-full-stack-programming-jobs.rss
+        - /categories/remote-devops-sysadmin-jobs.rss

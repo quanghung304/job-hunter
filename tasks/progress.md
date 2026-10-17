@@ -10,6 +10,23 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-008 We Work Remotely collector (RSS) — DONE
+- `source.weworkremotely`: `WeWorkRemotelyCollector` (configured feeds, dedupe by guid,
+  per-feed failure = warning), `WeWorkRemotelyFeedParser` (hardened JDOM + Rome; WWR's own
+  elements read from JDOM; item → JSON rawPayload), `WeWorkRemotelyMapper` ("Company: Title"
+  split, "Unknown" + warning), `WeWorkRemotelyItemDto`, `WeWorkRemotelyProperties`.
+- Findings (weworkremotely.md rewritten): description is entity-escaped HTML, not CDATA;
+  extra elements `country` (flag emoji), `state`, `skills`, `expires_at`, `media:content`
+  → country/state/skills appended to the description; spec feed URLs still valid.
+- Terms: RSS page, terms and sitemap are behind a Cloudflare JS challenge (not bypassed);
+  the owner read the ToS in a browser: no scraping/feed clause; limited, revocable,
+  non-transferable personal-use right → fine for Phase 1, no redistribution (a Phase 4 SaaS
+  needs WWR's permission). Catalog and weworkremotely.md updated.
+- Tests: `WeWorkRemotelyMapperTest` (7 fixture items, extras, rawPayload, title split, XXE
+  rejected), `WeWorkRemotelyCollectorTest` (2 feeds with shared guids → 8 unique of 10,
+  "Unknown" company, since, max-items, failing / challenge / all-failing feeds); live passed.
+- Next: T-009 (prefilter).
+
 ## 2026-10-17 — T-007 Jobicy collector — DONE
 - `source.jobicy`: `JobicyCollector` (one request per configured query, cursor while
   `hasMore`, dedupe by id across queries, per-query failure = warning), `JobicyMapper`

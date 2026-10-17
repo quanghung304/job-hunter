@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss">
+  <channel>
+    <title>We Work Remotely: Remote jobs in design, programming, marketing and more</title>
+    <link>https://weworkremotely.com/remote-jobs.rss</link>
+    <description>We Work Remotely: Remote jobs in design, programming, marketing and more</description>
+    <language>en-US</language>
+    <ttl>60</ttl>
+    <item>
+      <title>Legion: Principal Product Manager, Agentic AI</title>
+      <region>Anywhere in the World</region>
+      <country>🇺🇸 United States of America</country>
+      <state></state>
+      <skills></skills>
+      <category>Product</category>
+      <type>Full-Time</type>
+      <description>
+
+&lt;p&gt;
+  &lt;strong&gt;Headquarters:&lt;/strong&gt; Remote, United States
+&lt;/p&gt;
+
+&lt;h1&gt;&lt;strong&gt;Principal Product Manager, Agentic AI&lt;/strong&gt;&lt;/h1&gt;
+&lt;h2&gt;REMOTE, United States&lt;/h2&gt;
+&lt;p&gt;&lt;strong&gt;JOB OVERVIEW&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Legion is building AI agents that carry out workforce management work, not agents that describe it.&lt;/p&gt;
+&lt;p&gt;Much of what is presented as AI in workforce management today is a conversational layer over an existing scheduling screen. The more substantial problem — software that reasons over demand, labor regulation, and employee preferences, then acts, with a person in the loop wherever the stakes require one — remains unsolved across the category. Legion intends to solve it, and this role leads the product work to get there.&lt;/p&gt;
+&lt;p&gt;You will take an agent surface from operational research through specification, prototype, evaluation, and enterprise deployment, working hands-on throughout. You will work closely with Legion's AI Lab engineers and with our CEO, who is engaged in this work daily.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;RESPONSIBILITIES AND DUTIES&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Agent definition.&lt;/strong&gt; Determine what an agent is responsible for, which tools it may call, what it must escalate, what it must never do, and what a manager sees when it acts. These decisions affect employee pay and legal compliance. Much of this work is pre-launch, so you will shape the direction rather than inherit it.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Problem selection.&lt;/strong&gt; The hardest judgment in agentic product work is identifying which workflows suit an agent and which do not. You will spend substantial time inside customer operations — district managers, store managers, labor operations, frontline employees — and return with a ranked, defensible view of where an agent creates measurable value and where it does not.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;The human-in-the-loop contract.&lt;/strong&gt; Scheduling decisions affect income, childcare arrangements, and legal protections. For each agent action you will define where autonomy is appropriate, the escalation thresholds, how a manager overrides the system, what is logged, and how a compliance team audits the outcome. Legion treats this as a first-class design problem.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Build quality.&lt;/strong&gt; You are accountable for what ships, not for what was specified. That means staying engaged through implementation: reviewing the build against the specification as it comes together, using the product yourself before anyone else is asked to, joining bug triage and design review, catching drift from intent while it is still cheap to correct, and holding a release when the quality is not there. Our customers experience the build, not the document. A well-written specification that produced a product managers do not trust is failed product work, and we assess it that way.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Evaluation.&lt;/strong&gt; Build and maintain the evaluation sets that determine whether an agent is ready to ship and whether it is degrading in production — writing the cases, reviewing failure traces, setting the pass criteria. You will be the person who holds a release when the demonstration is persuasive and the evaluation is not.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Specifications.&lt;/strong&gt; Legion uses Functional Requirements Documents as its ground-truth specification layer; release notes, enablement material, and sales content are generated from maintained specifications rather than reconstructed from code or institutional memory. Write FRDs that meet that standard and keep them accurate after release. A specification is where the work begins, not where your responsibility ends.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Commercialization.&lt;/strong&gt; Partner with go-to-market on packaging, metering, pricing inputs, and field readiness. Agentic products raise difficult commercial questions — what unit to meter, what a customer is paying for when software performs work a person previously did — and you will be expected to hold a considered position on them.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Design-partner delivery.&lt;/strong&gt; Lead agent deployments with large enterprise design partners: scoping the pilot, establishing success criteria before it begins, joining failure reviews, and determining what becomes generally available and what remains bespoke.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;TECHNICAL EXPECTATIONS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Legion is looking for a product manager who builds, rather than one who directs others who build. In a typical week, this role involves:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Writing and iterating on prompts and system prompts directly, and explaining why a change improved a behavior&lt;/li&gt;
+&lt;li&gt;Standing up a working prototype of a proposed agent — tool definitions, structured outputs, retries, guardrails — before engineering is asked to build anything&lt;/li&gt;
+&lt;li&gt;Using agentic coding tools (Claude Code or equivalent) daily: prototyping, data analysis, specification work, and reading the codebase behind your specifications&lt;/li&gt;
+&lt;li&gt;Reviewing an execution trace and diagnosing whether a failure originates in a tool description, a retrieval gap, a context-window constraint, an under-specified output schema, or a genuine model limitation&lt;/li&gt;
+&lt;li&gt;Building and running evaluation sets, and interpreting the results without a data scientist to translate them&lt;/li&gt;
+&lt;li&gt;Holding an informed position on retrieval design, tool-use patterns, structured output, model routing, latency and cost trade-offs, and multi-tenant safety in enterprise SaaS&lt;/li&gt;
+&lt;li&gt;Opening pull requests against our codebase — a prototype, a prompt change, an evaluation fixture, a specification stub. Pushing code is permitted and actively encouraged for product managers who want to work that way. It is not a requirement of the role, and the same review standards apply to everyone.&lt;/li&gt;
+&lt;li&gt;Following model releases, agent frameworks, and protocol changes, and translating them into roadmap implications within days rather than quarters&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We recognize that this is a demanding technical bar for a product role. It reflects what the work actually requires.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;REQUIRED SKILLS AND QUALIFICATIONS&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;7+ years in product management (Senior) or 10+ years (Principal), including at least 2 years shipping LLM-backed features to external, paying users — not internal tools, proofs of concept, or hackathon projects&lt;/li&gt;
+&lt;li&gt;Demonstrated hands-on capability of the kind described above. Expect to show your work.&lt;/li&gt;
+&lt;li&gt;Substantial enterprise B2B SaaS experience: multi-tenant architecture, role-based access control, audit trails, single sign-on, data residency, security review, and enterprise procurement. You should be able to anticipate what a customer's security questionnaire will ask about an LLM feature.&lt;/li&gt;
+&lt;li&gt;A record of taking an ambiguous, operationally complex domain problem through to a shipped product with demonstrated adoption — not only launch&lt;/li&gt;
+&lt;li&gt;Evidence of staying with a product through implementation and owning its quality at release. We will ask about a release you delayed or stopped, what you found, and how you found it.&lt;/li&gt;
+&lt;li&gt;The judgment to recognize what current models cannot do reliably, and the willingness to say so when a room expects a different answer&lt;/li&gt;
+&lt;li&gt;Comfort working inside a codebase. An engineering background is not required, but you should be able to read the code behind what you are specifying, run it locally, and open a pull request.&lt;/li&gt;
+&lt;li&gt;Strong written communication. Legion runs on documents, and candidates are evaluated substantially on how they write.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;PREFERRED QUALIFICATIONS AND ATTRIBUTES&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Direct experience in workforce management, HCM, ERP, supply chain, or another operationally complex enterprise domain with compliance exposure&lt;/li&gt;
+&lt;li&gt;Familiarity with labor compliance regimes — predictive scheduling ordinances, meal and rest break rules, union work rules — or demonstrated ability to become fluent in a comparable regulatory domain quickly&lt;/li&gt;
+&lt;li&gt;Background in demand forecasting, optimization, or decision systems&lt;/li&gt;
+&lt;li&gt;Experience building platform or authoring surfaces that customers configure themselves&lt;/li&gt;
+&lt;li&gt;An engineering or technical degree, or prior experience as an engineer or data scientist&lt;/li&gt;
+&lt;li&gt;Experience with products sold into frontline-heavy industries: retail, hospitality, healthcare, or manufacturing&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;SCOPE OF ROLE, STATED PLAINLY&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;So that candidates can assess fit early:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;This is an individual contributor role. There is no team to inherit and no management responsibility at present.&lt;/li&gt;
+&lt;li&gt;The role is accountable for what ships, not for what is specified. Writing the specification is a portion of the work, not the whole of it.&lt;/li&gt;
+&lt;li&gt;This is not an AI strategy or vendor-evaluation role. The work is product definition, prototyping, specification, evaluation, and delivery.&lt;/li&gt;
+&lt;li&gt;The role requires forming an independent point of view from operational research. Direction will not be handed down in detail.&lt;/li&gt;
+&lt;li&gt;The environment carries genuine ambiguity. The category is being defined as we work in it, and model capabilities shift underneath the roadmap.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;SELECTION PROCESS&amp;nbsp;&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Our process includes a practical exercise: a sanitized workforce management problem, for which candidates produce an agent design — scope, tools, failure modes, human-in-the-loop contract, and evaluation plan — together with a working prototype they built themselves, using any model provider they prefer. The exercise is then discussed with the people the candidate would work alongside. We weigh it heavily, and we compensate candidates for the time.&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;COMPENSATION &amp;amp; BENEFITS&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;Salary Range: $280,000-$300,000 +bonus (tied to business outcomes) +Stock Equity&lt;/strong&gt;&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;At Legion, we offer competitive compensation and benefits packages to all employees. As a fully remote employer, pay for positions is determined using local, national, and industry-specific survey data.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Our posted salary range is done so in good faith based on national data and may be refined for a candidate's region/town/cost of living. We strive to make competitive offers that allow employees room for future growth. Salaries will be based on the applicant’s location, level of experience, education, and specialized knowledge and skills. Additionally, we consider the external market rate, the amount we have budgeted internally, and the internal equity for the same position within the company.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Benefits include, but are not limited to:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;$0 monthly premium and other flexible medical, dental, and vision plans effective on the first day of employment&lt;/li&gt;
+&lt;li&gt;401k plan&lt;/li&gt;
+&lt;li&gt;Discretionary Paid Time Off and Paid Holidays&lt;/li&gt;
+&lt;li&gt;Parental Leave&amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Equity&amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Monthly Wellness Reimbursement&lt;/li&gt;
+&lt;li&gt;Monthly Lunch on Legion&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3&gt;&lt;strong&gt;ABOUT LEGION&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Join Legion's mission to turn hourly jobs into good jobs. We're a remote, mission-driven team seeking exceptional talent to propel this vision. Embrace a culture that's collaborative, fast-paced, and entrepreneurial. With us, you'll grow your skills, work closely with experienced executives, and contribute significantly to our mission.&lt;/p&gt;
+&lt;p&gt;Legion Technologies delivers the industry’s most innovative workforce management platform. It enables businesses to maximize labor efficiency and employee engagement simultaneously. The award-winning, AI-driven Legion WFM platform is intelligent, automated, and employee-centric. It’s proven to deliver 13x ROI through schedule optimization, reduced attrition, increased productivity, and increased operational efficiency. Legion delivers cutting-edge technology in an easy-to-use platform and mobile app that employees love.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;If you're ready to make an impact and grow your career, Legion is where you belong. Join us in making hourly work rewarding and fulfilling.&lt;/p&gt;
+&lt;h3&gt;&lt;strong&gt;BACKGROUND AND OPPORTUNITY&amp;nbsp;&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;There are almost 75 million hourly workers in the United States, representing more than half of the entire workforce. Historically, managing hourly employees has been difficult due to high attrition (average of 60%) and high replacement costs (average of $3,200 per employee in retail). The ongoing labor shortage and competition from the gig economy make it more difficult to attract and retain hourly employees. The top reasons hourly employees leave their jobs are a lack of schedule empowerment, poor communication with employers, and an inability to get paid early. Gen Z and the millennial workforce demand gig-like flexibility, modern technology, and compelling work options. Legion’s mission is to turn hourly jobs into good jobs, serving the hourly workers who make up the majority of the US workforce. We believe in empowering employees and helping employers be efficient and innovative by enabling intelligent automation powered by Legion’s Workforce Management platform to optimize labor efficiency and enhance the employee experience simultaneously. Legion WFM was built for the cloud with AI at the core and designed to handle the complexity of modern businesses and meet the needs of today’s hourly employees.&amp;nbsp; Our team is comprised of dedicated individuals from all backgrounds and experiences, globally distributed across all time zones.&lt;/p&gt;
+&lt;p&gt;For more information, visit&lt;a href="https://legion.co"&gt; https://legion.co&lt;/a&gt;&amp;nbsp;&lt;/p&gt;
+&lt;h3&gt;&lt;strong&gt;EQUAL EMPLOYMENT OPPORTUNITY&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;Legion Technologies is proud to be an equal-opportunity employer and is committed to maintaining a diverse and inclusive work environment. All qualified applicants will be considered for employment without regard to race, color, religion, sex, age, disability, marital status, familial status, sexual orientation, pregnancy, genetic information, gender identity, gender expression, national origin, ancestry, citizenship status, veteran status, and any other legally protected status under federal, state, or local anti-discrimination laws.&lt;/p&gt;
+&lt;h3&gt;&lt;strong&gt;DISABILITY ACCOMMODATION&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;For individuals with disabilities who need additional assistance at any point in the application and interview process, please email recruiting@legion.co&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;We have noticed a rise in recruiting impersonations across the industry, where scammers attempt to access candidates' personal and financial information through fake interviews and offers. All Legion recruiting email communications will always come from the @&lt;a href="http://legion.co"&gt;legion.co&lt;/a&gt; domain. Any outreach claiming to be from Legion via other sources should be ignored. If you are uncertain whether you have been contacted by an official Legion employee, reach out to recruiting@legion.co&lt;/p&gt;&lt;div class="content-conclusion"&gt;&lt;p&gt;&lt;span&gt;&lt;em&gt;Legion is an equal opportunity employer. All applicants will be considered for employment without attention to race, religion, color, sex, sexual orientation, gender identity, age, national origin, veteran, disability status, or any other basis covered by appropriate law.&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;h2&gt;How We Determine What We Pay&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;As a global employer, Legion determines pay for positions using local, national, and industry-specific survey data. We evaluate external equity and the cost of labor/prevailing wage index in the relative marketplace for jobs directly comparable to jobs within our company. Our posted salary range is based on national data and may be refined for a candidate's region/town/cost of living. For new hires, we strive to make competitive offers allowing the new employee room for future growth. Salaries will be based on the applicant’s location, level of experience, education, and specialized knowledge and skills. Additionally, we consider the external market rate, the amount we have budgeted internally, and internal equity within the company for the same position. An employee/candidate with a stronger skill set will receive higher pay.&lt;/em&gt;&lt;/p&gt;
+&lt;h1&gt;Job Applicant Privacy Policy&lt;/h1&gt;
+&lt;p&gt;This Job Applicant Privacy Policy (“&lt;strong&gt;Policy&lt;/strong&gt;”) describes how Legion Technologies, Inc. (“&lt;strong&gt;Legion&lt;/strong&gt;”, “&lt;strong&gt;we&lt;/strong&gt;”, “&lt;strong&gt;us&lt;/strong&gt;” and “&lt;strong&gt;our&lt;/strong&gt;”) collects, uses, and discloses “personal information” as defined under California law from and about job applicants who are residents of California.&lt;/p&gt;
+&lt;p&gt;This Policy does not apply to our handling of data gathered about you in your role as a user of our consumer-facing services. When you interact with us as in that role, the&amp;nbsp;&lt;a href="https://legion.co/privacy-policy/"&gt;Legion Privacy Policy&lt;/a&gt;&amp;nbsp;applies.&lt;/p&gt;
+&lt;div class="section-anchor position-relative"&gt;&lt;/div&gt;
+&lt;ol class="ol-bold"&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Types of Personal Information We Handle&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We collect, store, and use various types of personal information through the application and recruitment process. We collect such information either directly from you or (where applicable) from another person or entity, such as an employment agency or consultancy, background check provider, or other referral sources. This information includes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Identification and contact information, and related identifiers&lt;/strong&gt;&amp;nbsp;such as full name, date and place of birth, citizenship and permanent residence, home and business addresses, telephone numbers, email addresses, and such information about your beneficiaries or emergency contacts.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Professional or employment-related information,&lt;/strong&gt;&amp;nbsp;including:
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Recruitment, employment, or engagement information&lt;/strong&gt;&amp;nbsp;such as application forms and information included in a resume, cover letter, or otherwise provided through any application or engagement process; and copies of identification documents, such as driver’s licenses, passports, and visas; and background screening results and references.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Career information&lt;/strong&gt;&amp;nbsp;such as job titles; work history; work dates and work locations; information about skills, qualifications, experience, publications, speaking engagements, and preferences; and professional memberships&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Education Information&lt;/strong&gt;&amp;nbsp;such as institutions attended, degrees, certifications, training courses, publications, and transcript information.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Legally protected classification information&lt;/strong&gt;&amp;nbsp;such as race, sex/gender, religious/ philosophical beliefs, gender identity/expression, sexual orientation, marital status, military service, nationality, ethnicity, request for family care leave, political opinions, and criminal history.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Other information&lt;/strong&gt;&amp;nbsp;such as any information you voluntarily choose to provide in connection with your job application.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li class="mt-3"&gt;
+&lt;p&gt;&lt;strong&gt;How We Use Personal Information&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We collect, use, share, and store personal information from job applicants for our and our service providers’ business and operational purposes in the recruitment process such as: processing your application, tracking your application through the recruitment process, contacting references with your authorization, conducting background checks you authorize, and making hiring decisions. We will also use job applicant information for internal analysis purposes to understand the applicants who apply and to improve our recruitment process. We may sometimes need to use applicant information for legal purposes, such as in connection with any challenges made to our hiring decisions.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li class="mt-3"&gt;
+&lt;p&gt;&lt;strong&gt;With Whom We Share Personal Information&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We will disclose job applicant personal information to the following types of entities or in the following circumstances (where applicable):&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Internally&lt;/strong&gt;: to other Legion personnel involved in the recruiting and hiring process.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Vendors&lt;/strong&gt;: such as technology service providers, travel management providers, human resources suppliers, background check companies, and employment agencies or recruiters, where applicable.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Legal Compliance&lt;/strong&gt;: when required to do so by law, regulation, or court order or in response to a request for assistance by the police or other law enforcement agency.&lt;/li&gt;
+&lt;li&gt;L&lt;strong&gt;itigation Purposes&lt;/strong&gt;: to seek legal advice from our external lawyers or in connection with litigation with a third party.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Business Transaction Purposes&lt;/strong&gt;: in connection with the sale, purchase, or merger.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li class="mt-3"&gt;&lt;strong&gt;How to Contact Us About this Policy&lt;/strong&gt;&amp;nbsp;– If you have any questions about this Policy, please contact &lt;a href="mailto:privacy@legion.co"&gt;privacy@legion.co&lt;/a&gt;.&lt;/li&gt;
+&lt;/ol&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;To apply:&lt;/strong&gt; &lt;a href="https://weworkremotely.com/remote-jobs/legion-principal-product-manager-agentic-ai"&gt;https://weworkremotely.com/remote-jobs/legion-principal-product-manager-agentic-ai&lt;/a&gt;&lt;/p&gt;
+</description>
+      <pubDate>Sat, 17 Oct 2026 07:31:02 +0000</pubDate>
+      <expires_at>Mon, 16 Nov 2026 07:31:02 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/legion-principal-product-manager-agentic-ai</guid>
+      <link>https://weworkremotely.com/remote-jobs/legion-principal-product-manager-agentic-ai</link>
+    </item>
+    <item>
+      <title>Mixpanel: Customer Value Architect III</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <state></state>
+      <skills></skills>
+      <category>Full-Stack Programming</category>
+      <type>Full-Time</type>
+      <description>
+
+&lt;p&gt;
+  &lt;strong&gt;Headquarters:&lt;/strong&gt; Remote, US
+&lt;/p&gt;
+
+&lt;div class="content-intro"&gt;&lt;p&gt;&lt;strong&gt;About Mixpanel&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Mixpanel is the leading product intelligence and analytics platform, trusted by more than 29,000 companies to help understand how people use the products they build. By combining powerful analytics with AI that knows your business, Mixpanel helps teams see what’s working, diagnose what’s not, and decide what to build next. Learn more at &lt;a href="https://mixpanel.com/home/"&gt;mixpanel.com&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;strong&gt;About the Team&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The Customer Value Architects team sits inside the revenue organization and owns the connection between what customers buy and what they actually get out of Mixpanel. We turn product usage into measurable business outcomes, working across onboarding, adoption, and renewal to make sure customers see the value they signed up for.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;About the Role&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;The right candidate is a relationship-first advisor who connects a customer's Mixpanel investment to real outcomes for a defined book of accounts. You'll own the adoption and value plan for each account end to end: understanding why the customer bought Mixpanel, tracking whether they're getting the ROI they expected, and driving the enablement and product usage that gets them there. You'll build trusted relationships with business and technical stakeholders, partner closely with your Account Executive and renewal counterparts, and bring a growing point of view on how customers should think about AI in their product workflows. This role suits someone who can own a project end to end and is ready to start extending their influence beyond their own accounts to the wider team.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Responsibilities&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Own the value plan for each account in your portfolio, connecting the business problem that led the customer to buy Mixpanel with the outcomes they measure.&lt;/li&gt;
+&lt;li&gt;Build relationships with business and technical stakeholders, aligning Mixpanel's capabilities to what customers care about most.&lt;/li&gt;
+&lt;li&gt;Run discovery on customer priorities and pain points, and turn what you learn into concrete adoption plans and internal updates.&lt;/li&gt;
+&lt;li&gt;Partner with your Account Executive on expansion and your renewal counterpart on renewal execution, bringing the value case and adoption evidence that supports both.&lt;/li&gt;
+&lt;li&gt;Lead enablement/best practices sessions on dashboard design, funnel analysis, and retention modeling to grow how deeply and widely a customer uses Mixpanel.&lt;/li&gt;
+&lt;li&gt;Monitor usage and health signals and lead business reviews that surface what's working, deepen adoption, and catch risk early.&lt;/li&gt;
+&lt;li&gt;Spot underused features and contracted capabilities, and turn them into clear recommendations for the customer.&lt;/li&gt;
+&lt;li&gt;Triage product questions and issues, solving what you can and routing the rest to the right team.&lt;/li&gt;
+&lt;li&gt;Build a working point of view on a customer's AI maturity, and use Mixpanel's own AI surface to help them build on their product data.&lt;/li&gt;
+&lt;li&gt;Coordinate with GTM, Product, and Engineering on escalations, and share what works with the broader Customer Value Architects team.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;We're Looking For Someone Who Has&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;4 - 6 years of experience in customer success, consulting, or a related field supporting B2B SaaS accounts, or equivalent experience.&lt;/li&gt;
+&lt;li&gt;A track record of managing relationships across a range of stakeholders, from business partners to technical teams.&lt;/li&gt;
+&lt;li&gt;The ability to translate technical concepts, like data models and product metrics, into terms that land with non-technical stakeholders.&lt;/li&gt;
+&lt;li&gt;Experience turning product usage into a clear story about customer outcomes and ROI.&lt;/li&gt;
+&lt;li&gt;Comfort building and running adoption plans that tie daily work to a customer's larger goals.&lt;/li&gt;
+&lt;li&gt;Hands-on experience with AI or agentic tooling beyond casual use, such as MCP-based workflows or LLM copilots.&lt;/li&gt;
+&lt;li&gt;A collaborative approach to working across account teams and internal partners to move plans forward.&lt;/li&gt;
+&lt;li&gt;Good judgment for prioritizing which accounts and actions need attention first.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Bonus Points For&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Background in product analytics, growth, or data-driven product development.&lt;/li&gt;
+&lt;li&gt;Experience in a technical advisory or professional services capacity.&lt;/li&gt;
+&lt;li&gt;Familiarity with analytics instrumentation, event tracking, or data tooling.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;#LI-Remote&lt;/p&gt;&lt;div class="content-conclusion"&gt;&lt;p&gt;&lt;strong&gt;Benefits and Perks&lt;/strong&gt;&lt;strong&gt;&lt;br&gt;&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Comprehensive Medical, Vision, and Dental Care&lt;/li&gt;
+&lt;li&gt;Mental Wellness Benefit&lt;/li&gt;
+&lt;li&gt;Generous Vacation Policy &amp;amp; Additional Company Holidays&lt;/li&gt;
+&lt;li&gt;Enhanced Parental Leave&lt;/li&gt;
+&lt;li&gt;Volunteer Time Off&lt;/li&gt;
+&lt;li&gt;Additional US Benefits: Pre-Tax Benefits including 401(K), Wellness Benefit, Holiday Break&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;em&gt;*please note that benefits and perks for contract positions will vary*&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Culture Values&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Make Bold Bets:&lt;/strong&gt; We choose courageous action over comfortable progress.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Innovate with Insight:&lt;/strong&gt; We tackle decisions with rigor and judgment - combining data, experience and collective wisdom to drive&amp;nbsp;powerful outcomes.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;One Team:&lt;/strong&gt; We collaborate across boundaries to achieve far greater impact than any of us could accomplish alone.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Candor with Connection:&lt;/strong&gt; We build meaningful relationships that enable honest feedback and direct conversations.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Champion the Customer:&lt;/strong&gt; We seek to deeply understand our customers’ needs, ensuring their success is our north star.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Powerful Simplicity:&lt;/strong&gt; We find elegant solutions to complex problems, making sophisticated things accessible.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Why choose Mixpanel?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;We’re a leader in analytics with over 29,000 customers and $277M invested from prominent investors: like Andreessen-Horowitz, Sequoia, YC, and, most recently, Bain Capital. Mixpanel’s pioneering event-based data analytics platform offers a powerful yet simple solution for companies to understand user behaviors and easily track overarching company success metrics. Our accomplished teams continuously facilitate our expansion by tackling the ever-evolving challenges tied to scaling, reliability, design, and service. Choosing to work at Mixpanel means you’ll be helping the world’s most innovative companies learn from their data so they can make better decisions.&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Mixpanel is an equal opportunity employer supporting workforce diversity. At Mixpanel, we are focused on things that really matter—our people, our customers, our partners—out of a recognition that those relationships are the most valuable assets we have. We actively encourage women, people with disabilities, veterans, underrepresented minorities, and LGBTQ+ people to apply. We do not discriminate on the basis of race, religion, color, national origin, gender, gender identity or expression, sexual orientation, age, marital status, veteran status, or disability status. Pursuant to the San Francisco Fair Chance Ordinance or other similar laws that may be applicable, we will consider for employment qualified applicants with arrest and conviction records. We’ve immersed ourselves in our Culture and Values as our guiding principles for the impact we want to have and the future we are building.&lt;/span&gt;&lt;/p&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;To apply:&lt;/strong&gt; &lt;a href="https://weworkremotely.com/remote-jobs/mixpanel-customer-value-architect-iii-1"&gt;https://weworkremotely.com/remote-jobs/mixpanel-customer-value-architect-iii-1&lt;/a&gt;&lt;/p&gt;
+</description>
+      <pubDate>Sat, 17 Oct 2026 07:30:54 +0000</pubDate>
+      <expires_at>Mon, 16 Nov 2026 07:30:54 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/mixpanel-customer-value-architect-iii-1</guid>
+      <link>https://weworkremotely.com/remote-jobs/mixpanel-customer-value-architect-iii-1</link>
+    </item>
+    <item>
+      <title>Expel: Senior Detection &amp; Response Engineer</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <state></state>
+      <skills></skills>
+      <category>DevOps and Sysadmin</category>
+      <type>Full-Time</type>
+      <description>
+
+&lt;p&gt;
+  &lt;strong&gt;Headquarters:&lt;/strong&gt; Remote
+&lt;/p&gt;
+
+&lt;p&gt;You're the detection engineer people turn to when they ask "what does Microsoft actually see here?" Not the marketing-slide answer, the real map. Which product emits which telemetry, any anticipated ingestion lags, what table or API it lands in, which license tier gates it, how long it survives before it ages out, and where the documentation quietly disagrees with reality. When a new technique drops, your first instinct is to ask which Microsoft signal would catch it, and whether customers have it switched on.&lt;/p&gt;
+&lt;p&gt;You also know Microsoft never sits still. Hunting tables appear, columns get renamed, Graph versions retire, capability shuffles between SKUs, previews go GA, features quietly vanish, and native alert logic shifts underneath you. You've got a repeatable way of staying ahead of that churn instead of finding out when a detection stops firing. You're comfortable behind a command line and in front of a customer, including scenarios where the conversation isn’t pleasant. If that's you, we'd love to talk! We have an amazing team and believe you'll love getting to know us.&lt;/p&gt;
+&lt;p&gt;At Expel, we help businesses bridge the cybersecurity talent gap by providing transparent Managed Detection and Response. To do this we build technology to make sure our security analysts are solving important problems, and automation is helping them make better decisions at every step. We delight in using technology to make security accessible for our customers.&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;&lt;strong&gt;What Expel can do for you&lt;/strong&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Make you one of our recognized authorities on Microsoft detection and response — for our SOC, our engineers, our go-to-market teams, and our customers&lt;/li&gt;
+&lt;li&gt;Give you real ownership of Expel's detection coverage across the whole Microsoft security estate&lt;/li&gt;
+&lt;li&gt;Put Microsoft telemetry from across our customer base in front of you — a breadth of real-world environments no single enterprise gets to see&lt;/li&gt;
+&lt;li&gt;Let you write and tune detections in our own rule engine and watch them run against live signal&lt;/li&gt;
+&lt;li&gt;Treat AI tooling (Claude Code and friends) as a first-class part of how you work, not a side experiment&lt;/li&gt;
+&lt;li&gt;Enable you to learn from analysts, data scientists, engineers, and responders responsible for various components of Expel's product and services&lt;/li&gt;
+&lt;li&gt;Provide access to popular EDR, network, SIEM, identity, and cloud technologies well beyond the Microsoft stack&lt;/li&gt;
+&lt;li&gt;Challenge you to push the boundaries of our security vision&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2&gt;&lt;strong&gt;What you can do for Expel&lt;/strong&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Own our detection coverage across Defender XDR, Entra ID, Sentinel, Microsoft Graph, Azure, and Microsoft 365 — from raw signal through to shipped, tuned detections&lt;/li&gt;
+&lt;li&gt;Build and maintain a living map of Microsoft security signal: what exists, known ingestion lag, where it lands, what gates it, how long it's kept, and how far you can trust it&lt;/li&gt;
+&lt;li&gt;Track how that signal changes and turn every material change into a concrete action — catching drift before it costs us efficacy&lt;/li&gt;
+&lt;li&gt;Tell us where Microsoft's native detections are strong enough to lean on, where they're noisy or shallow, and where Expel needs its own layer&lt;/li&gt;
+&lt;li&gt;Make SOC analysts faster by automating Microsoft-specific investigative workflows against the Graph, Defender, Sentinel, and Entra APIs&lt;/li&gt;
+&lt;li&gt;Partner with Engineering on our Microsoft integrations — ingestion, API limits and throttling, and schema mapping&lt;/li&gt;
+&lt;li&gt;Answer the hard questions from the SOC, CS, and Sales — and mentor the people asking them&lt;/li&gt;
+&lt;li&gt;Help customers understand what they're actually covered for, what they're missing, and what turning it on would buy them&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2&gt;&lt;strong&gt;What you should bring with you&lt;/strong&gt;&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Deep, current, hands-on knowledge of the Microsoft security stack — Defender XDR (Endpoint, Identity, Office 365, Cloud Apps), Entra ID, Sentinel, Microsoft Graph, and the Azure and Microsoft 365 control and data planes&lt;/li&gt;
+&lt;li&gt;Fluency in KQL: you can write, read, optimize, and debug non-trivial hunting queries across both Defender Advanced Hunting and Sentinel, and you know how and why the two schemas differ&lt;/li&gt;
+&lt;li&gt;Working knowledge of the Graph and Graph Security APIs, the Defender and Sentinel APIs, and their authentication, permission, versioning, and throttling models&lt;/li&gt;
+&lt;li&gt;A strong grasp of the Entra ID (and legacy Active Directory) identity attack surface — authentication flows, conditional access, OAuth application consent, token theft and replay, hybrid identity and sync, privileged role abuse — and the telemetry each produces&lt;/li&gt;
+&lt;li&gt;Solid understanding of Windows internals and command line tooling, with enough macOS and Linux to keep up with Defender's cross-platform coverage&lt;/li&gt;
+&lt;li&gt;Experience writing, deploying, and tuning custom detections against Microsoft data sets, plus enough non-Microsoft exposure (AWS, GCP, other EDR and SIEM) to keep perspective&lt;/li&gt;
+&lt;li&gt;Proficiency with Python and Sigma, and real fluency using Anthropic tools such as Claude Code to work across systems and data (locally, via MCP, and so on)&lt;/li&gt;
+&lt;li&gt;5+ years in information technology or security operations, with substantial time spent defending or operating Microsoft environments&lt;/li&gt;
+&lt;li&gt;Excellent tact and diplomacy skills — you can explain Microsoft's limits to an audience that doesn't want to hear about them&lt;/li&gt;
+&lt;li&gt;SC-200, AZ-500, or SC-300 are a plus; demonstrated depth matters considerably more&lt;/li&gt;
+&lt;/ul&gt;
+&lt;hr&gt;
+&lt;h2&gt;&lt;span&gt;&lt;strong&gt;Work Location&lt;/strong&gt;&lt;/span&gt;&lt;/h2&gt;
+&lt;p&gt;&lt;span&gt;Our headquarters is in Herndon, Virginia. However, we realize that while there is a benefit to in-person interaction, good people don’t all live in Northern Virginia. Remote work is an option for this role.&lt;/span&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h2&gt;&lt;strong&gt;Additional Notes&lt;/strong&gt;&lt;/h2&gt;
+&lt;p&gt;The base salary range for this role is between $142,900 USD and $207,200 USD + bonus eligibility and equity. While the full salary band reflects our long-term compensation framework, we're primarily targeting candidates between $160,000 and $192,000 based on experience, skills, and market data.&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;We believe in paying transparently and equitably. Your salary will ultimately be based on factors such as your experience, skills, team equity, and market data. You’ll also be eligible for unlimited PTO (which we model and encourage), work location flexibility, up to 24 weeks of parental leave, and really excellent health benefits.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;We’re only hiring those authorized to work in the United States. We do not currently sponsor immigration visas.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;We’re an Equal Opportunity Employer: You’ll receive consideration for employment without regard to race, sex, color, religion, sexual orientation, gender identity, national origin, protected veteran status, or on the basis of disability.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;We’ll ensure that individuals with disabilities are provided reasonable accommodation to participate in the job application or interview process, to perform essential job functions, and to receive other benefits and privileges of employment. Please let us know if you need accommodation of any kind.&lt;br&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;#LI-Remote&lt;/span&gt;&lt;/p&gt;&lt;div class="content-pay-transparency"&gt;&lt;div class="pay-input"&gt;&lt;div class="title"&gt;Salary Range&lt;/div&gt;&lt;div class="pay-range"&gt;&lt;span&gt;$142,900&lt;/span&gt;&lt;span class="divider"&gt;—&lt;/span&gt;&lt;span&gt;$207,200 USD&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;To apply:&lt;/strong&gt; &lt;a href="https://weworkremotely.com/remote-jobs/expel-senior-detection-response-engineer"&gt;https://weworkremotely.com/remote-jobs/expel-senior-detection-response-engineer&lt;/a&gt;&lt;/p&gt;
+</description>
+      <pubDate>Sat, 17 Oct 2026 07:30:54 +0000</pubDate>
+      <expires_at>Mon, 16 Nov 2026 07:30:54 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/expel-senior-detection-response-engineer</guid>
+      <link>https://weworkremotely.com/remote-jobs/expel-senior-detection-response-engineer</link>
+    </item>
+    <item>
+      <title>Fivetran : Global Alliance Lead, Capgemini</title>
+      <region>Anywhere in the World</region>
+      <country>🇺🇸 United States of America</country>
+      <state></state>
+      <skills></skills>
+      <category>Full-Stack Programming</category>
+      <type>Full-Time</type>
+      <description>
+
+&lt;p&gt;
+  &lt;strong&gt;Headquarters:&lt;/strong&gt; Remote, Colorado, United States, AMER
+&lt;/p&gt;
+
+&lt;div class="content-intro"&gt;&lt;p&gt;From Fivetran’s founding until now, our mission has remained the same: to make access to data as simple and reliable as electricity. With Fivetran, customer data arrives in their warehouses, canonical and ready to query, with no engineering or maintenance required. We’re proud that more organizations continue to leverage our technology every day to become truly data-driven.&lt;/p&gt;&lt;/div&gt;&lt;p&gt;&lt;span&gt;&lt;strong&gt;About Us&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;Fivetran and dbt Labs are bringing together two industry-leading companies with a shared mission: helping organizations unlock the full value of their data. Together, we’re delivering the data infrastructure layer that helps organizations move, transform, and trust their data — from the moment data moves, through every transformation, to the context teams and AI systems rely on. Fivetran helps organizations automate data movement across the systems, clouds, engines, and tools they rely on. dbt Labs pioneered analytics engineering, helping teams transform data into reliable, governed insights. Together, we support thousands of organizations as they build a trusted foundation for analytics, AI, and better business decisions.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;As we bring our teams and technology together, we’re building on the strengths of both companies while continuing to deliver the products and experiences our customers know and trust. It’s an exciting time to join us: we’re creating a company with the scale, talent, and technology to help more organizations put their data to work with greater speed, confidence, and impact. During this transition period, you may see references to both Fivetran and dbt Labs throughout our recruiting process as we integrate our teams, systems, and career sites.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;&lt;strong&gt;About the role&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;The Global Alliance Lead is one of the most strategically important roles in our Ecosystem. You will own our relationship with one of the world's leading technology and transformation partners end-to-end — from C-suite engagement through to practitioner enablement and joint pipeline creation. You will be the architect of how the GSI and NewCo go to market together, ensuring our platform becomes the trusted data foundation inside the GSI’s agentic AI delivery practice globally.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;This is a senior individual contributor role reporting to the Global Head of GSI Relationships. You will orchestrate across sales, partner solution architecture, marketing, and partner operations — bringing the full weight of the organisation to bear on one of our highest-leverage commercial relationships.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;&lt;strong&gt;What You'll Do&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;&lt;em&gt;Relationship strategy and executive engagement&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;Own the global GSI relationship at partner and C-suite level, building trusted relationships with Client, practice and delivery team leads.&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Define and execute a multi-year joint strategy that positions dbt + Fivetran as the default open data infrastructure layer within the GSI’s enterprise AI and agentic workflow delivery&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Represent NewCo at GSI’s internal forums, client briefings, and industry events — articulating a compelling narrative around open data infrastructure and its relevance to the GSI’s strategy.&amp;nbsp;&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;em&gt;Platform integration and practitioner adoption&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;Drive adoption of the dbt + Fivetran platform within GSI delivery teams — ensuring practitioners, solution architects and practice leads are certified, confident, and actively recommending the platform in client engagements&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Work with GSI's practice leadership to embed NewCo's platform into their business groups, standard delivery architectures, RFP responses and client proposals — with particular focus on GSI's Data &amp;amp; AI practices&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;em&gt;Enablement and go-to-market&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;Design and execute a frictionless enablement programme for GSI practitioners globally — certifications, reference architectures, use case playbooks, and joint delivery assets&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Partner with GSI's marketing and alliances teams to develop joint go-to-market campaigns anchored to open data infrastructure, trusted AI delivery, and closing the gap between AI POC and production&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Support GSI in building and positioning client-facing agentic AI value accelerators — with NewCo platform as the foundational data layer — the "NewCo inside" model&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;em&gt;Pipeline and opportunity development&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;Source and develop new pipeline opportunities through the GSI relationship — identifying client situations where open data infrastructure creates measurable value.&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Drive co-sell motions alongside GSI account teams, ensuring NewCo is present and influential at the point of client opportunity&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Maintain a rigorous view of GSI-engaged pipeline — tracking opportunity sourcing, progression, and closed business attributed to the alliance&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;em&gt;Telemetry and performance&lt;/em&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;Define and track the signals that indicate a healthy, high-performing GSI relationship: certifications, sourced opportunities, platform deployments, practitioner engagement, and joint wins&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Report regularly to the Global Head of GSI Relationships on alliance health, pipeline contribution, and strategic progress&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Identify risks and gaps in the relationship early and mobilise internal resources to address them&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;strong&gt;What you will bring&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;15+ years of experience in strategic alliances, enterprise sales, or partner management within the data, cloud, or enterprise software industry&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Demonstrated experience managing complex, global relationships with major consulting firms or global system integrators at a senior level&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Deep understanding of the modern data stack and the business value of open data infrastructure — dbt, Fivetran, or equivalent experience strongly preferred&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Ability to engage credibly at C-suite and partner level within a global consulting organisation — understanding how GSIs make decisions, build practices, and go to market&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Strong commercial instincts — able to identify, thoroughly qualify and develop joint pipeline opportunities, not just manage existing relationships&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Track record of operating as a cross-functional orchestrator — influencing without direct authority across sales, engineering, marketing, and operations&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Exceptional communication and storytelling skills — able to translate technical platform capabilities into compelling business narratives for consulting and enterprise audiences&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Familiarity with AI, agentic workflows, and the data governance landscape is a strong advantage + strong knowledge of GSI's operating model and contacts within.&amp;nbsp;&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Willingness to travel globally to engage GSI leadership and teams across regions&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;strong&gt;What Success Looks Like in Year One&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;span&gt;A clearly defined joint strategy with GSI signed off at partner Executive level and on track to primary Global Strategic Practice.&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;Material increase in GSI practitioner certifications and active platform deployments across Data &amp;amp; AI and Insights &amp;amp; Data practices&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;GSI-sourced pipeline contributing measurably to NewCo's revenue&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;At least two joint go-to-market campaigns live in the market delivering pipeline — anchored to GSI's agentic AI and trusted data agenda&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;First client-facing agentic value accelerators built on NewCo platform delivered with GSI — positioning NewCo as the trusted data infrastructure inside GSI's AI delivery&lt;/span&gt;&lt;/li&gt;
+&lt;li&gt;&lt;span&gt;A telemetry framework in place tracking alliance health and pipeline influence&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;span&gt;&lt;strong&gt;Why This Role&lt;/strong&gt;&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;This is a rare opportunity to own a marquee relationship at a defining moment for both companies. GSI’s are publicly committing to capturing the full value of the agentic AI revolution for customers&amp;nbsp; — and the merged dbt + Fivetran platform is the trusted data infrastructure that makes AI production-ready. The person who builds this alliance well will sit at the intersection of the two most important forces in enterprise technology right now: the scale of a global systems integrator and the open infrastructure that makes AI trustworthy enough to deploy at scale.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;This position qualifies for Fivetran’s incentive plan, and it’s common for employees in this role to achieve the total on-target earnings.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span&gt;#LI-Remote&lt;/span&gt;&lt;/p&gt;&lt;div class="content-pay-transparency"&gt;&lt;div class="pay-input"&gt;&lt;div class="description"&gt;&lt;p&gt;The compensation range displayed on this job posting reflects the minimum and maximum target for new hire compensation for the target position and level, and may include sales incentives or target bonuses depending on the role. &amp;nbsp;Our compensation ranges are determined by role, level, and location. Our job titles may span more than one career level. Within the range, individual compensation is determined by additional factors, including job-related skills, experience, relevant education or training, business need, market demands. The compensation range is subject to change and may be modified in the future. Your recruiter can share more about the specific compensation range for your location during the hiring process.&lt;/p&gt;&lt;/div&gt;&lt;div class="title"&gt;Denver Pay Range&lt;/div&gt;&lt;div class="pay-range"&gt;&lt;span&gt;$165,739&lt;/span&gt;&lt;span class="divider"&gt;—&lt;/span&gt;&lt;span&gt;$196,000 USD&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="pay-input"&gt;&lt;div class="title"&gt;OTE (On Target Earning)&lt;/div&gt;&lt;div class="pay-range"&gt;&lt;span&gt;$236,774&lt;/span&gt;&lt;span class="divider"&gt;—&lt;/span&gt;&lt;span&gt;$280,000 USD&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="content-conclusion"&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+&lt;p class="p-rich_text_section"&gt;&lt;strong&gt;Perks and Benefits&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;100% employer-paid medical insurance&lt;strong&gt;*&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;Generous paid time away from work, including paid vacation or flexible/unlimited vacation depending on role and country, plus paid sick time, inclusive parental leave, paid holidays, including a year-end Global Week of Rest, and volunteer days off.&lt;/li&gt;
+&lt;li&gt;RSU stock grants*&lt;/li&gt;
+&lt;li&gt;Professional development and training opportunities&lt;/li&gt;
+&lt;li&gt;Company virtual happy hours, free food, and fun team-building activities&lt;/li&gt;
+&lt;li&gt;Monthly cell phone stipend&lt;/li&gt;
+&lt;li&gt;Access to an innovative mental health support platform that offers personalized care and resources in areas such as: therapy, coaching, and self-guided mindfulness exercises for all covered employees and their covered dependents.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;*&lt;/strong&gt;May vary by country and worker type - please reach out to your recruiter for more information&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;Click &lt;a href="https://drive.google.com/drive/folders/1CdawUwjo1Q1B7ghZJ_owdmmHB8VtqhBu?usp=sharing"&gt;here&lt;/a&gt; to learn more about Fivetran's Benefits by Region.&lt;/em&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;We’re honored to be &lt;a class="c-link" href="https://fivetran.com/blog/hvr-acquisition-series-d"&gt;valued at over $5.6 billion&lt;/a&gt;, but more importantly, we’re proud of our&amp;nbsp;&lt;a class="c-link" href="https://fivetran.com/culture"&gt;core values of Get Stuck In, Do the Right Thing, and One Team, One Dream&lt;/a&gt;. Read about us in&amp;nbsp;&lt;a class="c-link" href="https://fivetran-com.s3.amazonaws.com/news/forbes-aug-sept-2022-digital-reprint-10-21-22.pdf"&gt;Forbes&lt;/a&gt;.&amp;nbsp; &amp;nbsp; &amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Fivetran brings together high-quality talent across the globe to make data access as easy and reliable as electricity for our customers. We value and recognize that our customers benefit from having innovative teams made of people from many backgrounds, experiences, and identities. Fivetran promotes diversity, equity, inclusion &amp;amp; belonging through attracting, recruiting, developing, and retaining a diverse workforce, not only because it is the right thing to do, but because it helps us build a world-class company to better serve our customers, our people and our communities.&lt;/p&gt;
+&lt;p&gt;To learn more about Fivetran’s culture and what it’s like to be part of the team, &lt;a href="https://www.youtube.com/watch?v=xlhtp4dGh8o"&gt;click here&lt;/a&gt; and enjoy our video.&lt;/p&gt;
+&lt;p&gt;To learn more about our candidate privacy policy, you can &lt;a href="https://fivetran.com/candidate-privacy"&gt;read our statement here&lt;/a&gt;.&lt;/p&gt;
+&lt;hr&gt;
+&lt;p&gt;&lt;em&gt;We are committed to ensuring that all candidates have an equal opportunity to participate in our interview process. If you require accommodations at any stage of the process due to a disability, medical condition, or any other circumstance, please don't hesitate to submit your request by filling out this &lt;a href="https://forms.gle/V7k3t4u9j523XkEt6"&gt;form&lt;/a&gt;. We will work with you to provide reasonable accommodations to facilitate your participation and ensure a fair and accessible interview experience. Your request and any information provided will be kept confidential and will not impact your candidacy. We look forward to hearing from you and accommodating your needs to the best of our ability.&lt;/em&gt;&lt;/p&gt;&lt;/div&gt;
+
+&lt;p&gt;&lt;strong&gt;To apply:&lt;/strong&gt; &lt;a href="https://weworkremotely.com/remote-jobs/fivetran-global-alliance-lead-capgemini"&gt;https://weworkremotely.com/remote-jobs/fivetran-global-alliance-lead-capgemini&lt;/a&gt;&lt;/p&gt;
+</description>
+      <pubDate>Fri, 16 Oct 2026 07:30:50 +0000</pubDate>
+      <expires_at>Sun, 15 Nov 2026 07:30:50 +0000</expires_at>
+      <guid>https://weworkremotely.com/remote-jobs/fivetran-global-alliance-lead-capgemini</guid>
+      <link>https://weworkremotely.com/remote-jobs/fivetran-global-alliance-lead-capgemini</link>
+    </item>
+  </channel>
+</rss>

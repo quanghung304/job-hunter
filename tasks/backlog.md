@@ -14,7 +14,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-005 | [Ingest: normalize, fingerprint, dedupe, upsert](T-005-ingest.md) | T-004 | M |
 | [x] | T-006 | [Himalayas collector](T-006-himalayas.md) | T-005 | S |
 | [x] | T-007 | [Jobicy collector](T-007-jobicy.md) | T-005 | S |
-| [ ] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |
+| [x] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |
 | [ ] | T-009 | [Prefilter rules](T-009-prefilter.md) | T-002, T-005 | S |
 | [ ] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
 | [ ] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
@@ -36,6 +36,7 @@ Owner tasks (not for agents):
 - [ ] Create free API keys (at least Groq; optionally Cerebras, GitHub Models) and check
       each provider's current model ids and limits against `config/llm.yaml`.
 - [ ] Optional: create a free Himalayas API key (himalayas.app/api) → `HIMALAYAS_API_KEY`.
+- [x] Read We Work Remotely's terms in a browser (2026-10-17: personal use OK, no redistribution).
 - [ ] Re-read terms of each Phase 1 source and set "Verified" dates in the catalog.
 - [ ] Add 30–100 target companies to `config/companies.yaml`.
 - [ ] Label ≥ 40 jobs for the eval.

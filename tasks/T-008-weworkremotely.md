@@ -17,8 +17,8 @@ Working `WeWorkRemotelyCollector` reading configured category RSS feeds.
 4. Live test.
 
 ## Acceptance criteria
-- [ ] Title without ": " → company "Unknown" + warning, still ingested.
-- [ ] Same guid in two feeds → one posting.
+- [x] Title without ": " → company "Unknown" + warning, still ingested.
+- [x] Same guid in two feeds → one posting.
 
 ## Tests
 `WeWorkRemotelyMapperTest`, `WeWorkRemotelyCollectorTest` (WireMock serving XML), live test.
