@@ -10,6 +10,20 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-003 Database schema and persistence layer — DONE
+- Flyway V2–V5 (all Phase 1 tables, §5 indexes + a few FK/lookup indexes, check constraints
+  on every enum column). Entities/repositories in `<module>.persistence`: source (CollectorRun,
+  Company), ingest (Job, RawPosting), enrich (JobExtraction, JobAssessment), tracking
+  (JobTracking with `JobTrackingId`, JobTrackingEvent), notify (Notification), llm (LlmCall).
+  Cross-module references are plain `Long` ids. Module enums in each module's root package.
+- `TrackingStatusMachine` + `IllegalStatusTransitionException` (409); test covers all 64 pairs.
+- New ArchUnit rule: `<module>.persistence` is private to its module (with a violating fixture).
+- Schema deviations (data-model.md updated): `notification.profile_id` added (needed for
+  "alerted once per profile"); `job_assessment` unique is `nulls not distinct`;
+  `collector_run.status` null while running; `llm_call.job_id` FK on delete set null.
+- Tests: 9 `*RepositoryIT` (round trip incl. jsonb/arrays, unique, check, FK) on Testcontainers.
+- Next: T-004 (or T-010 / T-019 in parallel).
+
 ## 2026-10-16 — T-002 Profile loading and validation — DONE
 - `profile`: `Profile` (nested records, defaults in compact constructors), `ProfileProvider`,
   `YamlProfileProvider` (Jackson YAML + Bean Validation, all problems listed by field path,

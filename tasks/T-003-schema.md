@@ -28,9 +28,9 @@ owning modules.
 Business services beyond the status machine.
 
 ## Acceptance criteria
-- [ ] `./mvnw verify` runs migrations on Testcontainers Postgres.
-- [ ] Each repository has a round-trip IT (save → load, jsonb and arrays intact).
-- [ ] Unique constraints behave as in data-model (duplicate insert fails).
+- [x] `./mvnw verify` runs migrations on Testcontainers Postgres.
+- [x] Each repository has a round-trip IT (save → load, jsonb and arrays intact).
+- [x] Unique constraints behave as in data-model (duplicate insert fails).
 
 ## Tests
 - `*RepositoryIT` per aggregate. `TrackingStatusMachineTest`: every allowed and every

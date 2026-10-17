@@ -38,7 +38,8 @@ Makefile, docker-compose.yml, .env.example
 - Constructor injection only; no field `@Autowired`.
 - Each module exposes a small public API (e.g. `IngestService`) in its root package;
   internals go in sub-packages and are package-private where possible.
-- JPA entities stay inside their module; never return entities from a module's public API
+- JPA entities and repositories live in `<module>.persistence` and are used only by that
+  module (ArchUnit rule); never return entities from a module's public API
   — map to records. API DTOs (`api` module) are separate from module records.
 - Enums are stored as `text` (`@Enumerated(EnumType.STRING)`).
 - Time: inject `java.time.Clock`; never call `Instant.now()` directly (testability).

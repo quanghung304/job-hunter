@@ -1,7 +1,10 @@
 # Data model
 
 PostgreSQL 16. All timestamps `timestamptz` (UTC). Ids `bigint generated always as identity`
-unless stated. Migrations in `backend/src/main/resources/db/migration`.
+unless stated. Migrations in `backend/src/main/resources/db/migration` (V2–V5, T-003).
+Enum-like text columns have `check` constraints listing their values; counters default to 0;
+`text[]` columns are `not null default '{}'`. Entities and repositories live in
+`<module>.persistence` of the owning module (enforced by `ArchitectureTest`).
 
 ## 1. Tables
 
@@ -11,7 +14,7 @@ unless stated. Migrations in `backend/src/main/resources/db/migration`.
 | id | bigint PK | |
 | source_code | text not null | matches `JobCollector.sourceCode()` |
 | started_at, finished_at | timestamptz | |
-| status | text | `SUCCESS`, `PARTIAL`, `FAILED` |
+| status | text | `SUCCESS`, `PARTIAL`, `FAILED`; null while the run is in progress |
 | fetched_count, new_raw_count, new_job_count | int | |
 | error_message | text | truncated to 2000 chars |
 
@@ -59,7 +62,7 @@ LLM-extracted attributes, per job and prompt version. Profile-independent.
 | job_id | bigint FK | |
 | prompt_version | text | e.g. `extract-v1` |
 | model | text | |
-| attributes | jsonb | validated against schema in `scoring-spec.md` §3 |
+| attributes | jsonb | validated against schema in `scoring-spec.md` §3; null when `FAILED` |
 | status | text | `OK`, `FAILED` |
 | attempts | int | |
 | created_at | timestamptz | |
@@ -86,7 +89,7 @@ Eligibility + score for one job and one profile. Owned by the `enrich` module;
 | status | text | `PENDING`, `DONE`, `FAILED` |
 | attempts | int | |
 | created_at, updated_at | timestamptz | |
-| unique | (job_id, profile_id, score_prompt_version) | |
+| unique | (job_id, profile_id, score_prompt_version) | `nulls not distinct`: at most one unscored row (null version) per job and profile |
 
 When the profile file changes (`profile_hash` differs), prefilter and eligibility are
 re-evaluated (cheap, no LLM). Re-scoring after a profile change is manual
@@ -110,7 +113,7 @@ Created lazily: a job without a row is `NEW`.
 |---|---|---|
 | id | bigint PK | |
 | purpose | text | `EXTRACT`, `SCORE`, `EVAL` |
-| job_id | bigint | nullable |
+| job_id | bigint | nullable; FK → job, `on delete set null` |
 | model, prompt_version | text | |
 | input_tokens, output_tokens | int | |
 | cost_usd | numeric(10,6) | estimated from `app.llm.pricing` |
@@ -120,7 +123,9 @@ Created lazily: a job without a row is `NEW`.
 | created_at | timestamptz | |
 
 ### `notification`
-| id | channel (`TELEGRAM`) | kind (`DIGEST`, `ALERT`) | job_ids bigint[] | sent_at | success | error |
+| id | profile_id | channel (`TELEGRAM`) | kind (`DIGEST`, `ALERT`) | job_ids bigint[] | sent_at | success | error |
+
+`profile_id` was added in T-003: without it "once per profile" cannot be checked.
 
 A job is alerted at most once per profile; the digest includes only jobs not in a previous digest.
 
@@ -205,3 +210,6 @@ posting is skipped and counted as a warning on the run.
 - `job(status, last_seen_at)`, `job(company_key)`
 - `job_assessment(profile_id, score desc)`, `job_assessment(status)`
 - `raw_posting(job_id)`, `llm_call(created_at)`
+- Also created: `collector_run(source_code, started_at desc)`, `job_assessment(extraction_id)`,
+  `job_tracking_event(job_id, profile_id, created_at)`, `notification` GIN on `job_ids` and
+  `(profile_id, kind, sent_at desc)`

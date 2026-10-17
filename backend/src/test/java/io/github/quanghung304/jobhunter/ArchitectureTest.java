@@ -9,12 +9,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.CompositeArchRule;
 import com.tngtech.archunit.library.Architectures.LayeredArchitecture;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 class ArchitectureTest {
 
     private static final String BASE = "io.github.quanghung304.jobhunter";
+
+    private static final List<String> MODULES = List.of(
+            "common", "profile", "source", "ingest", "llm", "enrich", "scoring", "tracking", "notify",
+            "pipeline", "api", "eval");
 
     private static JavaClasses mainClasses;
 
@@ -82,6 +89,31 @@ class ArchitectureTest {
 
         assertThat(moduleDependencies("io.github.quanghung304.archfixture").evaluate(fixture).hasViolation())
                 .as("common -> ingest in the fixture must be reported")
+                .isTrue();
+    }
+
+    /** Entities and repositories (`<module>.persistence`) are private to their module. */
+    static ArchRule persistenceStaysInsideItsModule(String base) {
+        return CompositeArchRule.of(MODULES.stream()
+                .map(module -> (ArchRule) noClasses()
+                        .that().resideOutsideOfPackage(base + "." + module + "..")
+                        .should().dependOnClassesThat().resideInAPackage(base + "." + module + ".persistence..")
+                        .because("conventions.md: never use another module's repositories or entities"))
+                .toList());
+    }
+
+    @Test
+    void persistenceIsPrivateToItsModule() {
+        persistenceStaysInsideItsModule(BASE).check(mainClasses);
+    }
+
+    @Test
+    void persistenceRuleDetectsAForeignRepositoryUse() {
+        JavaClasses fixture = new ClassFileImporter()
+                .importPackages("io.github.quanghung304.archfixture");
+
+        assertThat(persistenceStaysInsideItsModule("io.github.quanghung304.archfixture").evaluate(fixture).hasViolation())
+                .as("enrich -> ingest.persistence in the fixture must be reported")
                 .isTrue();
     }
 
