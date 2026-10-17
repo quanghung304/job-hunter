@@ -9,7 +9,7 @@ and update "Verified" with the date you did.
 |---|---|---|---|---|---|---|---|---|
 | `arbeitnow` | Arbeitnow | JSON API | none | 1 | allowed | Paginated, 300/page, hourly refresh, rate limit header 50; link back requested | [arbeitnow.md](arbeitnow.md) | 2026-10-17 (API `meta.terms`; site ToS not re-read) |
 | `himalayas` | Himalayas | JSON API | none (optional free key) | 1 | allowed | Cursor pages of ≤ 20; public shared allowance (key: 60/min, 10k/day); apply via `applicationLink`, show source credit, no redistribution | [himalayas.md](himalayas.md) | 2026-10-17 (API docs + Terms §30A) |
-| `jobicy` | Jobicy | JSON API | none | 1 | allowed | Filters by geo/industry/tag; cap per call; credit required | [jobicy.md](jobicy.md) | — |
+| `jobicy` | Jobicy | JSON API | none | 1 | allowed | 7-day window, 3 h delay, newest first, cursor, count ≤ 200; credit Jobicy and keep the canonical job URL; poll ≤ once per hour | [jobicy.md](jobicy.md) | 2026-10-17 (API docs + fair use) |
 | `weworkremotely` | We Work Remotely | RSS | none | 1 | allowed | Category feeds; attribution + direct link required | [weworkremotely.md](weworkremotely.md) | — |
 | `hn-whoishiring` | Hacker News "Who is hiring?" | JSON API (Algolia + Firebase) | none | 1 | allowed | Monthly thread, free-text comments; polite delay | [hn-whoishiring.md](hn-whoishiring.md) | — |
 | `greenhouse` | Greenhouse job boards | JSON API | none | 1 | allowed | Public GET; per company slug; no salary in board API | [ats.md](ats.md) | — |

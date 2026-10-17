@@ -10,6 +10,20 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-007 Jobicy collector — DONE
+- `source.jobicy`: `JobicyCollector` (one request per configured query, cursor while
+  `hasMore`, dedupe by id across queries, per-query failure = warning), `JobicyMapper`
+  (`parsePubDate`: ISO with offset, zone-less → UTC), DTOs, `JobicyProperties`; live test passed.
+- Spec corrections (jobicy.md rewritten): industry slug `dev` does not exist → `engineering`;
+  `pubDate` is ISO-8601 with offset; salary keys `salaryMin/Max/Currency/Period` and absent
+  when unknown; cursor pagination, count ≤ 200; 7-day window with 3 h delay, newest first
+  (so a query stops at its first job older than `since`).
+- Terms (fair use): allowed without approval; keep the canonical Jobicy URL and credit.
+- Tests: `JobicyMapperTest` (7 fixture items, 6 date formats, errors), `JobicyCollectorTest`
+  (overlapping queries → 8 unique of 10, since, max-items, cursor, max-pages, partial and
+  total failure, malformed items).
+- Next: T-008 (We Work Remotely) or T-009 (prefilter).
+
 ## 2026-10-17 — T-006 Himalayas collector — DONE
 - `source.himalayas`: `HimalayasCollector` (cursor pagination, optional `HIMALAYAS_API_KEY`
   bearer header), `HimalayasMapper`, `HimalayasJobDto`, `HimalayasPageDto`,

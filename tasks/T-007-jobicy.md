@@ -16,8 +16,8 @@ Working `JobicyCollector` with multiple configured queries, deduped by id.
 4. Live test.
 
 ## Acceptance criteria
-- [ ] Two overlapping query fixtures produce unique postings.
-- [ ] `pubDate` parsing documented and tested (with and without zone).
+- [x] Two overlapping query fixtures produce unique postings.
+- [x] `pubDate` parsing documented and tested (with and without zone).
 
 ## Tests
 `JobicyMapperTest`, `JobicyCollectorTest`, `JobicyCollectorLiveTest` (`live`).

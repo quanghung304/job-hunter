@@ -68,3 +68,15 @@ app:
       page-size: 20
       page-delay: 2s
       max-pages: 25
+    jobicy:
+      enabled: true
+      max-items: 200
+      min-interval: 6h
+      base-url: https://jobicy.com
+      count: 100
+      call-delay: 2s
+      max-pages-per-query: 3
+      queries:
+        - { geo: europe, industry: engineering }
+        - { geo: anywhere, industry: engineering }
+        - { tag: java }
