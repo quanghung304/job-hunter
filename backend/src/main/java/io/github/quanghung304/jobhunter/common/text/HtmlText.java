@@ -6,6 +6,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
+import org.jsoup.parser.Parser;
 import org.jsoup.select.NodeTraversor;
 import org.jsoup.select.NodeVisitor;
 
@@ -21,6 +22,9 @@ public final class HtmlText {
 
     private static final Pattern HORIZONTAL_SPACE = Pattern.compile("[ \\t\\x0B\\f\\u00A0]+");
     private static final Pattern THREE_OR_MORE_NEWLINES = Pattern.compile("\\n{3,}");
+    /** One escaped tag can be literal text ("use &lt;div&gt;"); several mean escaped markup. */
+    private static final int MIN_ESCAPED_TAGS = 3;
+    private static final Pattern ESCAPED_TAG = Pattern.compile("&lt;/?[a-zA-Z][a-zA-Z0-9]*[\\s/&]");
 
     private HtmlText() {
     }
@@ -29,14 +33,27 @@ public final class HtmlText {
      * Returns the plain text of {@code html}: {@code <p>}, {@code <li>}, {@code <br>} and other
      * block elements become line breaks, entities are decoded, scripts and styles are dropped,
      * lines are trimmed and runs of more than one blank line collapse to a single blank line.
-     * Input without markup keeps its own line breaks. {@code null} or blank input gives "".
+     * Input without markup keeps its own line breaks. HTML that was entity-escaped once more
+     * (three or more {@code &lt;tag} sequences, as some feeds send it, sometimes followed by a
+     * real HTML footer) is unescaped before rendering.
+     * {@code null} or blank input gives "".
      */
     public static String toPlain(String html) {
         if (html == null || html.isBlank()) {
             return "";
         }
-        String text = html.indexOf('<') < 0 && html.indexOf('&') < 0 ? html : render(html);
+        String source = isEscapedHtml(html) ? Parser.unescapeEntities(html, false) : html;
+        String text = source.indexOf('<') < 0 && source.indexOf('&') < 0 ? source : render(source);
         return tidy(text);
+    }
+
+    private static boolean isEscapedHtml(String text) {
+        var matcher = ESCAPED_TAG.matcher(text);
+        int found = 0;
+        while (found < MIN_ESCAPED_TAGS && matcher.find()) {
+            found++;
+        }
+        return found >= MIN_ESCAPED_TAGS;
     }
 
     private static String render(String html) {

@@ -38,10 +38,10 @@ A reusable collector framework and the first working collector (Arbeitnow), prod
 Persisting postings (T-005), other sources.
 
 ## Acceptance criteria
-- [ ] Collector stops on: no next page, item older than `since`, `max-items`.
-- [ ] `remote-only` option skips non-remote items.
-- [ ] A 500 or timeout yields `CollectResult(FAILED, message)`; no exception escapes.
-- [ ] `collector_run` row written for success and failure.
+- [x] Collector stops on: no next page, item older than `since`, `max-items`.
+- [x] `remote-only` option skips non-remote items.
+- [x] A 500 or timeout yields `CollectResult(FAILED, message)`; no exception escapes.
+- [x] `collector_run` row written for success and failure.
 
 ## Tests
 - `ArbeitnowMapperTest` (each fixture item → expected record; HTML stripped; epoch → Instant).

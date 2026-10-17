@@ -10,6 +10,23 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-004 Collector framework + Arbeitnow collector — DONE
+- `source` API: `JobCollector`, `CollectRequest`, `CollectResult` (+ `fetched`; overview.md
+  updated), `NormalizedPosting`; `CollectorRegistry`, `CollectorRunner` (virtual-thread
+  timeout, never throws, writes `collector_run`, min-interval skip, `recordIngestCounts`),
+  `HttpClients` (+ `app.http.*`, config-spec updated), `Politeness`/`Sleeper`.
+- `ArbeitnowCollector`/`Mapper`/`JobDto`/`PageDto`; real fixtures captured 2026-10-17.
+- Spec corrections (arbeitnow.md): 300 items/page; items not strictly ordered by `created_at`
+  → old items are skipped and paging stops only when a whole page is older than `since`;
+  end of data = empty page; page number incremented locally; added `max-pages` (20) cap.
+- `HtmlText` now decodes double-escaped HTML (seen in Arbeitnow descriptions).
+- Owner decision: `remote: false` + location containing "remote" counts as remote
+  (`ArbeitnowMapper.isRemote`, used by mapper and `remote-only`); arbeitnow.md updated.
+- Tests: mapper (fixture table), collector (WireMock: paging, since, max-items/pages, 500,
+  timeout, non-JSON, later-page error, malformed → PARTIAL), runner, registry, runner IT;
+  live test passed once.
+- Next: T-005 (ingest).
+
 ## 2026-10-17 — UI design approved — DONE
 - Mockups approved in the Claude Design canvas "Job Hunter UI mockups" (5 artboards).
 - `frontend.md` now holds design tokens, typography, component specs, layouts and

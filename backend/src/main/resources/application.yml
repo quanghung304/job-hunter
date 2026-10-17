@@ -45,3 +45,17 @@ springdoc:
 app:
   profile:
     path: ../config/profile.yaml
+  http:
+    connect-timeout: 5s
+    read-timeout: 20s
+  pipeline:
+    collector-timeout: 2m
+  sources:
+    arbeitnow:
+      enabled: true
+      max-items: 200
+      min-interval: 1h
+      base-url: https://www.arbeitnow.com
+      remote-only: true
+      page-delay: 1s
+      max-pages: 20

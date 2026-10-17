@@ -7,7 +7,7 @@ and update "Verified" with the date you did.
 
 | Code | Source | Kind | Auth | Phase | Status | Key limits / terms | Spec | Verified |
 |---|---|---|---|---|---|---|---|---|
-| `arbeitnow` | Arbeitnow | JSON API | none | 1 | allowed | Paginated, ~100/page, hourly refresh; link back requested | [arbeitnow.md](arbeitnow.md) | — |
+| `arbeitnow` | Arbeitnow | JSON API | none | 1 | allowed | Paginated, 300/page, hourly refresh, rate limit header 50; link back requested | [arbeitnow.md](arbeitnow.md) | 2026-10-17 (API `meta.terms`; site ToS not re-read) |
 | `himalayas` | Himalayas | JSON API | none | 1 | allowed | Remote roles with location/timezone restrictions | [himalayas.md](himalayas.md) | — |
 | `jobicy` | Jobicy | JSON API | none | 1 | allowed | Filters by geo/industry/tag; cap per call; credit required | [jobicy.md](jobicy.md) | — |
 | `weworkremotely` | We Work Remotely | RSS | none | 1 | allowed | Category feeds; attribution + direct link required | [weworkremotely.md](weworkremotely.md) | — |

@@ -25,7 +25,18 @@ class HtmlTextTest {
                 Arguments.of("<script>alert(1)</script><style>p{}</style><p>kept</p>", "kept"),
                 Arguments.of("a<br><br><br><br><br>b", "a\n\nb"),
                 Arguments.of("<p>a</p><p></p><p></p><p>b</p>", "a\n\nb"),
-                Arguments.of("first\r\n\r\n\r\n\r\nsecond\n  third  ", "first\n\nsecond\nthird"));
+                Arguments.of("first\r\n\r\n\r\n\r\nsecond\n  third  ", "first\n\nsecond\nthird"),
+                // Double-escaped HTML as sent by some feeds (seen in Arbeitnow, 2026-10-17).
+                Arguments.of("&lt;div class=&quot;intro&quot;&gt;&lt;p&gt;Hi &amp;amp; welcome&lt;/p&gt;"
+                        + "&lt;ul&gt;&lt;li&gt;Java&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;", "Hi & welcome\n\nJava"),
+                Arguments.of("&lt;h2&gt;The role&lt;/h2&gt;\n&lt;p&gt;Build&lt;br&gt;things&lt;/p&gt;",
+                        "The role\n\nBuild\nthings"),
+                // Escaped markup followed by a real HTML footer (Arbeitnow appends one).
+                Arguments.of("&lt;p&gt;Role&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Java&lt;/li&gt;&lt;/ul&gt;<p>Find more jobs</p>",
+                        "Role\n\nJava\n\nFind more jobs"),
+                // Escaped text that is not markup stays literal.
+                Arguments.of("Use &lt;3 and a &lt; b", "Use <3 and a < b"),
+                Arguments.of("<p>Write &lt;div&gt; tags</p>", "Write <div> tags"));
     }
 
     @ParameterizedTest

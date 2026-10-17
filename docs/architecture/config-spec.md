@@ -68,6 +68,7 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.pipeline.zone` | `Europe/Rome` | Zone for all crons |
 | `app.pipeline.catch-up-after` | `6h` | |
 | `app.pipeline.collector-timeout` | `2m` | Per collector |
+| `app.http.connect-timeout` / `read-timeout` | `5s` / `20s` | Source HTTP clients (overview.md, Cross-cutting) |
 | `app.sources.<code>.enabled` | per catalog | |
 | `app.sources.<code>.max-items` | `200` | Per run |
 | `app.sources.<code>.min-interval` | per source spec | Skip if last success is more recent |

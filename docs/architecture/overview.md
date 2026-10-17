@@ -79,8 +79,8 @@ public interface JobCollector {
     CollectResult collect(CollectRequest req); // never throws for source errors; reports them
 }
 public record CollectRequest(Instant since, List<String> keywords, int maxItems) {}
-public record CollectResult(List<NormalizedPosting> postings, List<String> warnings,
-                            CollectStatus status, String errorMessage) {}
+public record CollectResult(List<NormalizedPosting> postings, int fetched,  // fetched includes skipped items
+                            List<String> warnings, CollectStatus status, String errorMessage) {}
 
 public interface LlmClient {
     <T> LlmResult<T> completeJson(LlmRequest request, Class<T> responseType);
