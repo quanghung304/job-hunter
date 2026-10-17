@@ -112,22 +112,75 @@ Created lazily: a job without a row is `NEW`.
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| purpose | text | `EXTRACT`, `SCORE`, `EVAL` |
+| purpose | text | `EXTRACT`, `SCORE`, `EVAL`, `TEST` |
 | job_id | bigint | nullable; FK → job, `on delete set null` |
-| model, prompt_version | text | |
+| model_id | text | registry id from `config/llm.yaml` (e.g. `groq-llama-70b`) |
+| provider_model, prompt_version | text | model name sent to the provider |
+| tier | text | `FREE`, `PAID`, `LOCAL` at call time |
 | input_tokens, output_tokens | int | |
-| cost_usd | numeric(10,6) | estimated from `app.llm.pricing` |
+| cost_usd | numeric(10,6) | PAID only, from registry pricing; null otherwise |
 | latency_ms | int | |
 | success | boolean | |
-| error | text | |
+| http_status | int | nullable |
+| error_kind | text | `RATE_LIMIT`, `QUOTA_EXHAUSTED`, `AUTH`, `MODEL_NOT_FOUND`, `TIMEOUT`, `SERVER`, `INVALID_OUTPUT`, null |
+| error | text | truncated 2000 chars |
 | created_at | timestamptz | |
 
+Index: `llm_call(model_id, created_at)`.
+
+### `llm_assignment` (ADR-0008)
+Which model serves each purpose. One row per purpose; seeded from `config/llm.yaml`
+`defaults` when missing. Changed from the Admin page.
+| Column | Type | Notes |
+|---|---|---|
+| purpose | text PK | `EXTRACT`, `SCORE` |
+| model_id | text | must exist in the registry |
+| fallbacks | text[] | ordered model ids |
+| auto_fallback | boolean | |
+| allow_paid | boolean | |
+| updated_at | timestamptz | |
+| updated_by | text | `config`, `user`, `auto-fallback` |
+
+### `llm_assignment_event`
+History of switches: `id`, `purpose`, `from_model_id`, `to_model_id`, `reason`
+(`USER`, `AUTO_FALLBACK`, `RESTORED`), `created_at`. Shown on the Admin page.
+
+### `llm_model_state` (ADR-0008)
+| Column | Type | Notes |
+|---|---|---|
+| model_id | text PK | |
+| status | text | `AVAILABLE`, `NEAR_LIMIT`, `RATE_LIMITED`, `EXHAUSTED`, `ERROR` |
+| until | timestamptz | when the status is expected to clear (from `retry-after`/reset headers, or next UTC midnight for daily limits); null if unknown |
+| detail | text | human-readable reason, e.g. "Daily request limit 1000/1000" |
+| remaining_requests, remaining_tokens | int | last values reported by provider headers, nullable |
+| updated_at | timestamptz | |
+
+Status rules (implemented in `QuotaTracker`, unit-tested with a fixed Clock):
+- `RATE_LIMITED`: 429 with reset ≤ 1h → `until` = reset; calls to this model wait/skip until then.
+- `EXHAUSTED`: 429 whose body/headers indicate a daily/monthly quota, or reset > 1h, or our
+  own count reached a known `rpd`/`tokensPerDay`/`requestsPerMonth` → `until` = reset or next
+  UTC midnight (month start for monthly).
+- `NEAR_LIMIT`: our count ≥ `nearLimitPercent` of a known daily/monthly limit.
+- `ERROR`: 401/403 (bad key), 404 model not found, or missing key env var. Clears only after
+  a successful test call (Admin "Test" button) or restart.
+- Back to `AVAILABLE` when `until` passes or a call succeeds.
+
+### `eval_run`
+Written by `EvalRunner` (T-016): `id`, `extract_model_id`, `score_model_id`,
+`extract_prompt`, `score_prompt`, `job_count`, `metrics` jsonb (scoring-spec §7 names),
+`cost_usd`, `created_at`. The Admin "LLM models" card shows the newest run per model.
+
 ### `notification`
-| id | profile_id | channel (`TELEGRAM`) | kind (`DIGEST`, `ALERT`) | job_ids bigint[] | sent_at | success | error |
+| id | profile_id | channel (`TELEGRAM`) | kind (`DIGEST`, `ALERT`, `LLM_QUOTA`) | job_ids bigint[] | ref text | sent_at | success | error |
 
 `profile_id` was added in T-003: without it "once per profile" cannot be checked.
+V4 created `notification` without `ref` and with `kind in (DIGEST, ALERT)` and
+`profile_id not null`; T-022 adds a new migration for `ref`, `LLM_QUOTA` and a nullable
+`profile_id` (quota alerts are not per profile).
 
-A job is alerted at most once per profile; the digest includes only jobs not in a previous digest.
+A job is alerted at most once per profile; the digest includes only jobs not in a previous
+digest. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status
+is announced at most once per day.
 
 ### `company` (Phase 1, for ATS collectors)
 | Column | Type | Notes |

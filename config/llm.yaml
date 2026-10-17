@@ -1,0 +1,85 @@
+# LLM model registry. Spec: docs/architecture/config-spec.md §5 · Decision: ADR-0008
+# No secrets here: each provider names the environment variable that holds its key.
+# Model ids, base URLs and limits below were taken from public docs/summaries in Oct 2026.
+# VERIFY each against the provider's current documentation before relying on it (T-010).
+
+providers:
+  anthropic:
+    type: anthropic
+    apiKeyEnv: ANTHROPIC_API_KEY
+  groq:
+    type: openai-compatible
+    baseUrl: https://api.groq.com/openai/v1
+    apiKeyEnv: GROQ_API_KEY
+  cerebras:
+    type: openai-compatible
+    baseUrl: https://api.cerebras.ai/v1
+    apiKeyEnv: CEREBRAS_API_KEY
+  openrouter:
+    type: openai-compatible
+    baseUrl: https://openrouter.ai/api/v1
+    apiKeyEnv: OPENROUTER_API_KEY
+  github:
+    type: openai-compatible
+    baseUrl: https://models.github.ai/inference      # verify
+    apiKeyEnv: GITHUB_MODELS_TOKEN
+  ollama:
+    type: openai-compatible
+    baseUrl: http://localhost:11434/v1
+    apiKeyEnv: ""                                     # local, no key
+  fake:
+    type: fake
+
+models:
+  groq-llama-70b:
+    label: Llama 3.3 70B (Groq)
+    provider: groq
+    modelId: llama-3.3-70b-versatile                 # verify on Groq's model list
+    tier: FREE
+    limits: { rpm: 30, rpd: 1000 }                    # verify in Groq console
+  cerebras-llama-70b:
+    label: Llama 3.3 70B (Cerebras)
+    provider: cerebras
+    modelId: llama-3.3-70b                            # verify
+    tier: FREE
+    limits: { rpm: 30, tokensPerDay: 1000000 }        # verify
+  github-gpt:
+    label: GitHub Models (choose model)
+    provider: github
+    modelId: openai/gpt-4o-mini                       # verify available model ids
+    tier: FREE
+    limits: { rpm: 15, rpd: 150 }                     # verify
+  ollama-local:
+    label: Local model (Ollama)
+    provider: ollama
+    modelId: qwen2.5:7b-instruct                      # any model you have pulled
+    tier: LOCAL
+    limits: {}
+  claude-haiku:
+    label: Claude Haiku 5.5
+    provider: anthropic
+    modelId: claude-haiku-5-5
+    tier: PAID
+    pricing: { inputPerMTok: null, outputPerMTok: null }   # fill from Anthropic's price page
+    limits: {}
+  fake:
+    label: Fake (tests / UI work)
+    provider: fake
+    modelId: fake
+    tier: LOCAL
+    limits: {}
+
+defaults:
+  EXTRACT:
+    model: groq-llama-70b
+    fallbacks: [cerebras-llama-70b, claude-haiku]
+    autoFallback: false
+    allowPaid: false
+  SCORE:
+    model: groq-llama-70b
+    fallbacks: [claude-haiku]
+    autoFallback: false
+    allowPaid: false
+
+alerts:
+  nearLimitPercent: 80          # warn when a known daily limit is 80% used

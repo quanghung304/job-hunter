@@ -73,15 +73,13 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.sources.<code>.max-items` | `200` | Per run |
 | `app.sources.<code>.min-interval` | per source spec | Skip if last success is more recent |
 | `app.sources.<code>.*` | | Source-specific keys documented in `docs/sources/<code>.md` |
-| `app.llm.provider` | `anthropic` | `anthropic` \| `fake` |
-| `app.llm.extract-model` | `claude-haiku-5-5` | |
-| `app.llm.score-model` | `claude-haiku-5-5` | |
+| `app.llm.registry-path` | `../config/llm.yaml` | Model registry, see §5 |
+| `app.llm.force-model` | — | If set (e.g. `fake`), overrides every assignment; used by tests and `make e2e` |
 | `app.llm.extract-prompt` | `extract-v1` | File name in `docs/ai/prompts/` |
 | `app.llm.score-prompt` | `score-v1` | |
-| `app.llm.max-calls-per-run` | `150` | Budget guard |
-| `app.llm.monthly-budget-usd` | `5.00` | Hard stop when estimated month cost reaches it |
-| `app.llm.pricing.<model>.input-per-mtok` / `output-per-mtok` | — | USD per million tokens; owner fills from the provider's price page |
-| `app.llm.timeout` | `60s` | |
+| `app.llm.max-calls-per-run` | `150` | Budget guard (all models) |
+| `app.llm.monthly-budget-usd` | `5.00` | Hard stop for **PAID** models when estimated month cost reaches it |
+| `app.llm.timeout` | `60s` | Per call; local models may need more (`app.llm.timeout-local`, default `180s`) |
 | `app.notify.telegram.enabled` | `false` | |
 | `app.notify.digest-cron` | `0 30 8 * * *` | |
 | `app.jobs.expire-after-days` | `14` | Not seen in any source for N days → EXPIRED |
@@ -91,7 +89,8 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | Variable | Used for |
 |---|---|
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | PostgreSQL |
-| `ANTHROPIC_API_KEY` | LLM |
+| `ANTHROPIC_API_KEY` | Claude models (paid) |
+| `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `OPENROUTER_API_KEY`, `GITHUB_MODELS_TOKEN` | Free-tier providers; only the ones referenced by models you use are needed |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Notifications |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Phase 1.5 |
 | `OWNER_CONTACT_EMAIL` | User-Agent contact for polite API use |
@@ -107,3 +106,30 @@ companies:
     slug: gitlab
     notes: smoke-test entry
 ```
+
+## 5. `llm.yaml` (model registry, ADR-0008)
+
+Committed file, no secrets. Loaded at startup; invalid entries fail startup with the path
+of the bad field. A model whose provider key env var is empty is listed but marked
+`ERROR: missing key` and cannot be assigned.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `providers.<id>.type` | `anthropic` \| `openai-compatible` \| `fake` | Which `LlmClient` implementation |
+| `providers.<id>.baseUrl` | URL | For `openai-compatible`; the client calls `{baseUrl}/chat/completions` |
+| `providers.<id>.apiKeyEnv` | string | Name of the env var with the key; `""` for keyless (Ollama) |
+| `models.<id>.label` | string | Shown in the UI |
+| `models.<id>.provider` | provider id | |
+| `models.<id>.modelId` | string | Model name sent to the provider |
+| `models.<id>.tier` | `FREE` \| `PAID` \| `LOCAL` | PAID calls count against `monthly-budget-usd`; fallback to PAID needs `allowPaid` |
+| `models.<id>.limits` | `{rpm, rpd, tokensPerMinute, tokensPerDay, requestsPerMonth}` all optional | Known limits used for NEAR_LIMIT warnings and to avoid hitting 429; omit what you don't know |
+| `models.<id>.pricing` | `{inputPerMTok, outputPerMTok}` USD | PAID only; null → cost unknown (WARN once) |
+| `models.<id>.jsonMode` | boolean, default `true` for openai-compatible | Send `response_format: {type: json_object}` when the provider supports it |
+| `defaults.<PURPOSE>.model` | model id | Initial assignment for `EXTRACT` / `SCORE` (used when the DB has none) |
+| `defaults.<PURPOSE>.fallbacks` | model ids | Ordered alternatives offered in the UI and used by auto-fallback |
+| `defaults.<PURPOSE>.autoFallback` | boolean (false) | Switch automatically when the assigned model is EXHAUSTED/ERROR |
+| `defaults.<PURPOSE>.allowPaid` | boolean (false) | Auto-fallback may pick a PAID model |
+| `alerts.nearLimitPercent` | int (80) | NEAR_LIMIT threshold for known daily/monthly limits |
+
+Days for limits are counted in UTC (most providers reset daily limits at UTC midnight;
+verify per provider and note exceptions in the model entry as `resetZone`).

@@ -41,7 +41,8 @@ frontend/
                     EligibilityPanel, FactsPanel, DescriptionPanel, NotesEditor, HistoryList,
                     MobileActionBar
     features/admin/ AdminPage, KpiRow, SourcesTable, LlmUsageCard, RunsList, FailuresList,
-                    CompaniesTable, PipelineBanner, RescoreDialog
+                    CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard
+    features/llm/   LlmAlertBanner, SwitchModelDialog, TierTag, ModelStatusTag
     lib/            format.ts, labels.ts, statusMachine.ts, scoreBand.ts, useMediaQuery.ts
     styles/         tokens.css (CSS variables), index.css
     App.tsx, main.tsx, routes.tsx
@@ -151,8 +152,31 @@ transitions at all).
 Height 56px, `--surface`, bottom border `--line`, padding 0 24px. Left: logo icon (briefcase,
 `--accent`) + "Job Hunter" 15px/700. Nav links Board / Admin: active link 600 weight with a
 2px `--accent` bottom indicator (`box-shadow: inset 0 -2px 0`), inactive `--muted`. Right:
-mono status text "Last run 07:00 · 42 new · 9 scored" (from `/api/admin/overview`) and the
+mono status text "Last run 07:00 · 42 new · 9 scored" (from `GET /api/status`) and the
 profile pill (dot in `--accent` + profile id). Wraps on narrow screens.
+
+### LLM alert banner (all pages, ADR-0008)
+Rendered directly under the app header when `GET /api/status` returns `llmAlerts`
+(not yet in the mockups; follow this spec). One row per alert, full width, padding
+10px 24px (16px mobile), bottom border `--line`:
+- EXHAUSTED / ERROR / paused: `--attention-bg` background, `--attention-fg` text, warning
+  icon. NEAR_LIMIT: `--surface-muted` background, `--ink-2` text, gauge icon.
+- Text (one line, wraps on mobile): **"Extraction paused"** · "Llama 3.3 70B (Groq) reached its
+  daily limit (1000/1000)" · mono "resets 02:00" · "23 jobs waiting". For NEAR_LIMIT:
+  "Scoring model at 81% of today's limit".
+- Actions right-aligned: "Switch model" (secondary button, opens `SwitchModelDialog` for
+  that purpose), "Details" text link to `/admin#llm`, dismiss icon button (hides this exact
+  alert for the session).
+
+### `SwitchModelDialog`
+shadcn Dialog, max-width 560px. Title "Model for Extraction" / "Model for Scoring". Radio
+list rows: label (600) + provider (muted) · tier tag (FREE = `--accent-tint`, LOCAL =
+`--line-faint`, PAID = `--attention-bg` with text "PAID") · status tag · mono usage
+"812 / 1000 today" (or "no known limit") · last eval line in muted 12.5px ("Eval Oct 25:
+false-eligible 2.4%, HIGH recall 83%" or "Not evaluated yet"). Unusable models are disabled
+with the reason in muted text. Below: checkbox "Process waiting jobs now (23)"; for a PAID
+selection an attention box "Paid model — counts against the $5.00 monthly budget". Footer:
+Cancel (secondary), Save (primary).
 
 ### `/` and `/jobs/:id` — Board (desktop ≥ 1024px: split view)
 - Under the header, the **filter bar** (`--surface-muted`, bottom border, padding 12px 24px,
@@ -226,6 +250,17 @@ profile pill (dot in `--accent` + profile id). Wraps on narrow screens.
   55% with white — first and last date labels).
 - Row: Recent pipeline runs (time · summary · status tag) and Failed LLM work (purpose tag
   · job title · mono error · Retry button).
+- **LLM models card** (`id="llm"`, full width, placed right after the KPI row so problems
+  are seen first):
+  - Two assignment blocks side by side (auto-fit, min 360px): "Extraction" and "Scoring". Each:
+    model label + tier tag + status tag, mono usage meter "812 / 1000 requests today"
+    (meter fill `--accent`, turns `--attention-fg` at ≥ 80%), "resets 02:00" when known,
+    toggles "Auto-switch to fallback" and "Allow paid fallback" (shadcn Switch), fallback
+    order as small chips, and a "Change model" secondary button (opens `SwitchModelDialog`).
+  - Models table: Model, Provider, Tier, Status (+ detail), Today (calls · tokens · cost),
+    Limits, Last eval, "Test" button. Rows with `keyConfigured=false` show "Add
+    GROQ_API_KEY to .env" (name from the registry) in muted text.
+  - Switch history (last 10): time · purpose · from → to · reason (User / Auto-fallback).
 - Companies table (Company, ATS, Board slug mono, Check tag, Active jobs, Checked) with the
   hint "Edit list in config/companies.yaml".
 - `RescoreDialog`: shadcn Dialog, max-width 460px; title "Re-score active jobs?", text with
@@ -253,6 +288,14 @@ profile pill (dot in `--accent` + profile id). Wraps on narrow screens.
 ### Job detail
 - Notes autosave 1 s after typing stops; show "Saved · just now" after success.
 - Description collapsed by default per job; expanding is remembered while the job is open.
+
+### LLM alerts and switching
+- `useStatus()` polls `GET /api/status` every 60 s, every 10 s while any alert is shown.
+- Saving in `SwitchModelDialog` invalidates `['status']`, `['admin','llm']`,
+  `['admin','overview']`; toast "Extraction now uses Llama 3.3 70B (Cerebras)".
+- Model status tags: Available = accent tint "Available"; Near limit = attention "Near limit";
+  Rate limited = attention "Rate limited · 1 min"; Exhausted = strong "Exhausted until 02:00";
+  Error = strong "Error". Words always present.
 
 ### Admin
 - Overview refetch every 3 s while `pipelineRunning`, else every 60 s.

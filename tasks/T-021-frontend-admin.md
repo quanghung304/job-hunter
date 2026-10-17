@@ -18,7 +18,8 @@ One page to see whether the system is healthy and to trigger maintenance actions
   `LlmUsageCard` (meter + 14-day CSS bars, no chart library), `RunsList`, `FailuresList`
   with Retry, `CompaniesTable`, `RescoreDialog` (shows `jobCount` and `estimatedCostUsd`),
   Export for labeling (toast with path and count).
-- App header status line now reads from the overview (finish what T-019 stubbed).
+- App header status line reads from `GET /api/status` via `useStatus()` (finish what T-019
+  stubbed). The LLM banner and LLM models card come in T-023.
 
 ## Acceptance criteria
 - [ ] Run button disabled while running; 409 shows "already running" toast.

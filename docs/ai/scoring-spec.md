@@ -125,7 +125,12 @@ Score bands for UI: ≥ 85 excellent · 70–84 good · 50–69 maybe · < 50 we
 
 ## 6. Failure handling
 
-- Network/5xx/429 → retry with backoff (2 s, 8 s) inside the call; then mark attempt failed.
+- Network/5xx → retry with backoff (2 s, 8 s) inside the call; then mark attempt failed.
+- 429 / quota errors are **not** job failures: `QuotaTracker` updates the model status
+  (data-model `llm_model_state`), the attempt counter is not incremented, the job stays
+  PENDING, and `LlmRouter` applies the fallback/pause rule (overview "Pipeline run" step 3).
+  A short `retry-after` (≤ 10 s) is waited once inside the call.
+- 401/403/404 from the provider → model status `ERROR`; same as above (no attempt used).
 - Invalid JSON or schema → one corrective retry; then FAILED for this attempt.
 - Max 3 attempts per (job, purpose, prompt version) across runs, then permanently FAILED
   (visible on admin page with "retry" button).
@@ -150,3 +155,11 @@ Measured by `EvalRunner` on `docs/ai/eval/labeled-jobs.jsonl` (≥ 40 jobs):
 - Truncate descriptions as above; send the profile excerpt, not the full YAML.
 - Use the provider's prompt caching for the fixed system prompt + profile block if the SDK
   supports it (check current Anthropic docs in T-010; optional optimization).
+- Default models are free-tier (ADR-0008, `config/llm.yaml`). The monthly USD budget only
+  applies to PAID models; free models are limited by provider quotas and our alerts.
+- Prompts must work on smaller open models too: keep instructions explicit, ask for one JSON
+  object, and rely on the Java schema validation + corrective retry. If a model often fails
+  validation, the eval shows it before it becomes the default.
+- Scores from different models are not directly comparable. The UI shows the scoring model
+  in the breakdown footer; switching the SCORE model does not re-score existing jobs unless
+  the owner uses "Re-score active jobs".

@@ -28,7 +28,8 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 | G3 | Rank the rest by fit | In the eval set, ≥ 80% of jobs I labeled HIGH score ≥ 70 |
 | G4 | Track my decisions | Every shown job has a status; nothing I dismissed shows again |
 | G5 | Notify me | Daily Telegram digest; instant alert for score ≥ 85 |
-| G6 | Stay cheap | LLM cost ≤ 5 USD/month at personal volume |
+| G6 | Stay cheap | Run on free-tier/local models by default; paid LLM cost ≤ 5 USD/month |
+| G7 | Never stall silently | Any LLM pause is announced within one pipeline run and can be resolved from the UI |
 
 ## 4. Functional requirements
 
@@ -61,6 +62,14 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 - F2.6 Admin page: source health (last run, counts, errors), LLM usage this month,
   button to run the pipeline now.
 - F2.7 Jobs not seen in any source for N days are marked `EXPIRED` (still visible in history).
+- F2.8 LLM quota alerts: when the model used for extraction or scoring is near its limit
+  (≥ 80% of a known daily limit), exhausted, or failing (bad key, model removed), the owner
+  gets a Telegram message and a banner on every page, showing what is paused, how many jobs
+  wait, and when the limit resets.
+- F2.9 Model switching: the owner can choose, per step (extraction, scoring), which model
+  to use from a registry of free, local and paid models, from the banner or the Admin page,
+  without restart. Optional automatic fallback (off by default; paid fallback needs explicit
+  permission). Every switch is recorded.
 
 ## 5. Non-goals for Phase 1
 
@@ -82,7 +91,7 @@ Agents must not build these unless a task explicitly says so.
 - Must work with intermittent uptime: if the laptop was off, the next run catches up.
 - Sources must be used within their published terms (`docs/sources/catalog.md`).
 - Personal data (profile, CV) stays local; only job text and the profile summary are
-  sent to the LLM provider.
+  sent to LLM providers, and only to providers that do not train on API data (ADR-0008).
 
 ## 7. Acceptance for Phase 1
 

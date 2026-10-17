@@ -14,8 +14,8 @@ every profile. Cost must stay small.
 3. **Eligibility** is plain Java comparing attributes with the profile; fully unit-tested.
 4. LLM **scoring** runs only for ELIGIBLE/UNCERTAIN jobs and returns a structured breakdown.
 
-LLM access goes through `LlmClient`; the first implementation uses the Anthropic API with
-a small model (`claude-haiku-5-5` by default), configurable per step.
+LLM access goes through `LlmClient`; which provider and model serve each step is decided
+by ADR-0008 (registry, free tiers, runtime switching).
 
 ## Alternatives considered
 - Single LLM call per job — fewer calls, but not cacheable across profiles and hard-coded

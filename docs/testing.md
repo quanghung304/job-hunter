@@ -24,7 +24,7 @@ and the eval.
 | Unit | `lib/` helpers (formatting, labels, status machine copy vs data-model §2), filter ↔ URL params | Vitest |
 | Component | ScoreBadge, StatusActions, FilterBar, NotesEditor, admin tables: render states (loading/empty/error/data) and interactions | Vitest + React Testing Library + `@testing-library/user-event` |
 | Page integration | Board, Job detail, Admin against a mocked API (optimistic update + rollback, keyboard shortcuts, polling) | RTL + MSW handlers in `src/test/handlers.ts` typed from `schema.d.ts` |
-| E2E smoke (`make e2e`) | 1) board loads and dismiss hides a job 2) open detail, change status, add a note, reload persists 3) admin "Run pipeline" completes with fake LLM | Playwright against the real backend with `app.llm.provider=fake` and WireMock-served source fixtures |
+| E2E smoke (`make e2e`) | 1) board loads and dismiss hides a job 2) open detail, change status, add a note, reload persists 3) admin "Run pipeline" completes with fake LLM | Playwright against the real backend with `app.llm.force-model=fake` and WireMock-served source fixtures |
 
 E2E runs in `make e2e`, not in `make verify` (it needs a running stack).
 
@@ -45,8 +45,12 @@ E2E runs in `make e2e`, not in `make verify` (it needs a running stack).
 
 - Returns canned JSON keyed by (`purpose`, job external id) from
   `backend/src/test/resources/llm-fakes/`, or a default valid object.
-- Can be configured to fail N times, return invalid JSON, or exceed tokens, to test retries
-  and the budget guard.
+- Can be configured to fail N times, return invalid JSON, exceed tokens, or answer like a
+  provider out of quota (429 with daily-limit body, or 401), to test retries, the budget
+  guard, `QuotaTracker`, alerts and model switching. In `make e2e` this is driven by the
+  test-only property `app.llm.fake.simulate=quota-after:<n>`.
+- `OpenAiCompatibleLlmClient` is tested against WireMock with recorded response shapes
+  from the providers' docs (success, 429 variants, 401, 404).
 
 ## Test data rules
 

@@ -18,6 +18,9 @@ on a schedule, with catch-up on startup, a lock against concurrent runs, and job
   3. prefilter new/unassessed ACTIVE jobs;
   4. extract (newest `posted_at` first) → eligibility;
   5. score;
+     For 4 and 5: when `LlmRouter` returns `LlmUnavailable` for a purpose, stop that purpose
+     for this run (do not mark jobs failed), record `pausedPurposes` + reason in the report,
+     and continue with the other purpose and later steps;
   6. expiry: `job.status = EXPIRED` where `last_seen_at` < now − `app.jobs.expire-after-days`
      (ATS jobs are refreshed every run, board jobs may simply drop off the feed — same rule);
   7. publish `NewScoredJobs(jobIds)` event for notify (T-015).

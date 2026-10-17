@@ -15,7 +15,8 @@ metrics in scoring-spec §7.
   and prefilter result (PASS majority, some REJECT), write `data/eval-candidates.jsonl` in the
   label format with `label` fields empty.
 - `EvalRunner` (main class, non-web Spring context with profile `eval`): args `--extract`,
-  `--score`, `--model`, `--limit`, `--yes`. Loads `docs/ai/eval/labeled-jobs.jsonl`, runs
+  `--score`, `--extract-model`, `--score-model` (registry ids), `--limit`, `--yes`.
+  Writes one `eval_run` row (data-model; create it in a new migration) with the metrics. Loads `docs/ai/eval/labeled-jobs.jsonl`, runs
   prefilter → extraction → eligibility → scoring in memory (no DB writes to job tables;
   LLM calls logged with purpose EVAL), prints estimated cost and requires `--yes`.
 - Report: metrics vs targets, eligibility confusion matrix, extraction field accuracy for
@@ -25,7 +26,7 @@ metrics in scoring-spec §7.
   `"id": "example-*"` (ignored by the runner).
 
 ## Acceptance criteria
-- [ ] Runner works with `app.llm.provider=fake` (for tests) and real provider.
+- [ ] Runner works with `app.llm.force-model=fake` (for tests) and real provider.
 - [ ] Metrics computed exactly as defined (unit-tested with hand-made predictions).
 
 ## Tests

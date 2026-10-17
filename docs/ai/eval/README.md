@@ -42,17 +42,20 @@ Run it before switching any prompt version or model, and after changing eligibil
 
 ```bash
 cd backend && ./mvnw -q exec:java -Dexec.mainClass=io.github.quanghung304.jobhunter.eval.EvalRunner \
-  -Dexec.args="--extract=extract-v1 --score=score-v1 --model=claude-haiku-5-5"
+  -Dexec.args="--extract=extract-v1 --score=score-v1 --extract-model=groq-llama-70b --score-model=groq-llama-70b"
 ```
 
-Uses the real LLM (costs money; prints the estimated cost first and asks for `--yes`).
+Model arguments are registry ids from `config/llm.yaml`. Uses the real LLM (free-tier
+quota or money: prints the call count and estimated cost first and asks for `--yes`).
+Each run is also stored in the `eval_run` table so the Admin page can show the latest
+result next to each model. Compare models before changing a default.
 Outputs metrics from `scoring-spec.md` §7, a confusion matrix for eligibility, and a list of
 disagreements with reasons, to stdout and `data/eval/<timestamp>.md`.
 
 ## results.md entry template
 
 ```
-## 2026-10-25 — extract-v1 / score-v1 / claude-haiku-5-5 — 42 jobs
+## 2026-10-25 — extract-v1 / score-v1 / groq-llama-70b + groq-llama-70b — 42 jobs
 | Metric | Value | Target |
 | false-eligible | 2.4% | ≤ 5% |
 | ... |

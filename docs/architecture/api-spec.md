@@ -77,8 +77,20 @@ Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
   "schedule": { "nextRunAt": "...", "nextDigestAt": "...", "zone": "Europe/Rome" },
   "kpis": { "activeJobs": 1384, "newToday": 42, "prefilterRejectedToday": 31,
             "scoredToday": 9, "alertsToday": 2, "toReview": 37,
-            "sourceCount": 9, "companyBoardCount": 6 } }
+            "sourceCount": 9, "companyBoardCount": 6 },
+  "llmAlerts": [ LlmAlert, ... ] }
 ```
+
+`LlmAlert` (also returned by `GET /api/status`, below):
+```json
+{ "purpose": "EXTRACT", "modelId": "groq-llama-70b", "modelLabel": "Llama 3.3 70B (Groq)",
+  "status": "EXHAUSTED", "detail": "Daily request limit 1000/1000", "until": "2026-10-18T00:00:00Z",
+  "paused": true, "pendingJobs": 23,
+  "suggestions": [{ "modelId": "cerebras-llama-70b", "label": "...", "tier": "FREE", "status": "AVAILABLE" }] }
+```
+One entry per purpose whose assigned model is not `AVAILABLE`. `paused` = LLM work for that
+purpose is waiting. `suggestions` = usable models from the assignment's fallbacks, then
+other usable registry models (FREE/LOCAL before PAID).
 
 The app header's status line ("Last run 07:00 · 42 new · 9 scored") uses the newest
 `pipelineReports` entry. "Today" = since local midnight in `app.pipeline.zone`.
@@ -104,6 +116,44 @@ Body `{ "purpose": "EXTRACT" | "SCORE" }` → resets attempts and re-runs for th
 
 ### `GET /api/admin/companies`
 `[{ id, name, ats, slug, enabled, lastCheckStatus, lastCheckedAt, activeJobs }]`
+
+### `GET /api/status`
+Lightweight, polled by the app header on every page every 60 s (every 10 s while a banner
+is shown): `{ "lastRun": { "startedAt", "newJobs", "scored", "status" } | null,
+"pipelineRunning": false, "llmAlerts": [LlmAlert] }`.
+
+## LLM models (ADR-0008)
+
+### `GET /api/admin/llm`
+```json
+{ "assignments": [
+    { "purpose": "EXTRACT", "modelId": "groq-llama-70b", "fallbacks": ["cerebras-llama-70b", "claude-haiku"],
+      "autoFallback": false, "allowPaid": false, "updatedAt": "...", "updatedBy": "user" },
+    { "purpose": "SCORE", ... } ],
+  "models": [
+    { "modelId": "groq-llama-70b", "label": "Llama 3.3 70B (Groq)", "provider": "groq",
+      "providerModel": "llama-3.3-70b-versatile", "tier": "FREE",
+      "status": "NEAR_LIMIT", "until": null, "detail": "812 / 1000 requests today",
+      "limits": { "rpm": 30, "rpd": 1000 },
+      "usageToday": { "calls": 812, "inputTokens": 2400000, "outputTokens": 310000, "costUsd": null },
+      "keyConfigured": true, "assignedTo": ["EXTRACT", "SCORE"],
+      "lastEval": { "date": "2026-10-25", "falseEligible": 0.024, "highRecall": 0.83 } | null } ],
+  "history": [{ "purpose", "fromModelId", "toModelId", "reason", "at" }] }
+```
+`lastEval` is read from the newest matching entry the eval runner records (T-016).
+
+### `PUT /api/admin/llm/assignments/{purpose}`
+Body `{ "modelId": "cerebras-llama-70b", "fallbacks": [...], "autoFallback": false, "allowPaid": false }`
+(all but `modelId` optional) → 200 updated assignment. Errors: 400 `UNKNOWN_MODEL`,
+409 `MODEL_UNUSABLE` (status `ERROR`, e.g. missing key). A manual switch to a PAID model is
+allowed (`allowPaid` only limits auto-fallback); the response then includes
+`"warning": "PAID model: counts against the monthly budget"`.
+Switching writes `llm_assignment_event` (reason `USER`) and un-pauses that purpose; pending
+jobs are picked up by the next run, or immediately if the body has `"runNow": true`.
+
+### `POST /api/admin/llm/models/{modelId}/test`
+Sends one tiny prompt ("Reply with {\"ok\":true}") → 200 `{ ok, latencyMs, status }`; a
+success clears `ERROR`/expired statuses. Logged in `llm_call` with purpose `TEST`.
 
 ### `POST /api/admin/eval/export`
 Writes `data/eval-candidates.jsonl` (T-016) → `{ "path": "...", "count": 80 }`.

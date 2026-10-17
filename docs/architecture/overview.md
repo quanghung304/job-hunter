@@ -46,11 +46,11 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 | `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
 | `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging | common |
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry | common, source (DTOs only) |
-| `llm` | `LlmClient` interface, Anthropic implementation, `FakeLlmClient`, prompt loading, `llm_call` log, budget guard | common |
+| `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; publishes `LlmModelStatusChanged` events (ADR-0008) | common |
 | `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
 | `scoring` | Scoring (LLM); writes scores through `AssessmentService` | common, profile, llm, enrich |
 | `tracking` | `job_tracking` status machine, notes, history; `JobBoardQuery` (read-only SQL joining job + assessment + tracking for the UI) | common, profile, ingest (read), enrich (read) |
-| `notify` | Telegram client, digest and alert builders, sent-notification log | common, profile, tracking (read) |
+| `notify` | Telegram client, digest and job alert builders, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
 | `pipeline` | `PipelineOrchestrator`, scheduler, admin trigger; the only place that calls modules in sequence | all above |
 | `api` | REST controllers (`/api/**`), request/response DTOs, `ProblemDetail` error mapping, OpenAPI config, SPA fallback controller | tracking, scoring, enrich, ingest, pipeline, source, llm (usage stats), profile |
 | `eval` | Offline eval runner over labeled jobs | enrich, scoring, llm |
@@ -98,7 +98,11 @@ public interface ProfileProvider { Profile current(); }
 2. Select jobs needing work for the current profile:
    - no `job_extraction` for the current extraction prompt version → prefilter → extract
    - extraction exists but no eligibility/score for current versions → evaluate → score
-3. Respect the budget guard: stop LLM work when the per-run or monthly limit is hit;
+3. Before each LLM call, `LlmRouter` resolves the assigned model for the purpose. If that
+   model is `RATE_LIMITED`, `EXHAUSTED` or `ERROR`: use the first usable fallback when
+   `autoFallback` is on (PAID only if `allowPaid`), otherwise pause that purpose for the rest
+   of the run (jobs stay PENDING). Extraction and scoring pause independently.
+   Respect the budget guard: stop LLM work when the per-run or monthly limit is hit;
    leftover jobs are processed on the next run. Order of LLM work: newest `posted_at`
    first, because fresh jobs matter most.
 4. Mark expired jobs.

@@ -30,7 +30,7 @@ Makefile, docker-compose.yml, .env.example
 | `dev` | runs backend (`spring-boot:run`, profile `local`) and `npm run dev` together |
 | `run` | `npm run build`, then `./mvnw -Pwith-frontend spring-boot:run` |
 | `api` | backend `OpenApiExportIT` writes `docs/architecture/openapi.json`, then `npm run gen:api` |
-| `e2e` | builds and starts the app with `app.llm.provider=fake` and a seeded DB, runs Playwright |
+| `e2e` | builds and starts the app with `app.llm.force-model=fake` and a seeded DB, runs Playwright |
 
 ## Java (backend)
 

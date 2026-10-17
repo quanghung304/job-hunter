@@ -10,6 +10,18 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — Free-tier LLMs, quota alerts, model switching (docs) — DONE
+- ADR-0008: model registry `config/llm.yaml` (Groq free by default; Cerebras, GitHub
+  Models, OpenRouter, Ollama, Claude Haiku as options), OpenAI-compatible client,
+  per-purpose assignments switchable at runtime, quota tracking, Telegram + banner alerts.
+- Updated: PRD (F2.8, F2.9, G6, G7), config-spec §2/§3/§5, data-model (`llm_call` columns,
+  `llm_assignment`, `llm_assignment_event`, `llm_model_state`, `eval_run`, `notification`),
+  overview, api-spec, frontend.md, scoring-spec §6/§8, testing, runbook, eval README,
+  AGENTS.md, ADR-0004, `.env.example`. Tasks: T-010 rewritten, T-013/T-014/T-016/T-021
+  adjusted, new T-022 (backend) and T-023 (frontend).
+- Banner, switch dialog and LLM models card are specified in frontend.md but not drawn in
+  the mockups yet.
+
 ## 2026-10-17 — T-005 Ingest: normalize, fingerprint, dedupe, upsert — DONE
 - `common.text.TextNormalizer`, `common.Hashing` (profile reuses it), `ingest.Fingerprint`,
   `JobMerger`, `IngestService` (batches of 50, `JobDescriptionChanged` event), `IngestResult`.

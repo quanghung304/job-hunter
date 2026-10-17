@@ -24,8 +24,9 @@ Makefile    shortcuts for both toolchains
 ## Stack
 
 - Backend: Java 21, Spring Boot 3.x, Maven (`backend/mvnw`), PostgreSQL 16 (Docker Compose),
-  Flyway, Spring Data JPA, `RestClient`, Jackson, Rome (RSS), jsoup, springdoc-openapi,
-  Anthropic Java SDK behind our own `LlmClient`
+  Flyway, Spring Data JPA, `RestClient`, Jackson, Rome (RSS), jsoup, springdoc-openapi
+- LLM: our own `LlmClient` with Anthropic SDK and OpenAI-compatible clients; models in
+  `config/llm.yaml` (free-tier Groq by default), switchable at runtime (ADR-0008)
 - Frontend: React + TypeScript + Vite, React Router, TanStack Query, Tailwind + shadcn/ui,
   `openapi-fetch` with generated types
 - Notifications: Telegram Bot API
@@ -55,7 +56,7 @@ Makefile    shortcuts for both toolchains
 | REST endpoints | `docs/architecture/api-spec.md` (+ generated `openapi.json`) |
 | Frontend structure, pages, rules | `docs/architecture/frontend.md` |
 | Tables, enums, status lifecycle | `docs/architecture/data-model.md` |
-| `profile.yaml` / `application.yml` fields | `docs/architecture/config-spec.md` |
+| `profile.yaml` / `application.yml` / `llm.yaml` fields | `docs/architecture/config-spec.md` |
 | Past decisions (do not re-litigate) | `docs/architecture/adr/` |
 | Source list and status | `docs/sources/catalog.md` + `docs/sources/<source>.md` |
 | LLM extraction, eligibility, scoring | `docs/ai/scoring-spec.md`, `docs/ai/prompts/` |
@@ -94,8 +95,9 @@ Makefile    shortcuts for both toolchains
 - Respect each source's rules in `docs/sources/<source>.md` (rate limit, attribution, User-Agent).
   Do not add LinkedIn, Indeed, Glassdoor or any source marked `forbidden` in the catalog.
 - Do not scrape HTML pages when the source offers an API or feed.
-- All LLM calls go through `LlmClient`; every call is logged in `llm_call` and counted
-  against the budget guard. Prompts are versioned files; never inline prompt text in Java.
+- All LLM calls go through `LlmRouter`/`LlmClient`; never hard-code a provider or model
+  name in Java — use registry ids from `config/llm.yaml`. Every call is logged in
+  `llm_call` and counted against the budget guard. Quota errors (429) are not job failures. Prompts are versioned files; never inline prompt text in Java.
 - Changing a prompt means creating a new version file (`score-v2.md`), never editing a
   released one, then running the eval and recording results in `docs/ai/eval/results.md`.
 - Store times as UTC `Instant`/`timestamptz`. Do not use `LocalDateTime` for persisted data.

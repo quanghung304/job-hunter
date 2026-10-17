@@ -28,7 +28,7 @@ docker compose up -d db
 make dev        # backend on :8080 + Vite on :5173 with hot reload; open http://localhost:5173
 ```
 
-Use `app.llm.provider=fake` in `application-local.yml` while working on the UI to avoid
+Use `app.llm.force-model=fake` in `application-local.yml` while working on the UI to avoid
 LLM cost.
 
 ## Daily operation
@@ -45,6 +45,24 @@ startup error lists each invalid field). Prefilter and eligibility are re-evalua
 automatically. To re-score active jobs with the new profile: Admin → "Re-score active jobs"
 (shows the number of LLM calls first).
 
+## LLM models and quotas
+
+- Models and providers are listed in `config/llm.yaml`; keys live in `.env`. Default: Groq
+  free tier for both steps. Get a key from each provider you want to use and add it to
+  `.env`, then restart (keys are read at startup).
+- **When a model runs out** you get a Telegram message and a banner on every page. Click
+  "Switch model", pick another usable model, optionally tick "Process waiting jobs now".
+  If you do nothing, waiting jobs are processed automatically after the limit resets.
+- **Auto-switch**: Admin → LLM models → "Auto-switch to fallback". Leave "Allow paid
+  fallback" off unless you accept Claude costs (they count against the monthly budget).
+- **Adding a model**: add an entry under `models:` in `config/llm.yaml` (provider, modelId,
+  tier, known limits), restart, press "Test" on the Admin page, run the eval with it, then
+  switch to it.
+- **Local model**: install Ollama, `ollama pull qwen2.5:7b-instruct`, keep Ollama running,
+  choose "Local model (Ollama)". Slower on CPU; set `app.llm.timeout-local` higher if needed.
+- After switching the scoring model, existing scores keep their old model label. Use
+  "Re-score active jobs" if you want all jobs judged by the same model.
+
 ## Changing a prompt
 
 1. Copy `docs/ai/prompts/score-v1.md` to `score-v2.md`, edit.
@@ -59,7 +77,10 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
 | A source shows 0 fetched for 2+ runs | Admin sources table: error; run `cd backend && ./mvnw verify -Plive -Dit.test=<Source>CollectorLiveTest` | API changed → capture new fixture, update mapper and `docs/sources/<code>.md`; mark `broken` in catalog until fixed |
 | HTTP 429 from a source | Run frequency | Raise `app.sources.<code>.min-interval` |
 | HTTP 403 / blocked | Terms changed? | Disable source, update catalog status |
-| Many `FAILED` extractions | `llm_call.error` | Invalid JSON → check prompt/schema; 401 → API key; 429 → lower `max-calls-per-run` |
+| Many `FAILED` extractions | `llm_call.error` | Invalid JSON → the model may be too weak for the prompt: run the eval, switch model or write a new prompt version |
+| Banner "Extraction paused" / "Scoring paused" | Admin → LLM models (status, detail, resets at) | Switch model, wait for reset, or enable auto-switch |
+| Model shows "Error" | Detail text | Missing/invalid key in `.env`, or model id removed by the provider → fix `config/llm.yaml`, restart, press "Test" |
+| Hitting limits every day | Usage today vs limit | Tighten prefilter, lower run frequency, or split steps across two providers (e.g. extraction on Groq, scoring on Cerebras) |
 | "Budget reached" in logs | Admin LLM usage | Raise `monthly-budget-usd` or tighten prefilter |
 | Telegram not sending | `notification.error` | Token/chat id; bot must have received a message from you first |
 | Page reload on `/jobs/42` gives 404 | SPA fallback | Check `SpaFallbackController` and that the app was started with `make run` |
