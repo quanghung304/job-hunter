@@ -10,6 +10,22 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-009 Prefilter rules — DONE
+- `enrich`: `Prefilter` (all §2 rules, all reasons collected in rule order, injected `Clock`),
+  `PrefilterDecision`/`PrefilterReason`, `SkillMatcher` (word-boundary, flexible word
+  separators, slash-name parts, `ALIASES` table), `CityNames` (English/local names, accent-
+  insensitive), `AssessmentService.recordPrefilter(...)` and `reassessPrefilter(profile, hash)`.
+- `ingest`: `JobView` + `JobQueryService` (read access for other modules).
+- `RemoteHint` moved `source` → `common.model` (enrich may not depend on source; same reason
+  as the T-002 enums). `app.llm.score-prompt: score-v1` added to application.yml (rows are
+  keyed by it, as the task says; T-010 may move it into `LlmProperties`).
+- Choices (scoring-spec §2 "Details", data-model `job_assessment` updated): no `posted_at` →
+  never TOO_OLD; REJECT → eligibility null, status DONE; PASS after REJECT → PENDING;
+  hash change clears eligibility (re-evaluated, no LLM) and keeps scores.
+- Tests: `PrefilterTest` (28 rows + 3), `SkillMatcherTest` (35 rows), `CityNamesTest`,
+  `AssessmentServiceIT` (5 cases incl. reassess).
+- Next: T-010 (LLM client), then T-011.
+
 ## 2026-10-17 — T-019 Frontend bootstrap (React) — DONE
 - Versions: Vite 8.3, React 19.3, React Router 8.4 (declarative routes), TanStack Query 5.104,
   openapi-fetch 0.17 / openapi-typescript 7.13, Tailwind CSS 4.3 (`@tailwindcss/vite`,

@@ -91,8 +91,13 @@ Eligibility + score for one job and one profile. Owned by the `enrich` module;
 | created_at, updated_at | timestamptz | |
 | unique | (job_id, profile_id, score_prompt_version) | `nulls not distinct`: at most one unscored row (null version) per job and profile |
 
+Rows are written for the configured score prompt version (`app.llm.score-prompt`) by
+`AssessmentService.recordPrefilter`: prefilter REJECT → `eligibility` null, `status` DONE
+(no LLM work); PASS on a new row or after a REJECT → `status` PENDING.
+
 When the profile file changes (`profile_hash` differs), prefilter and eligibility are
-re-evaluated (cheap, no LLM). Re-scoring after a profile change is manual
+re-evaluated (cheap, no LLM): `AssessmentService.reassessPrefilter` re-runs the prefilter
+and clears `eligibility` of every row with another hash, so it is evaluated again; scores are kept. Re-scoring after a profile change is manual
 (admin button "Re-score active jobs"), to control cost.
 
 ### `job_tracking`

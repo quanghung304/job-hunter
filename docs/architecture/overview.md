@@ -42,10 +42,10 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 
 | Package | Responsibility | May depend on |
 |---|---|---|
-| `common` | Clock, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`) | — |
+| `common` | Clock, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`) | — |
 | `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
 | `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging | common |
-| `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry | common, source (DTOs only) |
+| `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry; `JobQueryService` returns read-only `JobView`s to other modules | common, source (DTOs only) |
 | `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; publishes `LlmModelStatusChanged` events (ADR-0008) | common |
 | `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
 | `scoring` | Scoring (LLM); writes scores through `AssessmentService` | common, profile, llm, enrich |

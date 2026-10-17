@@ -1,9 +1,9 @@
 package io.github.quanghung304.jobhunter.source.arbeitnow;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.text.HtmlText;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;

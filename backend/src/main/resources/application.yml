@@ -50,6 +50,8 @@ app:
     read-timeout: 20s
   pipeline:
     collector-timeout: 2m
+  llm:
+    score-prompt: score-v1
   sources:
     arbeitnow:
       enabled: true

@@ -15,7 +15,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-006 | [Himalayas collector](T-006-himalayas.md) | T-005 | S |
 | [x] | T-007 | [Jobicy collector](T-007-jobicy.md) | T-005 | S |
 | [x] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |
-| [ ] | T-009 | [Prefilter rules](T-009-prefilter.md) | T-002, T-005 | S |
+| [x] | T-009 | [Prefilter rules](T-009-prefilter.md) | T-002, T-005 | S |
 | [ ] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
 | [ ] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
 | [ ] | T-012 | [Scoring](T-012-scoring.md) | T-011 | M |

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.source.persistence.CollectorRun;
 import io.github.quanghung304.jobhunter.source.persistence.CollectorRunRepository;
 import java.time.Clock;

@@ -5,9 +5,9 @@ import static io.github.quanghung304.jobhunter.PersistenceFixtures.assertRejecte
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.quanghung304.jobhunter.PostgresJpaTest;
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.model.SalaryPeriod;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.Test;

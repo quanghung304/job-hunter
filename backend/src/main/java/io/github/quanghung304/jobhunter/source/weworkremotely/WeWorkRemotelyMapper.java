@@ -1,8 +1,8 @@
 package io.github.quanghung304.jobhunter.source.weworkremotely;
 
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.text.HtmlText;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

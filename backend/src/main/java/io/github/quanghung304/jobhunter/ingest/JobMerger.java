@@ -1,10 +1,10 @@
 package io.github.quanghung304.jobhunter.ingest;
 
 import io.github.quanghung304.jobhunter.common.Hashing;
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.text.TextNormalizer;
 import io.github.quanghung304.jobhunter.ingest.persistence.Job;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.net.URI;
 import java.time.Instant;
 import java.util.LinkedHashSet;

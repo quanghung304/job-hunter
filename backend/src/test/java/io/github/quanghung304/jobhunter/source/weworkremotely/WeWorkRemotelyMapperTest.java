@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.github.quanghung304.jobhunter.Fixtures;
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;

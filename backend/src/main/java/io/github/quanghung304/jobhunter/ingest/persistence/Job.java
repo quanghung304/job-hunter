@@ -1,8 +1,8 @@
 package io.github.quanghung304.jobhunter.ingest.persistence;
 
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.model.SalaryPeriod;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

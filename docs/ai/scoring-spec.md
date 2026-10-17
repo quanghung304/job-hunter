@@ -29,6 +29,20 @@ the first REJECT wins, but collect all reasons for display.
 | `NOT_RELEVANT` | title matches no `titleInclude` regex **and** description contains fewer than `minSkillHits` distinct `skills.core` terms (case-insensitive, word-boundary match; `Spring Boot` also matches `SpringBoot`) |
 | `ONSITE_SOURCE_HINT` | `remote_hint == ONSITE` **and** `location_text` does not contain `candidate.city` (also its local name, e.g. Torino) — reject (remote only, unless it is in my city) |
 
+Details (T-009):
+- `TOO_OLD`: a job without `posted_at` is never too old.
+- `EXCLUDED_COMPANY`: each `excludeCompanies` entry is normalized like `company_key`
+  (`TextNormalizer.companyKey`), so "Acme, Inc." excludes `acme`.
+- Skill hits (`SkillMatcher`): case-insensitive, whole words (letters/digits around a match
+  prevent it: "Java" ≠ "JavaScript"). Words of a skill may be joined by space, `-`, `_` or
+  nothing (`Spring Boot` ~ `SpringBoot` ~ `spring-boot`). A slash name also matches each
+  part when every part has ≥ 3 characters (`Hibernate/JPA` ~ `JPA`; `CI/CD` stays whole).
+  Aliases are a table in `SkillMatcher.ALIASES` (`REST API` ~ `RESTful`, `OAuth 2.0` ~
+  `OAuth2`, `OpenID Connect` ~ `OIDC`, …). Hits count distinct profile skills.
+- City names: case- and accent-insensitive whole-word match; English/local names are a
+  table in `CityNames` (Turin ~ Torino, Munich ~ München/Muenchen, …). No `candidate.city`
+  → every ONSITE job is rejected.
+
 ## 3. Extraction (LLM, profile-independent)
 
 Prompt: `docs/ai/prompts/extract-v1.md`. Input: title, company, location text, source

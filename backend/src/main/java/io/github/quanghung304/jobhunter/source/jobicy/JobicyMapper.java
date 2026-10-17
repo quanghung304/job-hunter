@@ -1,10 +1,10 @@
 package io.github.quanghung304.jobhunter.source.jobicy;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.model.SalaryPeriod;
 import io.github.quanghung304.jobhunter.common.text.HtmlText;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
-import io.github.quanghung304.jobhunter.source.RemoteHint;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
