@@ -59,3 +59,12 @@ app:
       remote-only: true
       page-delay: 2s
       max-pages: 20
+    himalayas:
+      enabled: true
+      max-items: 400
+      min-interval: 2h
+      base-url: https://himalayas.app
+      api-key: ${HIMALAYAS_API_KEY:}
+      page-size: 20
+      page-delay: 2s
+      max-pages: 25

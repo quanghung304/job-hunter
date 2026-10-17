@@ -1,0 +1,131 @@
+{
+  "comments": "21/08/2026: Cursor pagination is now available and is the preferred way to page through the feed. Pass the nextCursor value from each response back as ?cursor=. It is faster than offset and will never return the same job twice. The offset parameter is deprecated and will be removed in a future release. 13/03/2026: The API has been updated to include the companySlug field in the response.",
+  "updatedAt": 1792249185,
+  "offset": 0,
+  "limit": 20,
+  "totalCount": 124983,
+  "nextCursor": "MjAyNi0xMC0xN1QxNDo1MjoyMC4wMjE5NDVafDI0MTc0MjE",
+  "jobs": [
+    {
+      "title": "Korean Culture Expert",
+      "excerpt": "OverviewAre you passionate about languages, writing, and quality evaluation?",
+      "companyName": "Welocalize",
+      "companySlug": "welocalize",
+      "companyLogo": "https://cdn-images.himalayas.app/mgs6a3lgzst6biuk1ro30100pkwv",
+      "employmentType": "Contractor",
+      "minSalary": 35,
+      "maxSalary": 35,
+      "salaryPeriod": "hourly",
+      "seniority": [
+        "Mid-level"
+      ],
+      "currency": "USD",
+      "locationRestrictions": [
+        "South Korea"
+      ],
+      "timezoneRestrictions": [
+        9
+      ],
+      "categories": [
+        "QA-Specialist",
+        "Search-Quality-Analyst",
+        "Localization-Specialist",
+        "AI-Trainer",
+        "Content-Evaluator",
+        "Korean-Specialist",
+        "Culture-Expert"
+      ],
+      "parentCategories": [
+        "Content Creator",
+        "Data Science"
+      ],
+      "description": "<h3>Overview</h3><p>Are you passionate about languages, writing, and quality evaluation? We are launching an exciting language evaluation project and are looking for Korean-speaking experts to join our team.</p><h3>Project Details: </h3><p>   - Job Title: <strong>MSR Project - </strong><strong>Korean</strong><strong> Culture Expert</strong></p><h3>   - Start Date: ASAP</h3><h3>   - Duration: Ongoing Project.</h3><h3>   - Commitment: 20 hours per week.</h3><h3>   - Job Type: Freelance contract.</h3><h3>   - Location: South Korea, Remote</h3><h3>   - Rate: US$35 per hour.</h3><h3>What you will do:  </h3><p>Identify realistic search-related failures where an AI model provides inadequate responses. </p><p>Create search queries, test them, document what went wrong, and write instructions and evaluation criteria for correct answers.</p><p>Common issues: local relevance, source quality, outdated information, language mismatches, incomplete answers, and region-specific inapplicability. Testing multiple queries before finding failures is expected.</p><h3>Requirements:  </h3><ul>\n<li>Research skills: ability to find and verify information from multiple sources; comfort navigating different websites, databases, and documentation</li>\n<li>Critical thinking: Can spot contradictions between sources, identify outdated information, and recognize when something doesn't apply to a specific locale/context</li>\n<li>Attention to detail: Can catch nuances in language, local variations (prices, regulations, requirements), and edge cases</li>\n<li>Problem-solving mindset: Comfortable iterating and testing when things don't work; doesn't get frustrated by trial-and-error</li>\n<li>Domain knowledge: Ideally someone with background in research, quality assurance, compliance, or similar work that requires precision and source verification</li>\n<li>Writing clarity: Can articulate instructions and rubrics clearly so others understand the logic behind their reasoning</li>\n<li>Locale knowledge: Deep familiarity with their specific locale (local regulations, business practices, cultural nuances) is valuable for spotting region-specific failures</li>\n</ul><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+      "pubDate": 1792249185,
+      "expiryDate": 1797433184,
+      "applicationLink": "https://himalayas.app/companies/welocalize/jobs/korean-culture-expert",
+      "guid": "https://himalayas.app/companies/welocalize/jobs/korean-culture-expert"
+    },
+    {
+      "title": "Senior Software Engineer - Verification Platform",
+      "excerpt": "Beneath a simple yet elegant user interface lies a complex system of functionalities.",
+      "companyName": "Veriff",
+      "companySlug": "veriff",
+      "companyLogo": "https://cdn-images.himalayas.app/d8yfhmyu8n6l8xfb0w3pe4yv25gj",
+      "employmentType": "Full Time",
+      "minSalary": null,
+      "maxSalary": null,
+      "salaryPeriod": "annual",
+      "seniority": [
+        "Senior"
+      ],
+      "currency": null,
+      "locationRestrictions": [
+        "Spain"
+      ],
+      "timezoneRestrictions": [
+        0,
+        1
+      ],
+      "categories": [
+        "Software-Engineer",
+        "Backend-Engineer",
+        "Platform-Engineer",
+        "Senior-Verification-Engineer",
+        "Software-Verification-Engineer",
+        "Senior-QA-Engineer-Platform-Engineering",
+        "Software-Quality-Engineer",
+        "Senior-Software-Engineer-In-Test",
+        "Software-Verification-Specialist",
+        "Senior-Software-Test-Engineer",
+        "Verification-Engineer"
+      ],
+      "parentCategories": [
+        "Developer"
+      ],
+      "description": "<div class=\"p-rich_text_section\"><div class=\"p-rich_text_section\">\n<p>Beneath a simple yet elegant user interface lies a complex system of functionalities. Our AI-powered product uses advanced image recognition, facial verification, face recognition, facial anti-spoofing (liveness detection), and behavior analysis to make identity decisions. We help our partners build onboarding processes that ensure good people get things done and bad folks get stopped.</p>\n<p>To take our platform to the next level, we're looking for a Senior Software Engineer to join the <strong>Verification Platform</strong> team. This team owns the workflow orchestration engine and the automated verification decisioning pipeline that powers <a href=\"https://himalayas.app/companies/veriff\">Veriff</a>'s core product — and that other product teams across Identity, Fraud, and End User Platform build on top of. Your work will directly determine the reliability, scalability, and capabilities of the flows that thousands of people go through every day.</p>\n<h3>You’ll help us protect honest people online by:</h3>\n<ul>\n<li>Designing, building, and operating VP's backend services, including the orchestration engine and the automated decisioning pipeline, with a strong focus on reliability, scalability, and maintainability</li>\n<li>Delivering key orchestration features such as multi-method flow execution, branching and fallback logic, and webhook integrations</li>\n<li>Improving the resilience of production-critical systems — backpressure and idempotency handling, backwards-compatibility testing, SPOF elimination, and end-to-end monitoring</li>\n<li>Participating in on-call rotations, incident response, and postmortems to ensure our most critical flows stay healthy</li>\n<li>Driving engineering quality through code reviews, CI practices, runbook documentation, and mentoring teammates</li>\n</ul>\n<p><strong>You are the right future <a href=\"https://himalayas.app/companies/veriff\">Veriff</a>ian for the job if you have:</strong></p>\n<ul>\n<li>5+ years of experience building large-scale backend applications with Python, including event-driven and async architectures with message queues (e.g. SQS or similar)</li>\n<li>Proven ownership of production-critical services — you understand what it means to be on-call and take reliability seriously</li>\n<li>Deep experience designing for resilience in distributed systems: idempotency, backpressure, retries, backwards compatibility</li>\n<li>Strong understanding of modular design approaches and SOLID principles</li>\n<li>Hands-on experience building scalable, maintainable APIs</li>\n<li>Proficiency in a range of testing strategies that ensure robust and reliable software</li>\n<li>Solid understanding of relational database fundamentals</li>\n<li>Familiarity with structured logging and observability practices</li>\n<li>Strong communication skills — you can clearly articulate technical ideas to engineers and non-engineers alike</li>\n</ul>\n<h3>You’re an especially awesome match if you have:</h3>\n<ul><li>Experience with workflow or orchestration engines, event-driven systems, Kubernetes, or identity verification domain knowledge.</li></ul>\n<p>You can get familiar with our tech stack on StackShare.</p>\n<h3>Why <a href=\"https://himalayas.app/companies/veriff\">Veriff</a>?</h3>\n<p>We are the preferred identity verification platform partner for the world’s most innovative growth-driven organizations helping conveniently verify and safeguard users anywhere in the world. We support the broadest number of identity documents from nearly every country and territory in the world - and this is continually increasing! With a diverse team in the United States, United Kingdom, Spain, and Estonia, as well as robust backing and funding from investors including Accel, Alkeon, IVP, Tiger Capital, and Y Combinator, we’re dedicated to helping businesses and individuals build a safer and more secure world. We strive to be the benchmark for trust online, and we take pride in being a positive force. </p>\n<p>When you join Team <a href=\"https://himalayas.app/companies/veriff\">Veriff</a>, we offer you the opportunity to have a real impact and advance your career, while looking after you along the way with a range of benefits designed with you in mind. Some of our favorites include...</p>\n<ul>\n<li>Flexibility to work from home</li>\n<li>Stock options that ensure your share in our success</li>\n<li>Extra recharge days on top of your annual vacation</li>\n<li>Extensive medical, dental, and vision insurance to ensure you’re feeling great physically and mentally</li>\n<li>Learning and Development &amp; Health and Sports budget that you are free to tailor to your own needs</li>\n<li>Four weeks of fully paid sabbatical leave after reaching your 5th work anniversary </li>\n</ul>\n<p>We are an Equal Opportunities employer committed to a diverse and representative team. Different opinions, perspectives and personalities push us forward. We want to hear from people who are passionate about their work and align with our values. Regardless of race, religion, color, national origin, gender, sexual orientation, age, marital status or disability. We also know the confidence gap and imposter syndrome can get in the way of meeting spectacular candidates - so rest assured, whoever you are, we want to hear from you! </p>\n<p>Please take the time to read our Recruitment Privacy Notice, which explains how we collect and process your data for recruitment-related activities in accordance with applicable laws. Please read the information carefully. By submitting the application with the required information, you acknowledge that <a href=\"https://himalayas.app/companies/veriff\">Veriff</a> processes the information for recruitment purposes. Please be informed that in the final stage of the recruitment process, we may request that you undergo identity verification. For more information, please see Recruitment Privacy Notice.</p>\n<br><h3>#SPBTAL </h3>\n</div></div><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+      "pubDate": 1792249089,
+      "expiryDate": 1797433088,
+      "applicationLink": "https://himalayas.app/companies/veriff/jobs/senior-software-engineer-verification-platform",
+      "guid": "https://himalayas.app/companies/veriff/jobs/senior-software-engineer-verification-platform"
+    },
+    {
+      "title": "Promotional Products Coordinator – Client Presentations & Order Management (IN)",
+      "excerpt": "DescriptionJob Title: Promotional Products Marketing Coordinator Experience: 1–3 years preferred Industry: Promotional Products / Branded Merchandise Job SummaryWe are seeking a detail-oriented and organized Promotional Products Coordinator to support client presentations, product sourcing, pricing, order processing, and supplier coordination.",
+      "companyName": "Snapscale",
+      "companySlug": "snapscale",
+      "companyLogo": "https://cdn-images.himalayas.app/6afei6epx3kf8blfopp1s0xu37tj",
+      "employmentType": "Full Time",
+      "minSalary": null,
+      "maxSalary": null,
+      "salaryPeriod": "annual",
+      "seniority": [
+        "Mid-level"
+      ],
+      "currency": null,
+      "locationRestrictions": [
+        "India"
+      ],
+      "timezoneRestrictions": [
+        5.5
+      ],
+      "categories": [
+        "Marketing-Coordinator",
+        "Promotional-Products-Coordinator",
+        "Order-Coordinator",
+        "Sales-Support-Specialist",
+        "Product-Coordinator",
+        "Promotional-Products-Specialist",
+        "Merchandise-Production-Coordinator",
+        "Merchandise-Coordinator"
+      ],
+      "parentCategories": [
+        "Marketing"
+      ],
+      "description": "<h3>Description</h3><p>Job Title: Promotional Products Marketing Coordinator</p><p><strong>Experience:</strong> 1–3 years preferred</p><p><strong>Industry:</strong> Promotional Products / Branded Merchandise</p><h3>Job Summary</h3><p>We are seeking a detail-oriented and organized Promotional Products Coordinator to support client presentations, product sourcing, pricing, order processing, and supplier coordination. The ideal candidate should be comfortable working with platforms such as <strong>commonsku and ASI/ESP</strong>, creating customized product presentations, managing purchase orders, and tracking orders from approval through delivery.</p><h3>Key Responsibilities</h3><ul>\n<li>\n<strong>Client Presentations:</strong> Build professional client presentations in commonsku featuring promotional products, pricing, decoration options, and virtual mockups.</li>\n<li>\n<strong>Presentation Revisions:</strong> Update presentations based on feedback from clients and the sales team.</li>\n<li>\n<strong>Estimates and Sales Orders:</strong> Convert approved presentations into accurate estimates and sales orders in commonsku.</li>\n<li>\n<strong>Purchase Order Management:</strong> Prepare and send purchase orders to suppliers, verifying pricing, quantities, imprint details, and shipping dates.</li>\n<li>\n<strong>Order Tracking:</strong> Monitor artwork proofs, production progress, and shipping schedules while keeping clients and sales representatives informed.</li>\n<li>\n<strong>Issue Resolution:</strong> Resolve order-related issues, including product backorders, artwork proof revisions, and shipping delays.</li>\n<li>\n<strong>Product and Supplier Sourcing:</strong> Use ASI/ESP to identify suitable products and suppliers based on client budgets, quantities, and delivery deadlines.</li>\n<li>\n<strong>Marketing Support:</strong> Assist with company store setup, email campaigns, social media posts, and promotional product spotlights.</li>\n<li>\n<strong>Data Accuracy:</strong> Maintain accurate product specifications, pricing, order details, supplier information, and delivery records.</li>\n<li>\n<strong>Cross-Functional Coordination:</strong> Coordinate with sales teams, suppliers, and other internal stakeholders to ensure smooth order execution and timely delivery.</li>\n</ul><h3>Requirements</h3><h3>Required Skills and Qualifications</h3><ul>\n<li>Experience in promotional products, branded merchandise, order coordination, purchasing, sales support, or a related field.</li>\n<li>Familiarity with commonsku and ASI/ESP is preferred.</li>\n<li>Strong attention to detail and accuracy in pricing, quantities, product specifications, and purchase orders.</li>\n<li>Good written and verbal communication skills.</li>\n<li>Ability to manage multiple orders, deadlines, and client requests simultaneously.</li>\n<li>Strong organizational, problem-solving, and follow-up skills.</li>\n<li>Basic proficiency in spreadsheets, email communication, and online business platforms.</li>\n<li>Ability to work collaboratively with sales teams, suppliers, and clients.</li>\n</ul><h3>Preferred Qualifications</h3><ul>\n<li>Experience creating product presentations, virtual mockups, and branded merchandise proposals.</li>\n<li>Knowledge of decoration methods such as screen printing, embroidery, engraving, and heat transfer.</li>\n<li>Experience tracking artwork approvals, production timelines, and shipments.</li>\n<li>Familiarity with promotional product sourcing, supplier pricing, and inventory availability.</li>\n</ul><h3>Ideal Candidate Profile</h3><p>The ideal candidate is proactive, organized, customer-focused, and comfortable managing the complete workflow from product sourcing and presentation creation to order placement, production tracking, and final delivery.</p><p>Originally posted on <a href=\"https://himalayas.app\">Himalayas</a></p>",
+      "pubDate": 1792249074,
+      "expiryDate": 1797433073,
+      "applicationLink": "https://himalayas.app/companies/snapscale/jobs/promotional-products-coordinator-client-presentations-order-management-in",
+      "guid": "https://himalayas.app/companies/snapscale/jobs/promotional-products-coordinator-client-presentations-order-management-in"
+    }
+  ]
+}

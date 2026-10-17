@@ -94,6 +94,7 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Notifications |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Phase 1.5 |
 | `OWNER_CONTACT_EMAIL` | User-Agent contact for polite API use |
+| `HIMALAYAS_API_KEY` | Optional free Himalayas key (higher rate limits); empty = public allowance |
 
 Template: `.env.example`. Never log these values.
 

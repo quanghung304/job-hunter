@@ -8,7 +8,7 @@ and update "Verified" with the date you did.
 | Code | Source | Kind | Auth | Phase | Status | Key limits / terms | Spec | Verified |
 |---|---|---|---|---|---|---|---|---|
 | `arbeitnow` | Arbeitnow | JSON API | none | 1 | allowed | Paginated, 300/page, hourly refresh, rate limit header 50; link back requested | [arbeitnow.md](arbeitnow.md) | 2026-10-17 (API `meta.terms`; site ToS not re-read) |
-| `himalayas` | Himalayas | JSON API | none | 1 | allowed | Remote roles with location/timezone restrictions | [himalayas.md](himalayas.md) | — |
+| `himalayas` | Himalayas | JSON API | none (optional free key) | 1 | allowed | Cursor pages of ≤ 20; public shared allowance (key: 60/min, 10k/day); apply via `applicationLink`, show source credit, no redistribution | [himalayas.md](himalayas.md) | 2026-10-17 (API docs + Terms §30A) |
 | `jobicy` | Jobicy | JSON API | none | 1 | allowed | Filters by geo/industry/tag; cap per call; credit required | [jobicy.md](jobicy.md) | — |
 | `weworkremotely` | We Work Remotely | RSS | none | 1 | allowed | Category feeds; attribution + direct link required | [weworkremotely.md](weworkremotely.md) | — |
 | `hn-whoishiring` | Hacker News "Who is hiring?" | JSON API (Algolia + Firebase) | none | 1 | allowed | Monthly thread, free-text comments; polite delay | [hn-whoishiring.md](hn-whoishiring.md) | — |

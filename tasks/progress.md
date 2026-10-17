@@ -10,6 +10,24 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-006 Himalayas collector — DONE
+- `source.himalayas`: `HimalayasCollector` (cursor pagination, optional `HIMALAYAS_API_KEY`
+  bearer header), `HimalayasMapper`, `HimalayasJobDto`, `HimalayasPageDto`,
+  `HimalayasProperties`; real fixtures captured 2026-10-17; live test passed once.
+- Spec corrections (himalayas.md rewritten): browse is **cursor**-paginated (offset
+  deprecated), ≤ 20 per request, feed ordered by last update; `guid` is the job URL;
+  `salaryPeriod` field; worldwide jobs list all 37 offsets; ~160 new jobs/hour.
+- Terms: §30A allows API use; obligations recorded (apply via `applicationLink`, source
+  credit, no redistribution). The ATS-over-board merge rule stays (an ATS link only wins when
+  we collected the job from the ATS ourselves).
+- Owner decisions: walk the newest-first feed (every 2h, ≤ 400 jobs, 2 s/page, ≤ 25 pages)
+  instead of keyword search; optional API key via env (`.env.example`, config-spec, owner
+  task added).
+- Tests: `HimalayasMapperTest` (11 fixture items + edge cases), `HimalayasCollectorTest`
+  (WireMock: cursors, since, max-items/pages, empty page, API key header, 500, 429, malformed,
+  duplicate guids).
+- Next: T-007 (Jobicy), T-008 (WWR) or T-009 (prefilter).
+
 ## 2026-10-17 — Free-tier LLMs, quota alerts, model switching (docs) — DONE
 - ADR-0008: model registry `config/llm.yaml` (Groq free by default; Cerebras, GitHub
   Models, OpenRouter, Ollama, Claude Haiku as options), OpenAI-compatible client,

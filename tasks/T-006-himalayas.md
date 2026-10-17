@@ -17,9 +17,9 @@ Working `HimalayasCollector` feeding ingest.
 4. Live test tagged `live`.
 
 ## Acceptance criteria
-- [ ] Mapper covers: empty restrictions → locationText "Worldwide"; salary present/absent.
-- [ ] Pagination stops on empty page, `since`, `max-items`.
-- [ ] Catalog row updated with verified date.
+- [x] Mapper covers: empty restrictions → locationText "Worldwide"; salary present/absent.
+- [x] Pagination stops on empty page, `since`, `max-items`.
+- [x] Catalog row updated with verified date.
 
 ## Tests
 `HimalayasMapperTest`, `HimalayasCollectorTest` (WireMock), `HimalayasCollectorLiveTest` (`live`).
