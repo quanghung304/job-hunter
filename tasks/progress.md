@@ -10,6 +10,13 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — UI design approved — DONE
+- Mockups approved in the Claude Design canvas "Job Hunter UI mockups" (5 artboards).
+- `frontend.md` now holds design tokens, typography, component specs, layouts and
+  behavior ("inbox triage", split view ≥ 1024px). Added `o` and `Esc` shortcuts.
+- `api-spec.md`: overview gained `kpis`, `schedule`, `pipelineProgress`; re-score dry run
+  gained `estimatedCostUsd`. T-014, T-019, T-020, T-021 updated accordingly.
+
 ## 2026-10-17 — T-003 Database schema and persistence layer — DONE
 - Flyway V2–V5 (all Phase 1 tables, §5 indexes + a few FK/lookup indexes, check constraints
   on every enum column). Entities/repositories in `<module>.persistence`: source (CollectorRun,

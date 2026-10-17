@@ -72,8 +72,17 @@ Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
   "llmUsage": { "monthToDateUsd", "monthlyBudgetUsd", "callsToday",
                 "daily": [{ "date", "calls", "inputTokens", "outputTokens", "costUsd" }] },
   "failures": { "extractions": [{ jobId, title, attempts, lastError }], "scorings": [...] },
-  "pipelineRunning": false }
+  "pipelineRunning": false,
+  "pipelineProgress": { "stage": "SCORE", "text": "Collect 7/9 sources · scoring 14 / 27", "percent": 62 } | null,
+  "schedule": { "nextRunAt": "...", "nextDigestAt": "...", "zone": "Europe/Rome" },
+  "kpis": { "activeJobs": 1384, "newToday": 42, "prefilterRejectedToday": 31,
+            "scoredToday": 9, "alertsToday": 2, "toReview": 37,
+            "sourceCount": 9, "companyBoardCount": 6 } }
 ```
+
+The app header's status line ("Last run 07:00 · 42 new · 9 scored") uses the newest
+`pipelineReports` entry. "Today" = since local midnight in `app.pipeline.zone`.
+`toReview` = count of the board's default view.
 
 ### `POST /api/admin/pipeline/run`
 Starts a run asynchronously → 202 `{ "accepted": true }`; 409 `PIPELINE_ALREADY_RUNNING`.
@@ -83,7 +92,8 @@ The UI polls `GET /api/admin/overview` (`pipelineRunning`, newest report).
 Runs one collector + ingest (debug) → 200 `{ collectStatus, fetched, newRaw, newJobs, warnings }`.
 
 ### `POST /api/admin/rescore`
-Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57 }`; with
+Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09 }`
+(cost = average `cost_usd` of SCORE calls in the last 30 days × calls; null if no history); with
 `dryRun: false` → 202.
 
 ### `POST /api/admin/jobs/{id}/retry`

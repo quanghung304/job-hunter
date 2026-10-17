@@ -18,6 +18,9 @@ so the frontend tasks can build against a stable contract.
   `TrackingStatusMachine`.
 - `TrackingService.changeStatus(jobId, to, note)` (validates transition, writes event) and
   `updateNotes`.
+- Overview extras used by the UI: `kpis`, `schedule` (next cron fire times), and
+  `pipelineProgress` (the orchestrator publishes stage + counters while running);
+  re-score dry run returns `estimatedCostUsd`.
 - Controllers: `JobController`, `MetaController`, `AdminController` (overview, pipeline run,
   collect, rescore dry-run/execute, retry, companies, eval export stub returning 501 until T-016).
 - Response DTOs with accurate OpenAPI annotations (required fields, enums, nullability).

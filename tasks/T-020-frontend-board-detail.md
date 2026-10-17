@@ -15,12 +15,18 @@ fast enough to clear ~50 jobs in a few minutes with the keyboard.
   list and detail caches, rollback + toast on error), `useUpdateNotes()`.
 - `lib/statusMachine.ts` mirroring data-model §2; `lib/labels.ts` for enums and reason codes
   (prefilter, eligibility) with human-readable English labels; `lib/format.ts`.
-- Board: `FilterBar` (URL search params ⇄ filters, debounced search, reset), `JobRow`,
-  `ScoreBadge`, `EligibilityChips`, `StatusActions`, `SourceLinks`, load more,
-  keyboard shortcuts per frontend.md.
-- Job detail page with all panels in frontend.md; notes autosave (1 s debounce, "Saved" hint);
-  `allowedTransitions` from the server drives the buttons.
-- Responsive down to 360 px.
+- Desktop (≥ 1024px) **split view** per frontend.md "Board": `FilterBar`, `JobList` +
+  `JobRow` (shortlist/dismiss icon buttons, selected row, density toggle in localStorage),
+  `JobDetailPane`; `/jobs/:id` keeps search params and renders the split view with that job
+  selected; sticky keyboard hint footer; load more.
+- `JobDetail` with the exact content order in frontend.md "JobDetail content order"
+  (`WhyItFits`, `ScoreBreakdown`, `EligibilityPanel`, `FactsPanel`, `DescriptionPanel`,
+  `NotesEditor`, `HistoryList`); `allowedTransitions` from the server drives the buttons.
+- Mobile (< 1024px) per frontend.md "Mobile": list-only board, horizontal filter pills +
+  "Filters · N" bottom sheet, full-page detail with back bar and fixed `MobileActionBar`.
+  "Job N of M" uses the cached list; hide it when the page was opened directly.
+- `useBoardKeyboard` with every key in frontend.md "Behavior › Board" (incl. `o`, `Esc`).
+- Undo toast after each status change; row collapse animation (respect reduced motion).
 
 ## Out of scope
 Admin page (T-021). Editing anything except status and notes.
@@ -31,6 +37,9 @@ Admin page (T-021). Editing anything except status and notes.
 - [ ] Filters survive reload and can be bookmarked.
 - [ ] Keyboard flow works and is ignored while typing in inputs.
 - [ ] "via <Source>" links open the original posting in a new tab (`rel="noopener"`).
+- [ ] Desktop board and job detail match the "Board + job detail · desktop" mockup; mobile
+      matches "Board · mobile" and "Job detail · mobile" (owner checks visually at 1440 and 390 px).
+- [ ] Exactly one primary button per view; mobile touch targets ≥ 44px.
 
 ## Tests
 `statusMachine.test.ts` (matches data-model §2 matrix), `useBoardFilters.test.ts`,

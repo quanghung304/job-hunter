@@ -12,16 +12,19 @@ One page to see whether the system is healthy and to trigger maintenance actions
 - Hooks: `useAdminOverview()` (refetch every 3 s while `pipelineRunning`, else every 60 s),
   `useRunPipeline()`, `useRescore()` (dry run → confirm dialog → execute), `useRetry()`,
   `useCompanies()`, `useEvalExport()`.
-- `PipelinePanel` (run button, running indicator, last report summary),
-  `SourcesTable` (status color + text, last error expandable), `LlmUsageCard`
-  (month-to-date vs budget meter; 14-day cost bars — a small SVG/CSS bar list is enough, no
-  chart library), `FailuresTable` with Retry, `CompaniesTable`, Re-score dialog,
-  Export for labeling button (shows path and count).
+- Layout and components exactly per frontend.md "/admin": title row with the three
+  actions, `PipelineBanner` (uses `pipelineProgress`), `KpiRow` (uses `kpis`),
+  `SourcesTable` (status tag + text, long errors truncated with full text in `title`),
+  `LlmUsageCard` (meter + 14-day CSS bars, no chart library), `RunsList`, `FailuresList`
+  with Retry, `CompaniesTable`, `RescoreDialog` (shows `jobCount` and `estimatedCostUsd`),
+  Export for labeling (toast with path and count).
+- App header status line now reads from the overview (finish what T-019 stubbed).
 
 ## Acceptance criteria
 - [ ] Run button disabled while running; 409 shows "already running" toast.
 - [ ] Re-score never executes without the confirm step showing the job count.
 - [ ] Every status is readable without color.
+- [ ] Matches the "Admin · desktop" mockup at 1440 px; tables scroll horizontally on mobile.
 
 ## Tests
 `AdminPage.test.tsx` (MSW: overview render, run → polling → done, 409, rescore confirm flow,
