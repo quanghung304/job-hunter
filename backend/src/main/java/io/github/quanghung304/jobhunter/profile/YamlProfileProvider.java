@@ -7,15 +7,13 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.github.quanghung304.jobhunter.common.Hashing;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +41,7 @@ class YamlProfileProvider implements ProfileProvider {
         byte[] bytes = read(path);
         this.profile = parse(path, bytes);
         validate(path, profile, validator);
-        this.profileHash = sha256(bytes);
+        this.profileHash = Hashing.sha256Hex(bytes);
         warnAboutUnsupportedTracks(profile);
         log.info("Loaded profile id={} hash={} from {}", profile.id(), profileHash.substring(0, 12),
                 path.toAbsolutePath().normalize());
@@ -129,13 +127,6 @@ class YamlProfileProvider implements ProfileProvider {
         return newline < 0 ? message : message.substring(0, newline);
     }
 
-    private static String sha256(byte[] bytes) {
-        try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 is required by the JDK spec", e);
-        }
-    }
 
     private static void warnAboutUnsupportedTracks(Profile profile) {
         profile.tracks().stream()

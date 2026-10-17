@@ -10,6 +10,22 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-17 — T-005 Ingest: normalize, fingerprint, dedupe, upsert — DONE
+- `common.text.TextNormalizer`, `common.Hashing` (profile reuses it), `ingest.Fingerprint`,
+  `JobMerger`, `IngestService` (batches of 50, `JobDescriptionChanged` event), `IngestResult`.
+- `POST /api/admin/collect/{sourceCode}` in `AdminController` (runs now, ignores
+  min-interval; TODO T-013 move to pipeline); `UnknownSourceException` (404
+  `SOURCE_NOT_FOUND`); `CollectorRunner.runNow/defaultRequest`; `openapi.json` regenerated.
+- Refinements (data-model §4 rewritten with examples): extended legal suffixes removed from
+  the end repeatedly; generic gender tags; re-posting looks up the newest job of the
+  fingerprint family; merge fills missing fields and unites tags; EXPIRED → ACTIVE on sighting.
+- Real run against Arbeitnow: 2643 fetched, 200 postings → 194 raw, 184 jobs. An immediate
+  second run hit Cloudflare 429 on page 4 → PARTIAL as designed; warnings now carry only
+  "HTTP 429 …" (`HttpErrors`), Arbeitnow `page-delay` raised to 2s.
+- Tests: TextNormalizer (45 rows), Fingerprint (20 same/different pairs), JobMerger,
+  IngestServiceIT (13 cases), AdminControllerTest.
+- Next: T-006 / T-007 / T-008 (collectors) or T-009 (prefilter, needs T-002 + T-005).
+
 ## 2026-10-17 — T-004 Collector framework + Arbeitnow collector — DONE
 - `source` API: `JobCollector`, `CollectRequest`, `CollectResult` (+ `fetched`; overview.md
   updated), `NormalizedPosting`; `CollectorRegistry`, `CollectorRunner` (virtual-thread

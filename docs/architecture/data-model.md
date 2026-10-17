@@ -189,21 +189,47 @@ posting is skipped and counted as a warning on the run.
 
 ## 4. Normalization and dedupe
 
-- `company_key` = lower-case, accents stripped, punctuation removed, legal suffixes removed
-  (`inc`, `ltd`, `llc`, `gmbh`, `srl`, `spa`, `bv`, `sa`, `co`, `corp`, `limited`),
-  whitespace collapsed. Example: "Acme, Inc." → `acme`.
-- `title_key` = lower-case, accents stripped, content in brackets/parentheses removed,
-  separators `-–|/,` replaced by space, words `remote`, `m/f/d`, `f/m/d`, `w/m/d` removed,
-  whitespace collapsed.
+Implemented in T-005 (`common.text.TextNormalizer`, `ingest.Fingerprint`, `ingest.IngestService`).
+
+- `company_key` = lower-case, accents stripped, punctuation removed, a trailing run of single
+  letters joined (`S.r.l.` → `srl`), then legal suffixes removed **from the end, repeatedly**
+  (spec list `inc`, `ltd`, `llc`, `gmbh`, `srl`, `spa`, `bv`, `sa`, `co`, `corp`, `limited`
+  plus `incorporated`, `corporation`, `plc`, `llp`, `ag`, `kg`, `ug`, `se`, `nv`, `sas`,
+  `sarl`, `sl`, `oy`, `ab`, `as`, `aps`, `pty`, `pvt`), whitespace collapsed. A name made only
+  of legal words keeps its first word.
+- `title_key` = lower-case, accents stripped, content in brackets/parentheses removed
+  (nested too), gender tags removed (`m/f/d`, `f/m/d`, `w/m/d`, `m/w/d`, `f/m/x`, any 2–4
+  of `m f w d x` joined by `/`), separators `- – — | / ,` replaced by space, the word
+  `remote` removed, whitespace collapsed. Other punctuation is kept (`c++`, `c#`).
 - `fingerprint` = sha256(`company_key` + "|" + `title_key`).
-- Ingest: find `raw_posting` by (source, external_id). If new, find `job` by fingerprint;
-  if none, create. If found but `last_seen_at` older than 60 days, create a new job
-  (re-posting) with fingerprint suffixed by `#<yyyyMMdd>` of first_seen.
-- Merge rule when a job gets a second source: keep the longest `description_text`;
-  keep earliest `posted_at`; prefer structured salary; prefer ATS `apply_url`
-  (greenhouse/lever/ashby) over board URLs.
-- If an existing job's description hash changes, the extraction for it is invalidated
-  (new extraction on next run).
+
+| Input | Key |
+|---|---|
+| "Acme, Inc." / "ACME Inc" / "Acme" / "Acme GmbH & Co. KG" | `acme` |
+| "Società S.r.l." / "Società Srl" | `societa` |
+| "Senior Backend Engineer (Remote) - m/f/d" / "[Remote] Senior Backend Engineer" | `senior backend engineer` |
+| "Full-Stack Engineer – AI Authoring Platform" | `full stack engineer ai authoring platform` |
+
+- Ingest (per batch of 50 postings, one transaction): validate (title, company, url,
+  description non-blank; else skipped and counted) → find `raw_posting` by (source,
+  external_id; blank id → sha256 of the URL). Existing: update `last_seen_at`, and payload,
+  `payload_hash` (sha256 of the payload as received) and url if the hash changed; its job is
+  reused. New: find the **newest job of the fingerprint family** (`fp` or `fp#…`); if none,
+  create; if its `last_seen_at` is older than 60 days, create a new job (re-posting) with
+  fingerprint `<fp>#<yyyyMMdd>` of the new first_seen (UTC); else merge into it.
+  The family lookup avoids a duplicate `#date` fingerprint on the next re-posting.
+- Merge rule when a job gets a posting: keep the longest `description_text` (max 30 000
+  chars, truncated); keep earliest `posted_at` (new jobs use now when the source has none);
+  take structured salary only if the job has none; prefer ATS `apply_url`
+  (greenhouse.io / lever.co / ashbyhq.com hosts) over board URLs (apply_url defaults to the
+  posting url); fill `location_text`, `employment_hint`, `remote_hint` (when UNKNOWN) if
+  missing; tags are united; title and company keep their first form. A sighting sets
+  `last_seen_at` and `status = ACTIVE`.
+- If an existing job's description hash changes, `JobDescriptionChanged(jobId)` is published
+  and the extraction for it is invalidated (enrich, T-011).
+- `IngestResult(newRaw, newJobs, updatedJobs, skippedInvalid)`: `updatedJobs` counts existing
+  jobs whose content (not only `last_seen_at`) changed; jobs created in the same call are not
+  counted as updated.
 
 ## 5. Indexes (minimum)
 

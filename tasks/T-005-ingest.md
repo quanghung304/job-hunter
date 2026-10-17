@@ -27,10 +27,10 @@ Phase: 1 · Depends on: T-004 · Size: M
 Expiry (T-013), any enrichment.
 
 ## Acceptance criteria
-- [ ] Same posting ingested twice → 1 raw_posting, 1 job, second run counts 0 new.
-- [ ] Same job from two sources → 2 raw_postings, 1 job; merge rules applied.
-- [ ] "Acme, Inc." / "ACME Inc" / "Acme" produce the same `company_key`.
-- [ ] "Senior Backend Engineer (Remote) - m/f/d" and "Senior Backend Engineer" same `title_key`.
+- [x] Same posting ingested twice → 1 raw_posting, 1 job, second run counts 0 new.
+- [x] Same job from two sources → 2 raw_postings, 1 job; merge rules applied.
+- [x] "Acme, Inc." / "ACME Inc" / "Acme" produce the same `company_key`.
+- [x] "Senior Backend Engineer (Remote) - m/f/d" and "Senior Backend Engineer" same `title_key`.
 
 ## Tests
 - `TextNormalizerTest`, `FingerprintTest` (≥ 20 rows incl. accents: "Società Srl" → `societa`).

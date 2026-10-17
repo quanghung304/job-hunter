@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.quanghung304.jobhunter.source.CollectRequest;
 import io.github.quanghung304.jobhunter.source.CollectResult;
 import io.github.quanghung304.jobhunter.source.HttpClients;
+import io.github.quanghung304.jobhunter.source.HttpErrors;
 import io.github.quanghung304.jobhunter.source.JobCollector;
 import io.github.quanghung304.jobhunter.source.NormalizedPosting;
 import io.github.quanghung304.jobhunter.source.Politeness;
@@ -70,9 +71,9 @@ public class ArbeitnowCollector implements JobCollector {
                 return CollectResult.failed(fetched, "interrupted on page " + page);
             } catch (RestClientException e) {
                 if (page == 1) {
-                    return CollectResult.failed(0, "page 1: " + e.getMessage());
+                    return CollectResult.failed(0, "page 1: " + HttpErrors.describe(e));
                 }
-                warnings.add("page " + page + " failed, kept earlier pages: " + e.getMessage());
+                warnings.add("page " + page + " failed, kept earlier pages: " + HttpErrors.describe(e));
                 break;
             }
             if (body == null || body.data().isEmpty()) {

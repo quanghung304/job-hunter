@@ -14,8 +14,9 @@
 - **Stop conditions:** empty page, `links.next == null`, `max-items` postings reached,
   `max-pages` reached, or a **whole page** older than `CollectRequest.since` (an item older
   than `since` is skipped, not a stop signal, because of the order quirk above).
-- **Rate rule:** ≥ 1 s between pages. Response header `x-ratelimit-limit: 50`. Min interval
-  between runs: 1h (feed refreshes hourly).
+- **Rate rule:** ≥ 1 s between pages; we use 2 s. Response header `x-ratelimit-limit: 50`, but
+  Cloudflare answered `429` with a JS challenge page after ~13 page requests within a minute
+  (2026-10-17). Min interval between runs: 1h (feed refreshes hourly).
 - **Terms** (`meta.terms` in every response): "This is a free public API for jobs, please do
   not abuse. I would appreciate linking back to the site. By using the API, you agree to the
   terms of service present on Arbeitnow.com." → we keep `url` as the attribution link.
@@ -66,6 +67,10 @@ All ten item fields were present on every item of page 1 (types: strings, `remot
 - `job_types` mixes languages and casing ("Full Time", "Full time",
   "Unbefristeter arbeitsvertrag", "freelance") — kept raw as `employmentHint` for the LLM.
 - Titles and descriptions contain typographic Unicode (–, ’); JSON is UTF-8.
+- The same slug can appear on two pages of one run (unstable order): 200 postings gave 194
+  raw postings in the first real run. Ingest dedupes by (source, external_id).
+- On `429`, the collector keeps earlier pages (PARTIAL); warnings carry only "HTTP 429 …",
+  never the HTML body.
 
 ## Config keys (`app.sources.arbeitnow.*`)
 
@@ -74,7 +79,7 @@ All ten item fields were present on every item of page 1 (types: strings, `remot
 | `enabled`, `max-items`, `min-interval` | `true`, `200`, `1h` | shared keys (config-spec §2) |
 | `base-url` | `https://www.arbeitnow.com` | overridden in tests |
 | `remote-only` | `true` | skip items that are not remote by the rule above (counted in `fetched`, not output) |
-| `page-delay` | `1s` | pause between page requests |
+| `page-delay` | `2s` | pause between page requests |
 | `max-pages` | `20` | safety cap per run |
 
 Fixture captured: 2026-10-17 — `fixtures/arbeitnow/page1.json` (6 items of page 1: 3 remote,

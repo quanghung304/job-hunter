@@ -13,7 +13,8 @@ import org.springframework.validation.annotation.Validated;
  *
  * @param baseUrl    API host, overridden in tests
  * @param remoteOnly skip items with {@code remote == false}
- * @param pageDelay  pause between page requests (rate rule: at least 1 s)
+ * @param pageDelay  pause between page requests (rate rule: at least 1 s; 2 s avoids the
+ *                   Cloudflare challenge seen after ~13 pages in quick succession)
  * @param maxPages   safety cap on pages per run
  */
 @Validated
@@ -21,6 +22,6 @@ import org.springframework.validation.annotation.Validated;
 public record ArbeitnowProperties(
         @NotBlank @DefaultValue("https://www.arbeitnow.com") String baseUrl,
         @DefaultValue("true") boolean remoteOnly,
-        @DefaultValue("1s") Duration pageDelay,
+        @DefaultValue("2s") Duration pageDelay,
         @Positive @DefaultValue("20") int maxPages) {
 }

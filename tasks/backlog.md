@@ -11,7 +11,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-002 | [Profile loading and validation](T-002-profile.md) | T-001 | S |
 | [x] | T-003 | [Database schema and persistence layer](T-003-schema.md) | T-001 | M |
 | [x] | T-004 | [Collector framework + Arbeitnow collector](T-004-collector-framework-arbeitnow.md) | T-003 | M |
-| [ ] | T-005 | [Ingest: normalize, fingerprint, dedupe, upsert](T-005-ingest.md) | T-004 | M |
+| [x] | T-005 | [Ingest: normalize, fingerprint, dedupe, upsert](T-005-ingest.md) | T-004 | M |
 | [ ] | T-006 | [Himalayas collector](T-006-himalayas.md) | T-005 | S |
 | [ ] | T-007 | [Jobicy collector](T-007-jobicy.md) | T-005 | S |
 | [ ] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |

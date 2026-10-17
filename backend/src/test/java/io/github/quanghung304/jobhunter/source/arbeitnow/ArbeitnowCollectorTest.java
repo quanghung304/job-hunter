@@ -150,7 +150,7 @@ class ArbeitnowCollectorTest {
         CollectResult result = collector(false, 20, Duration.ofSeconds(5)).collect(request(null, 200));
 
         assertThat(result.status()).isEqualTo(CollectStatus.FAILED);
-        assertThat(result.errorMessage()).contains("page 1").contains("500");
+        assertThat(result.errorMessage()).isEqualTo("page 1: HTTP 500 Internal Server Error");
         assertThat(result.postings()).isEmpty();
     }
 
@@ -182,6 +182,18 @@ class ArbeitnowCollectorTest {
         CollectResult result = collector(false, 20, Duration.ofSeconds(5)).collect(request(null, 200));
 
         assertThat(result.status()).isEqualTo(CollectStatus.FAILED);
+    }
+
+    @Test
+    void rateLimitPageBodyIsNotCopiedIntoTheWarning() {
+        stubPage(1, okJson(Fixtures.text("arbeitnow/page1.json")));
+        stubPage(2, WireMock.aResponse().withStatus(429).withHeader("Content-Type", "text/html")
+                .withBody("<!DOCTYPE html><html><head><title>Just a moment...</title></head>" + "x".repeat(5_000)));
+
+        CollectResult result = collector(false, 20, Duration.ofSeconds(5)).collect(request(null, 200));
+
+        assertThat(result.status()).isEqualTo(CollectStatus.PARTIAL);
+        assertThat(result.warnings()).containsExactly("page 2 failed, kept earlier pages: HTTP 429 Too Many Requests");
     }
 
     @Test

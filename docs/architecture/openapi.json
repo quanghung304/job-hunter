@@ -1,6 +1,49 @@
 {
   "components" : {
     "schemas" : {
+      "CollectRunResponse" : {
+        "properties" : {
+          "collectStatus" : {
+            "enum" : [ "SUCCESS", "PARTIAL", "FAILED" ],
+            "type" : "string"
+          },
+          "error" : {
+            "type" : [ "string", "null" ]
+          },
+          "fetched" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newRaw" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "runId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "skippedInvalid" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "updatedJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "warnings" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "collectStatus", "error", "fetched", "newJobs", "newRaw", "runId", "skippedInvalid", "updatedJobs", "warnings" ],
+        "type" : "object"
+      },
       "MetaResponse" : {
         "properties" : {
           "eligibilities" : {
@@ -59,6 +102,32 @@
   },
   "openapi" : "3.1.0",
   "paths" : {
+    "/api/admin/collect/{sourceCode}" : {
+      "post" : {
+        "operationId" : "collect",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "sourceCode",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/CollectRunResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-controller" ]
+      }
+    },
     "/api/meta" : {
       "get" : {
         "operationId" : "meta",

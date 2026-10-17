@@ -57,5 +57,5 @@ app:
       min-interval: 1h
       base-url: https://www.arbeitnow.com
       remote-only: true
-      page-delay: 1s
+      page-delay: 2s
       max-pages: 20

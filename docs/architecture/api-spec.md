@@ -89,7 +89,10 @@ Starts a run asynchronously → 202 `{ "accepted": true }`; 409 `PIPELINE_ALREAD
 The UI polls `GET /api/admin/overview` (`pipelineRunning`, newest report).
 
 ### `POST /api/admin/collect/{sourceCode}`
-Runs one collector + ingest (debug) → 200 `{ collectStatus, fetched, newRaw, newJobs, warnings }`.
+Runs one collector + ingest (debug) → 200 `{ runId, collectStatus, fetched, newRaw, newJobs,
+updatedJobs, skippedInvalid, warnings, error }` (`error` null unless FAILED). Ignores
+`min-interval` and the `enabled` flag; collects postings newer than `prefilter.maxAgeDays`.
+404 `SOURCE_NOT_FOUND` for an unknown source code.
 
 ### `POST /api/admin/rescore`
 Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09 }`

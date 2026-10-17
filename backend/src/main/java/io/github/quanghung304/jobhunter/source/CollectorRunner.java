@@ -46,22 +46,24 @@ public class CollectorRunner {
         this.timeout = timeout;
     }
 
-    /** Runs with {@code max-items} from the source settings and no keywords. */
+    /** Runs with {@link #defaultRequest} unless the min-interval says to skip. */
     public CollectorRunOutcome run(JobCollector collector, Instant since) {
-        int maxItems = sources.source(collector.sourceCode())
-                .map(SourcesProperties.Source::maxItems)
-                .orElse(SourcesProperties.DEFAULT_MAX_ITEMS);
-        return run(collector, new CollectRequest(since, List.of(), maxItems));
+        return run(collector, defaultRequest(collector.sourceCode(), since));
     }
 
+    /** Runs unless the last successful run is within {@code min-interval}. */
     public CollectorRunOutcome run(JobCollector collector, CollectRequest request) {
-        String code = collector.sourceCode();
-        Optional<String> skip = minIntervalSkipReason(code);
+        Optional<String> skip = minIntervalSkipReason(collector.sourceCode());
         if (skip.isPresent()) {
-            log.info("source={} skipped: {}", code, skip.get());
+            log.info("source={} skipped: {}", collector.sourceCode(), skip.get());
             return CollectorRunOutcome.skipped(skip.get());
         }
+        return runNow(collector, request);
+    }
 
+    /** Runs regardless of {@code min-interval} (manual admin run). */
+    public CollectorRunOutcome runNow(JobCollector collector, CollectRequest request) {
+        String code = collector.sourceCode();
         Instant started = clock.instant();
         CollectorRun run = runs.save(new CollectorRun(code, started));
         CollectResult result = collectWithTimeout(collector, request);
@@ -75,6 +77,14 @@ public class CollectorRunner {
         log.info("source={} fetched={} postings={} status={} ms={}", code, result.fetched(),
                 result.postings().size(), result.status(), Duration.between(started, finished).toMillis());
         return CollectorRunOutcome.ran(run.getId(), result);
+    }
+
+    /** {@code max-items} from the source settings, no keywords. */
+    public CollectRequest defaultRequest(String sourceCode, Instant since) {
+        int maxItems = sources.source(sourceCode)
+                .map(SourcesProperties.Source::maxItems)
+                .orElse(SourcesProperties.DEFAULT_MAX_ITEMS);
+        return new CollectRequest(since, List.of(), maxItems);
     }
 
     public void recordIngestCounts(long runId, int newRaw, int newJobs) {
