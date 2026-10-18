@@ -4,6 +4,10 @@ Implements ADR-0004. Sections are referenced by tasks; keep numbering stable.
 
 ## 1. Flow per job and profile
 
+LLM steps (extraction, scoring) run only when the owner asks for that one job, through the
+Analyze and Score actions (ADR-0010). The pipeline run only prefilters. Each step is cached,
+so a repeat request makes no call.
+
 ```
 job ──► §2 prefilter ──REJECT──► assessment(prefilter_result=REJECT)    [no LLM]
             │PASS
@@ -142,13 +146,13 @@ Score bands for UI: ≥ 85 excellent · 70–84 good · 50–69 maybe · < 50 we
 - Network/5xx → retry with backoff (2 s, 8 s) inside the call; then mark attempt failed.
 - 429 / quota errors are **not** job failures: `QuotaTracker` updates the model status
   (data-model `llm_model_state`), the attempt counter is not incremented, the job stays
-  PENDING, and `LlmRouter` applies the fallback/pause rule (overview "Pipeline run" step 3).
+  PENDING, and `LlmRouter` applies the fallback/pause rule (overview "LLM work on owner action").
   A short `retry-after` (≤ 10 s) is waited once inside the call.
 - 401/403/404 from the provider → model status `ERROR`; same as above (no attempt used).
 - Invalid JSON or schema → one corrective retry; then FAILED for this attempt.
 - Max 3 attempts per (job, purpose, prompt version) across runs, then permanently FAILED
   (visible on admin page with "retry" button).
-- Budget guard reached → stop starting new LLM calls this run; not a failure.
+- Budget guard reached → refuse the manual call with `BUDGET_REACHED`; not a failure.
 
 ## 7. Eval targets (Phase 1 acceptance)
 
@@ -164,8 +168,9 @@ Measured by `EvalRunner` on `docs/ai/eval/labeled-jobs.jsonl` (≥ 40 jobs):
 
 ## 8. Cost control
 
-- Expected volume: ~300–800 new jobs/day collected → ~10–20% pass prefilter → ~50–120
-  extractions/day, fewer scorings. Keep `max-calls-per-run` and monthly budget as guards.
+- Collection costs no LLM calls. Each job costs one extraction call when the owner presses
+  Analyze, plus one scoring call when the owner presses Score (ADR-0010). Spend is therefore
+  the number of jobs the owner chooses to look at. Keep `max-calls-per-run` and monthly budget as guards.
 - Truncate descriptions as above; send the profile excerpt, not the full YAML.
 - Use the provider's prompt caching for the fixed system prompt + profile block if the SDK
   supports it (check current Anthropic docs in T-010; optional optimization).

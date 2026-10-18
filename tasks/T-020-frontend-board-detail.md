@@ -25,6 +25,10 @@ fast enough to clear ~50 jobs in a few minutes with the keyboard.
 - Mobile (< 1024px) per frontend.md "Mobile": list-only board, horizontal filter pills +
   "Filters · N" bottom sheet, full-page detail with back bar and fixed `MobileActionBar`.
   "Job N of M" uses the cached list; hide it when the page was opened directly.
+- Analysis actions (ADR-0010): a row and the detail pane show "Analyze" for `NOT_ANALYZED`
+  jobs and "Score" for `ANALYZED` eligible jobs. One click sends one request, with a spinner
+  while it runs. When the purpose is paused, the button is disabled and links to the switch
+  dialog (T-023). No new keyboard key.
 - `useBoardKeyboard` with every key in frontend.md "Behavior › Board" (incl. `o`, `Esc`).
 - Undo toast after each status change; row collapse animation (respect reduced motion).
 
@@ -33,6 +37,7 @@ Admin page (T-021). Editing anything except status and notes.
 
 ## Acceptance criteria
 - [ ] Dismissing a job removes it from the default board immediately and it stays gone on reload.
+- [ ] Clicking "Analyze" sends exactly one request; no LLM request runs on page or list load.
 - [ ] A failed status change (409) restores the previous state and shows the server message.
 - [ ] Filters survive reload and can be bookmarked.
 - [ ] Keyboard flow works and is ignored while typing in inputs.

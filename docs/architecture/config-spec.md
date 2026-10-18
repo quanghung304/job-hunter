@@ -43,7 +43,6 @@ an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the defa
 | `prefilter.titleExclude` | list of regex | no | Title matching any is rejected |
 | `prefilter.minSkillHits` | int | no (2) | See above |
 | `notify.digestMinScore` | int | no (65) | |
-| `notify.alertMinScore` | int | no (85) | |
 | `tracks` | list | no | Phase 1 implements only `software`; other tracks are parsed and ignored with a WARN |
 
 ### 1.1 Region tokens

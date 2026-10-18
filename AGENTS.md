@@ -95,6 +95,8 @@ Makefile    shortcuts for both toolchains
 - Respect each source's rules in `docs/sources/<source>.md` (rate limit, attribution, User-Agent).
   Do not add LinkedIn, Indeed, Glassdoor or any source marked `forbidden` in the catalog.
 - Do not scrape HTML pages when the source offers an API or feed.
+- LLM calls happen only on an owner action for one job (`/analyze`, `/score`) or an explicit
+  admin confirmation (ADR-0010). Never from the pipeline run, a scheduler, or a loop over jobs.
 - All LLM calls go through `LlmRouter`/`LlmClient`; never hard-code a provider or model
   name in Java — use registry ids from `config/llm.yaml`. Every call is logged in
   `llm_call` and counted against the budget guard. Quota errors (429) are not job failures. Prompts are versioned files; never inline prompt text in Java.

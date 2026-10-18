@@ -27,9 +27,9 @@ in the same commit.
 ### `GET /api/jobs`
 Query (all optional): `status` (repeatable), `eligibility` (repeatable), `minScore`,
 `maxScore`, `source` (repeatable), `employmentType` (repeatable), `postedWithinDays`, `q`
-(title/company text), `includeExpired` (default false), `sort` (`score` | `posted`, default
-`score`), `page`, `size`. With no filters, the default view of T-020 applies: status ∈
-{NEW, SHORTLISTED}, eligibility ≠ INELIGIBLE, ACTIVE, score ≥ 50.
+(title/company text), `includeExpired` (default false), `analysisStage` (repeatable), `sort` (`score` | `posted`, default
+`score`), `page`, `size`. With no filters, the default view applies: status ∈ {NEW, SHORTLISTED}, prefilter PASS,
+eligibility ≠ INELIGIBLE, ACTIVE. Scored jobs come first, by score; jobs not yet analyzed follow, by `postedAt`.
 
 Item `JobSummary`:
 ```json
@@ -38,9 +38,11 @@ Item `JobSummary`:
   "eligibility": "ELIGIBLE", "remoteType": "REMOTE_RESTRICTED", "allowedRegions": ["EU"],
   "employmentTypes": ["CONTRACT"], "postedAt": "...", "firstSeenAt": "...",
   "sources": [{ "code": "himalayas", "name": "Himalayas" }],
-  "status": "NEW", "jobStatus": "ACTIVE" }
+  "status": "NEW", "jobStatus": "ACTIVE", "analysisStage": "NOT_ANALYZED" }
 ```
 `scoreBand`: `EXCELLENT` ≥ 85, `GOOD` 70–84, `MAYBE` 50–69, `WEAK` < 50, `NONE` if unscored.
+`analysisStage` (derived, ADR-0010): `NOT_ANALYZED` (no LLM call yet) · `ANALYZED`
+(extraction and eligibility done, not scored) · `SCORED` · `FAILED` (last attempt failed; retry available).
 
 ### `GET /api/jobs/{id}`
 `JobDetail` = `JobSummary` fields plus: `description`, `applyUrl`, `salary`, `tags`,
@@ -53,6 +55,18 @@ Item `JobSummary`:
 ### `POST /api/jobs/{id}/status`
 Body `{ "to": "SHORTLISTED", "note": "optional" }` → 200 with updated `JobSummary`;
 409 `ILLEGAL_STATUS_TRANSITION`; 404 `JOB_NOT_FOUND`.
+
+### `POST /api/jobs/{id}/analyze`
+Owner action "Analyze" (ADR-0010). Runs extraction if no OK extraction exists for the
+current prompt version (one EXTRACT call), then eligibility (no LLM). No body → 200 `JobDetail`.
+Repeating it makes no LLM call. Errors: 404 `JOB_NOT_FOUND`; 409 `LLM_PAUSED` (the response
+includes the `LlmAlert` for that purpose); 409 `BUDGET_REACHED`.
+
+### `POST /api/jobs/{id}/score`
+Owner action "Score" (ADR-0010). Requires an analyzed job whose eligibility is
+ELIGIBLE or UNCERTAIN; makes one SCORE call → 200 `JobDetail`. Repeating it makes no call.
+Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_NOT_ANALYZED`; 409 `JOB_NOT_ELIGIBLE`; 409 `LLM_PAUSED`;
+409 `BUDGET_REACHED`.
 
 ### `PUT /api/jobs/{id}/notes`
 Body `{ "notes": "text ≤ 10 000 chars" }` → 204.
@@ -98,6 +112,7 @@ The app header's status line ("Last run 07:00 · 42 new · 9 scored") uses the n
 
 ### `POST /api/admin/pipeline/run`
 Starts a run asynchronously → 202 `{ "accepted": true }`; 409 `PIPELINE_ALREADY_RUNNING`.
+The run makes no LLM calls (ADR-0010).
 The UI polls `GET /api/admin/overview` (`pipelineRunning`, newest report).
 
 ### `POST /api/admin/collect/{sourceCode}`
@@ -106,7 +121,33 @@ updatedJobs, skippedInvalid, warnings, error }` (`error` null unless FAILED). Ig
 `min-interval` and the `enabled` flag; collects postings newer than `prefilter.maxAgeDays`.
 404 `SOURCE_NOT_FOUND` for an unknown source code.
 
+### `POST /api/admin/jobs/analyze`
+Bulk analysis (extraction, then eligibility) of jobs the admin selected, with the same rules
+as `/analyze` (ADR-0010). Body `{ "jobIds": [42, 57], "dryRun": true }`, at most 200 ids.
+The admin picks jobs from `GET /api/jobs?analysisStage=NOT_ANALYZED`.
+
+Dry run → `{ "selected": 40, "willAnalyze": 33, "skipped": { "alreadyAnalyzed": 7, "expired": 0 },
+"estimatedCalls": 33, "estimatedCostUsd": 0.0 }`. `estimatedCalls` counts the jobs without a
+current extraction (one EXTRACT call each). Skipped jobs make no call.
+
+`dryRun: false` → 202 `{ "accepted": true }`. Progress appears in `pipelineProgress` (stage
+`ANALYZE`). Errors: 400 `TOO_MANY_JOBS`; 409 `LLM_PAUSED`; 409 `BUDGET_REACHED`, with the same
+mid-run rule as bulk scoring.
+
+### `POST /api/admin/jobs/score`
+Bulk scoring of jobs the admin selected in the Admin page table (ADR-0010). Body
+`{ "jobIds": [42, 57], "dryRun": true }`, at most 200 ids. The admin picks jobs from
+`GET /api/jobs?analysisStage=ANALYZED&eligibility=ELIGIBLE&eligibility=UNCERTAIN`.
+
+Dry run → `{ "selected": 40, "willScore": 27, "skipped": { "notAnalyzed": 5, "ineligible": 6,
+"alreadyScored": 2 }, "estimatedCalls": 27, "estimatedCostUsd": 0.04 }`. Skipped jobs make no call.
+
+`dryRun: false` → 202 `{ "accepted": true }`. Progress appears in `pipelineProgress` (stage
+`SCORE`). Errors: 400 `TOO_MANY_JOBS`; 409 `LLM_PAUSED`; 409 `BUDGET_REACHED` (checked before the
+run starts). If the budget runs out mid-run, the remaining jobs stay unscored and the report says so.
+
 ### `POST /api/admin/rescore`
+Bulk LLM action, admin only. Always run the dry run first; execute only after the owner confirms the count (ADR-0010).
 Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09 }`
 (cost = average `cost_usd` of SCORE calls in the last 30 days × calls; null if no history); with
 `dryRun: false` → 202.

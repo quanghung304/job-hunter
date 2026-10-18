@@ -33,7 +33,7 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
         │
         ▼
  ┌──────────────┐      ┌──────────────┐
- │   Tracking   │ ───► │    Notify    │  Telegram digest / alerts
+ │   Tracking   │ ───► │    Notify    │  Telegram digest
  │ status, UI   │      └──────────────┘
  └──────────────┘
 ```
@@ -50,7 +50,7 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 | `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
 | `scoring` | Scoring (LLM); writes scores through `AssessmentService` | common, profile, llm, enrich |
 | `tracking` | `job_tracking` status machine, notes, history; `JobBoardQuery` (read-only SQL joining job + assessment + tracking for the UI) | common, profile, ingest (read), enrich (read) |
-| `notify` | Telegram client, digest and job alert builders, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
+| `notify` | Telegram client, digest builder, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
 | `pipeline` | `PipelineOrchestrator`, scheduler, admin trigger; the only place that calls modules in sequence | all above |
 | `api` | REST controllers (`/api/**`), request/response DTOs, `ProblemDetail` error mapping, OpenAPI config, SPA fallback controller | tracking, scoring, enrich, ingest, pipeline, source, llm (usage stats), profile |
 | `eval` | Offline eval runner over labeled jobs | enrich, scoring, llm |
@@ -94,25 +94,30 @@ public interface ProfileProvider { Profile current(); }
 
 `NormalizedPosting` fields are defined in `data-model.md` §3.
 
-## Pipeline run (one pass)
+## Pipeline run (one pass, zero LLM calls)
 
 1. For each enabled collector (sequentially; each with its own timeout and try/catch):
    collect → ingest. Record `collector_run`.
-2. Select jobs needing work for the current profile:
-   - no `job_extraction` for the current extraction prompt version → prefilter → extract
-   - extraction exists but no eligibility/score for current versions → evaluate → score
-3. Before each LLM call, `LlmRouter` resolves the assigned model for the purpose. If that
-   model is `RATE_LIMITED`, `EXHAUSTED` or `ERROR`: use the first usable fallback when
-   `autoFallback` is on (PAID only if `allowPaid`), otherwise pause that purpose for the rest
-   of the run (jobs stay PENDING). Extraction and scoring pause independently.
-   Respect the budget guard: stop LLM work when the per-run or monthly limit is hit;
-   leftover jobs are processed on the next run. Order of LLM work: newest `posted_at`
-   first, because fresh jobs matter most.
-4. Mark expired jobs.
-5. Send instant alerts for new scores ≥ alert threshold. The daily digest is a separate
-   scheduled job.
+2. Prefilter new or changed ACTIVE jobs for the current profile (rules, no LLM).
+3. Mark expired jobs.
+4. Build digest data: new jobs not yet analyzed, and scored jobs above the digest threshold.
+   The daily digest is a separate scheduled job.
 
-A run is idempotent: running twice in a row does no LLM work the second time.
+A run never calls an LLM (ADR-0010). Running it twice in a row changes nothing unless new jobs arrived.
+
+## LLM work on owner action (ADR-0010)
+
+- **Analyze** (`POST /api/jobs/{id}/analyze`): extraction (one EXTRACT call, cached per
+  prompt version), then eligibility (Java). Each call goes through `LlmRouter`.
+- **Score** (`POST /api/jobs/{id}/score`): one SCORE call, only for an analyzed job that is
+  ELIGIBLE or UNCERTAIN.
+- **Bulk** (admin only, with a dry run showing the count first): "Re-score active jobs",
+  "Retry failed", and bulk analysis and scoring of jobs the admin selects in a table.
+- Before each call, `LlmRouter` resolves the assigned model for the purpose. If that model is
+  `RATE_LIMITED`, `EXHAUSTED` or `ERROR`, it uses the first usable fallback when `autoFallback`
+  is on (PAID only if `allowPaid`). Otherwise the call is refused with `LLM_PAUSED` and the job
+  stays unanalyzed. Extraction and scoring pause independently.
+- The budget guard applies to each call. At the limit, the call is refused with `BUDGET_REACHED`.
 
 ## Scheduling
 

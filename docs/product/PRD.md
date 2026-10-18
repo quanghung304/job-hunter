@@ -27,7 +27,7 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 | G2 | Drop jobs I cannot take | ≤ 5% of jobs shown to me are clearly ineligible (region, on-site, full-time-only when I set part-time only) |
 | G3 | Rank the rest by fit | In the eval set, ≥ 80% of jobs I labeled HIGH score ≥ 70 |
 | G4 | Track my decisions | Every shown job has a status; nothing I dismissed shows again |
-| G5 | Notify me | Daily Telegram digest; instant alert for score ≥ 85 |
+| G5 | Notify me | Daily Telegram digest of new jobs and scored matches |
 | G6 | Stay cheap | Run on free-tier/local models by default; paid LLM cost ≤ 5 USD/month |
 | G7 | Never stall silently | Any LLM pause is announced within one pipeline run and can be resolved from the UI |
 
@@ -44,10 +44,12 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 - F1.5 Cheap rule-based prefilter (age, keywords, excluded titles) runs before any LLM call.
 - F1.6 The LLM extracts structured attributes (remote type, allowed regions, employment
   type, hours, seniority, stack, languages, salary) from the description.
+  It runs only when the owner presses Analyze on that job (ADR-0010), never for every collected job.
 - F1.7 A deterministic eligibility check compares attributes to the profile:
   `ELIGIBLE`, `UNCERTAIN` or `INELIGIBLE`, with reasons.
-- F1.8 The LLM scores `ELIGIBLE` and `UNCERTAIN` jobs 0–100 with a breakdown, strengths,
-  gaps, red flags and a one-line summary in the profile's summary language.
+- F1.8 When the owner presses Score on an `ELIGIBLE` or `UNCERTAIN` job, the LLM scores it
+  0–100 with a breakdown, strengths, gaps, red flags and a one-line summary in the profile's
+  summary language.
 
 ### F2 — Track jobs
 
@@ -57,8 +59,9 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
   links to original postings, my notes.
 - F2.3 Status changes with one click; every change is stored in history.
 - F2.4 Notes per job.
-- F2.5 Telegram: daily digest of new jobs above threshold; instant alert above a higher
-  threshold; each message links to the job's detail page and the original posting.
+- F2.5 Telegram: daily digest only (no instant alerts). It lists new jobs waiting for analysis
+  and scored jobs above the digest threshold. Each message links to the job's detail page and
+  the original posting.
 - F2.6 Admin page: source health (last run, counts, errors), LLM usage this month,
   button to run the pipeline now.
 - F2.7 Jobs not seen in any source for N days are marked `EXPIRED` (still visible in history).
@@ -70,6 +73,10 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
   to use from a registry of free, local and paid models, from the banner or the Admin page,
   without restart. Optional automatic fallback (off by default; paid fallback needs explicit
   permission). Every switch is recorded.
+- F2.10 Per-job analysis: the owner presses "Analyze" and "Score" on one job at a time. The
+  pipeline run makes no LLM calls. Bulk LLM actions exist only in the admin page: bulk analysis
+  and scoring of selected jobs, re-scoring, and retry. Each one runs after a dry run shows the
+  count (ADR-0010).
 
 ## 5. Non-goals for Phase 1
 

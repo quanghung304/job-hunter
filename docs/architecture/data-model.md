@@ -179,14 +179,14 @@ Written by `EvalRunner` (T-016): `id`, `extract_model_id`, `score_model_id`,
 `cost_usd`, `created_at`. The Admin "LLM models" card shows the newest run per model.
 
 ### `notification`
-| id | profile_id | channel (`TELEGRAM`) | kind (`DIGEST`, `ALERT`, `LLM_QUOTA`) | job_ids bigint[] | ref text | sent_at | success | error |
+| id | profile_id | channel (`TELEGRAM`) | kind (`DIGEST`, `LLM_QUOTA`) | job_ids bigint[] | ref text | sent_at | success | error |
 
 `profile_id` was added in T-003: without it "once per profile" cannot be checked.
 V4 created `notification` without `ref` and with `kind in (DIGEST, ALERT)` and
 `profile_id not null`; T-022 adds a new migration for `ref`, `LLM_QUOTA` and a nullable
 `profile_id` (quota alerts are not per profile).
 
-A job is alerted at most once per profile; the digest includes only jobs not in a previous
+A job appears in at most one digest per profile; the digest includes only jobs not in a previous
 digest. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status
 is announced at most once per day.
 

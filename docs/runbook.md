@@ -36,8 +36,12 @@ LLM cost.
 
 - Pipeline runs at 07:00 and 19:00 Europe/Rome while the app is running; on start it
   catches up if the last run is older than 6h.
-- Digest at 08:30. Alerts immediately for score ≥ alert threshold.
+- Digest at 08:30: new jobs waiting for analysis, and scored jobs above the digest threshold.
 - Run now: Admin → "Run pipeline", or `curl -X POST localhost:8080/api/admin/pipeline/run`.
+- The pipeline never calls the LLM. New jobs appear as "Not analyzed". Open a job you want to
+  judge and press "Analyze" (one extraction call), then "Score" (one scoring call) if it is
+  eligible. On the admin page you can select jobs and analyze or score them in bulk, or
+  re-score active jobs. Each of these shows the count first.
 
 ## Changing the profile
 
@@ -53,7 +57,7 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
   `.env`, then restart (keys are read at startup).
 - **When a model runs out** you get a Telegram message and a banner on every page. Click
   "Switch model", pick another usable model, optionally tick "Process waiting jobs now".
-  If you do nothing, waiting jobs are processed automatically after the limit resets.
+  If you do nothing, the Analyze/Score buttons for that step stay disabled until the limit resets.
 - **Paid models (Claude) are off by default** (ADR-0009). To allow them set
   `LLM_ALLOW_PAID_CALLS=true` in `.env` and restart; the monthly budget
   (`app.llm.monthly-budget-usd`) still applies. While off, a PAID assignment or fallback
@@ -94,6 +98,7 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
 | Telegram not sending | `notification.error` | Token/chat id; bot must have received a message from you first |
 | Page reload on `/jobs/42` gives 404 | SPA fallback | Check `SpaFallbackController` and that the app was started with `make run` |
 | Frontend type errors after pulling | API contract changed | `make api` |
+| Board shows only "Not analyzed" jobs | Expected: collection makes no LLM calls | Press "Analyze" on the jobs you want to judge |
 | Jobs I dismissed reappear | Fingerprint changed (title edited by employer) | Expected occasionally; dismiss again |
 
 ## Backup and restore

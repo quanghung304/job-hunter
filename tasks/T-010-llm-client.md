@@ -39,7 +39,7 @@ logging of every call, quota status tracking, and a budget guard for paid models
   comments in `config/llm.yaml` and correct wrong values there.
 - `FakeLlmClient` per testing.md; `app.llm.force-model=fake` overrides all assignments.
 - `LlmRouter.call(purpose, …)`: reads the assignment (seed from `defaults` if the table is
-  empty), checks model status, applies fallback/pause rules (overview "Pipeline run" step 3),
+  empty), checks model status, applies fallback/pause rules (overview "LLM work on owner action"),
   returns `LlmResult` or `LlmUnavailable(purpose, reason)` (not an exception the caller must
   treat as a job failure).
 - `QuotaTracker` (basic part): updates `llm_model_state` from responses per data-model status

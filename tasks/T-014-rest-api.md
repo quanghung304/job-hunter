@@ -16,6 +16,9 @@ so the frontend tasks can build against a stable contract.
   sorts in api-spec; default view when no filters; text search via ILIKE on title/company.
 - `JobDetailQuery`: everything `JobDetail` needs, including `allowedTransitions` from
   `TrackingStatusMachine`.
+- `POST /api/jobs/{id}/analyze` and `POST /api/jobs/{id}/score` (owner actions, ADR-0010)
+  calling `AnalysisService` / `ScoringService`, with the 409 codes in api-spec. Repeat calls
+  for the same prompt version make no LLM call. `analysisStage` on `JobSummary`.
 - `TrackingService.changeStatus(jobId, to, note)` (validates transition, writes event) and
   `updateNotes`.
 - Overview extras used by the UI: `kpis`, `schedule` (next cron fire times), and
@@ -24,7 +27,7 @@ so the frontend tasks can build against a stable contract.
 - `GET /api/status` (api-spec) with `llmAlerts` always `[]` for now — T-022 fills it.
   `llmAlerts` in the overview likewise `[]`.
 - Controllers: `JobController`, `MetaController`, `AdminController` (overview, pipeline run,
-  collect, rescore dry-run/execute, retry, companies, eval export stub returning 501 until T-016).
+  collect, bulk analyze and score of selected jobs (`POST /api/admin/jobs/analyze` and `/score`, dry-run/execute), rescore dry-run/execute, retry, companies, eval export stub returning 501 until T-016).
 - Response DTOs with accurate OpenAPI annotations (required fields, enums, nullability).
 - `scoreBand` computed in one place (shared with Telegram formatting).
 - Regenerate `docs/architecture/openapi.json`.
@@ -36,7 +39,8 @@ Any frontend code. Auth.
 - [ ] Every endpoint in api-spec returns the documented shape; errors are Problem Details
       with the documented `code`.
 - [ ] Illegal transition → 409 `ILLEGAL_STATUS_TRANSITION`; unknown job → 404 `JOB_NOT_FOUND`.
-- [ ] Default view excludes DISMISSED, INELIGIBLE, EXPIRED and score < 50.
+- [ ] Default view excludes DISMISSED, INELIGIBLE, EXPIRED and non-PASS prefilter jobs;
+      unscored jobs are included after scored ones.
 - [ ] Queries filter by `profile_id` (test with two profiles' rows in the DB).
 - [ ] `openapi.json` committed and `OpenApiExportIT` passes.
 

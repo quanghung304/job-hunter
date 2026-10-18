@@ -56,7 +56,6 @@ prefilter:
 
 notify:
   digestMinScore: 65
-  alertMinScore: 85
 
 tracks:
   - name: software

@@ -21,6 +21,11 @@ prompt version, and the deterministic eligibility evaluator classifies them for 
   `JobAttributes` without DB writes (reused by the eval in T-016); `extract(jobId)` wraps it.
 - Listener for `JobDescriptionChanged`: delete/invalidate extractions for that job and reset
   its assessments to PENDING.
+- `AnalysisService.analyze(jobId)` (owner action, ADR-0010): extraction if needed, then
+  eligibility. Called only by the analyze endpoint (T-014), never by the pipeline.
+- `AnalysisService.analyzeMany(jobIds, dryRun)` for the admin bulk action (api-spec
+  `POST /api/admin/jobs/analyze`): max 200 ids; skips jobs that already have a current
+  extraction and expired jobs; stops at budget or pause and reports the rest.
 - `EligibilityEvaluator.evaluate(JobAttributes, JobView, Profile)` — pure, implements every
   row in §4 including `FULL_TIME_ONLY_SOFT`, DST-aware timezone check with injected `Clock`,
   language level comparison (`NATIVE` > `C2` > … > `A1`), uses `RegionMatcher` (T-002).
@@ -31,6 +36,8 @@ Scoring (T-012). Pipeline wiring (T-013) — expose service methods only.
 
 ## Acceptance criteria
 - [ ] Re-running extraction for the same job and version makes no LLM call.
+- [ ] Analyzing 3 jobs makes at most 3 EXTRACT calls; the pipeline makes none (ADR-0010).
+- [ ] Bulk analysis never sends a job that already has a current extraction.
 - [ ] Invalid LLM JSON → one corrective retry → FAILED after max attempts (3 across runs).
 - [ ] Every cell of the §4 table has a test row.
 

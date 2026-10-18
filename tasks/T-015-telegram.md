@@ -3,7 +3,7 @@
 Phase: 1 · Depends on: T-013 · Size: S
 
 ## Goal
-Instant alerts for top jobs and a daily digest via the Telegram Bot API.
+A daily digest via the Telegram Bot API. No instant alerts (owner decision, 2026-10-18).
 
 ## Read first
 - PRD F2.5 · data-model `notification` · config-spec (`notify.*`, `app.notify.*`)
@@ -11,17 +11,16 @@ Instant alerts for top jobs and a daily digest via the Telegram Bot API.
 ## In scope
 - `TelegramClient`: `sendMessage` with `parse_mode=HTML`, escaping, 4096-char limit
   (split digests into several messages), retry once on 429 honoring `retry_after`.
-- Alert: on `NewScoredJobs`, for scores ≥ `notify.alertMinScore` not alerted before →
-  one message per job: score, title, company, summary, region/employment line, links
-  ("Open" → `${app.public-base-url}/jobs/{id}`, "Posting" → original URL).
-- Digest (`app.notify.digest-cron`): jobs scored since last digest with score ≥
-  `digestMinScore`, status NEW, not in a previous digest; top 15 by score, + "and N more";
-  send nothing when empty.
+- No instant alerts. Do not implement `notify.alertMinScore`.
+- Digest (`app.notify.digest-cron`): (a) count of NEW, ACTIVE, prefilter-PASS jobs not yet
+  analyzed; (b) jobs scored since last digest with score ≥ `digestMinScore`, status NEW, not in
+  a previous digest; top 15 by score, + "and N more". Links: "Open" → `${app.public-base-url}/jobs/{id}`,
+  "Posting" → original URL. Send nothing when (a) and (b) are both empty.
 - Record every send in `notification`.
 - Disabled unless `app.notify.telegram.enabled=true` and env vars present (WARN otherwise).
 
 ## Acceptance criteria
-- [ ] A job is alerted at most once and appears in at most one digest.
+- [ ] A job appears in at most one digest.
 - [ ] Message text is valid Telegram HTML (escape `<`, `>`, `&`).
 
 ## Tests

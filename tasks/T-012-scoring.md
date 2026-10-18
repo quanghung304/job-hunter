@@ -14,13 +14,16 @@ summary and apply advice, stored in `job_assessment`.
 - `ScoreResult` record + validation (ranges; lists ≤ 3; summary ≤ 200 chars — truncate
   rather than fail for text length).
 - Sum check: if `score` ≠ sum of breakdown, use the sum, log WARN.
-- `ScoringService.score(jobId, profile)`: requires OK extraction and eligibility in
+- `ScoringService.score(jobId, profile)` (owner action via the score endpoint, ADR-0010; never called by the pipeline): requires OK extraction and eligibility in
   {ELIGIBLE, UNCERTAIN}; variables: `summaryLanguage`, `candidateBlock`, title, company,
   `extractionJson` (pretty JSON of attributes), eligibility + reasons (one per line),
   description truncated to 8 000 chars. Stores via `AssessmentService.recordScore(...)`.
   Honors `BudgetGuard`.
 - As in T-011, a pure `computeScore(JobView, JobAttributes, EligibilityResult, Profile)`
   without DB writes, wrapped by `score(...)` (reused by the eval).
+- `ScoringService.scoreSelected(jobIds, profile, dryRun)` for the admin bulk action (api-spec
+  `POST /api/admin/jobs/score`): max 200 ids; skips jobs not analyzed, ineligible or already
+  scored; stops at budget or pause and reports the rest as unscored.
 - `ScoringService.rescoreActive(profile)`: returns the count first (dry run) and executes
   only when confirmed (used by admin page). ADR-0009: the dry run also returns the SCORE
   model, its tier and the estimated cost; if that model is PAID the confirmation must say so,
@@ -28,6 +31,7 @@ summary and apply advice, stored in `job_assessment`.
 
 ## Acceptance criteria
 - [ ] INELIGIBLE or prefilter-rejected jobs are never sent to the LLM.
+- [ ] Bulk scoring never sends a job that is not analyzed or is ineligible.
 - [ ] Scoring the same job/profile/prompt version twice makes no second call.
 - [ ] Summary language follows the profile (`vi` in the example profile).
 - [ ] A PAID SCORE model is never called without consent (ADR-0009): `PAID_NOT_ALLOWED` leaves

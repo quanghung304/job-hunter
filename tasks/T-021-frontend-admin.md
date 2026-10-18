@@ -17,14 +17,16 @@ One page to see whether the system is healthy and to trigger maintenance actions
   `SourcesTable` (status tag + text, long errors truncated with full text in `title`),
   `LlmUsageCard` (meter + 14-day CSS bars, no chart library), `RunsList`, `FailuresList`
   with Retry, `CompaniesTable`, `RescoreDialog` (shows `jobCount` and `estimatedCostUsd`),
+  `BulkActionTable` + `BulkActionDialog` (Analyze or Score mode, up to 200 jobs, dry run, confirm; `useBulkAction()`),
   Export for labeling (toast with path and count).
 - App header status line reads from `GET /api/status` via `useStatus()` (finish what T-019
   stubbed). The LLM banner and LLM models card come in T-023.
 
 ## Acceptance criteria
 - [ ] Run button disabled while running; 409 shows "already running" toast.
-- [ ] Re-score never executes without the confirm step showing the job count, the SCORE model
-      and the estimated cost; a PAID model is called out explicitly (ADR-0009).
+- [ ] Re-score and bulk actions never execute without the confirm step showing the job count, the
+      model and the estimated cost; a PAID model is called out explicitly (ADR-0009).
+- [ ] Bulk actions cannot select more than 200 jobs.
 - [ ] Every status is readable without color.
 - [ ] Matches the "Admin · desktop" mockup at 1440 px; tables scroll horizontally on mobile.
 

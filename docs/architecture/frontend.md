@@ -39,9 +39,9 @@ frontend/
                     useBoardKeyboard
     features/job/   JobDetail (shared by pane and mobile page), WhyItFits, ScoreBreakdown,
                     EligibilityPanel, FactsPanel, DescriptionPanel, NotesEditor, HistoryList,
-                    MobileActionBar
+                    MobileActionBar, AnalysisActions
     features/admin/ AdminPage, KpiRow, SourcesTable, LlmUsageCard, RunsList, FailuresList,
-                    CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard
+                    CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard, BulkActionTable, BulkActionDialog
     features/llm/   LlmAlertBanner, SwitchModelDialog, TierTag, ModelStatusTag
     lib/            format.ts, labels.ts, statusMachine.ts, scoreBand.ts, useMediaQuery.ts
     styles/         tokens.css (CSS variables), index.css
@@ -189,14 +189,14 @@ Cancel (secondary), Save (primary).
 ### `/` and `/jobs/:id` — Board (desktop ≥ 1024px: split view)
 - Under the header, the **filter bar** (`--surface-muted`, bottom border, padding 12px 24px,
   wraps): search field (min 240px, with `/` kbd hint), one dropdown button per filter
-  showing "Label **value**" (Status, Eligibility, Score, Source, Type, Posted), "Reset" as an
+  showing "Label **value**" (Status, Eligibility, Analysis, Score, Source, Type, Posted), "Reset" as an
   underlined text button, then right-aligned: mono job count and a "Sort: Score" button.
 - Below: two columns in a wrapping flex row.
   - **List** (`flex: 1 1 440px; max-width: 600px`), `--surface`, right border. Rows separated
     by `--line-soft`. Row = [select button: ScoreBadge sm · title · "company · sources" ·
     summary (2-line clamp, hidden in compact density) · tags (Needs check, StatusTag,
     FactChips)] + [posted relative time, mono 12px, top-right] + [icon buttons column:
-    star (shortlist toggle) and ✕ (dismiss)]. Selected row background `--accent-tint-2`
+    analysis action (see AnalysisActions), star (shortlist toggle) and ✕ (dismiss)]. Selected row background `--accent-tint-2`
     and `aria-current="true"`. Row padding 14px (compact: 10px). "Load more" button at the
     end. Sticky list footer with the keyboard hint line (mono 12px):
     `j/k move · Enter open · s shortlist · d dismiss · a applied · o posting · / search`.
@@ -211,7 +211,7 @@ Cancel (secondary), Save (primary).
 ### `JobDetail` content order (pane and mobile page)
 1. Header: ScoreBadge lg · title (h1) · "company · location · posted X ago" · tags
    (StatusTag, EligibilityTag, FactChips).
-2. Action row: StatusActions from `allowedTransitions` (primary first, then secondary, then
+2. Action row: AnalysisActions (secondary, see below), then StatusActions from `allowedTransitions` (primary first, then secondary, then
    quiet Dismiss), spacer, "Open posting ↗" (secondary link, new tab), "Apply" (ink link,
    new tab, goes to `applyUrl`).
 3. Card "Why it fits": summary (16px), "Khi apply:"-style advice line labelled with the
@@ -228,6 +228,20 @@ Cancel (secondary), Save (primary).
 7. Two-column auto-fit grid: Notes (`<label>` + textarea 5 rows + hint "Autosaves as you
    type" → "Saved · just now", mono 12px) and History (time mono 12.5px muted · text).
 
+### AnalysisActions (ADR-0010)
+Two owner actions, one job at a time. Shown on the row (icon button in the icon column) and
+in the detail action row (text buttons).
+- `NOT_ANALYZED` → **Analyze** (secondary, `ScanSearch` icon). Calls `POST /api/jobs/{id}/analyze`.
+- `ANALYZED` and eligibility ELIGIBLE or UNCERTAIN → **Score** (secondary, `Gauge` icon).
+  Calls `POST /api/jobs/{id}/score`.
+- Otherwise hidden. A scored job shows only its score.
+- While the request runs: spinner, button disabled, text "Analyzing…" or "Scoring…".
+- Paused purpose (`LlmAlert.paused` for that purpose): button disabled, with "Model paused" and a
+  "Switch model" link that opens `SwitchModelDialog` for that purpose.
+- Success updates the job in the list and detail caches (`['jobs', …]`, `['job', id]`).
+  409 `BUDGET_REACHED` shows an error toast with the problem `detail`.
+- These buttons are secondary, so the one-primary-per-view rule is unchanged.
+
 ### Mobile (< 1024px)
 - `/` = list only. Header 56px: logo, "Board", mono count, search icon button (opens a
   full-width search field), menu icon button (links Board / Admin). Filter bar becomes a
@@ -238,7 +252,8 @@ Cancel (secondary), Save (primary).
 - `/jobs/:id` = full page: top bar with back chevron (returns to `/` with filters kept),
   "Job N of M", "Posting ↗"; then `JobDetail` with cards stacked (padding 16px), and a fixed
   **bottom action bar** (white, top border, shadow): Dismiss icon button 48×48, secondary
-  action, primary action (flex 1 each), safe-area padding at the bottom. Hide the desktop
+  action (the analysis action when it applies, see AnalysisActions), primary action (flex 1 each),
+  safe-area padding at the bottom. Hide the desktop
   action row on mobile.
 - Toast sits above the bottom action bar / at the bottom of the list, inset 12px.
 
@@ -271,6 +286,16 @@ Cancel (secondary), Save (primary).
   - Switch history (last 10): time · purpose · from → to · reason (User / Auto-fallback).
 - Companies table (Company, ATS, Board slug mono, Check tag, Active jobs, Checked) with the
   hint "Edit list in config/companies.yaml".
+- **Bulk actions** (ADR-0010): a table of jobs with a segmented control "Analyze | Score".
+  Analyze mode lists NOT_ANALYZED jobs. Score mode lists ANALYZED jobs with eligibility
+  ELIGIBLE or UNCERTAIN that are not yet scored. Columns: checkbox, title, company,
+  eligibility tag, analysis tag, posted. The header checkbox selects the visible page (max
+  200). Above the table: mono "N selected", a Clear button, and a secondary button "Analyze
+  selected…" or "Score selected…" (matching the mode, disabled at 0), which opens
+  `BulkActionDialog`.
+- `BulkActionDialog`: shadcn Dialog, max-width 460px; title "Analyze N jobs?" or "Score N
+  jobs?"; mono counts for will run, skipped (with reasons) and estimated calls and cost;
+  Cancel (secondary) and "Analyze N jobs" or "Score N jobs" (primary).
 - `RescoreDialog`: shadcn Dialog, max-width 460px; title "Re-score active jobs?", text with
   mono job count, a `--ground` box "Estimated cost ≈ $x", Cancel (secondary) and
   "Re-score N jobs" (primary).
@@ -308,7 +333,7 @@ Cancel (secondary), Save (primary).
 ### Admin
 - Overview refetch every 3 s while `pipelineRunning`, else every 60 s.
 - Run → 202 → banner; 409 → toast "Pipeline is already running".
-- Re-score: dry run first; the dialog must show the count before executing.
+- Re-score and bulk actions: dry run first; the dialog must show the count, and for bulk actions the skipped counts, before executing.
 
 ## Rules
 
@@ -320,6 +345,6 @@ Cancel (secondary), Save (primary).
   focus ring (2px `--accent` outline, offset 2px), color never the only signal, icon-only
   buttons have `aria-label`, text contrast ≥ 4.5:1.
 - No external analytics, no fonts/scripts from third-party CDNs (works offline).
-- UI text in English; job summaries and apply advice arrive in the profile's language from
+- UI text in English. Job summaries and apply advice arrive in the profile's language from
   the backend and are rendered with that `lang`.
 - Responsive breakpoint for split view vs mobile: 1024px (`lib/useMediaQuery.ts`).

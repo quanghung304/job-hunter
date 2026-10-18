@@ -1,6 +1,6 @@
 # ADR-0004: Rules → LLM extraction → deterministic eligibility → LLM scoring
 
-Status: Accepted · Date: 2026-10-16
+Status: Accepted (trigger amended by ADR-0010) · Date: 2026-10-16
 
 ## Context
 Asking an LLM "is this job good for me, 0–100?" in one step mixes facts (is it US-only?)
@@ -13,6 +13,7 @@ every profile. Cost must stay small.
    prompt version, independent of any profile.
 3. **Eligibility** is plain Java comparing attributes with the profile; fully unit-tested.
 4. LLM **scoring** runs only for ELIGIBLE/UNCERTAIN jobs and returns a structured breakdown.
+5. Steps 2 and 4 run only when the owner asks for that job; the pipeline makes no LLM calls (ADR-0010).
 
 LLM access goes through `LlmClient`; which provider and model serve each step is decided
 by ADR-0008 (registry, free tiers, runtime switching).
@@ -24,7 +25,7 @@ by ADR-0008 (registry, free tiers, runtime switching).
   Possible later as an extra ranking signal.
 
 ## Consequences
-- Two calls per relevant job; acceptable because of the prefilter.
+- Up to two calls per job the owner chooses to analyze; the owner controls the spend (ADR-0010).
 - Eligibility bugs are fixed in code with tests, not by prompt tweaking.
 - The extraction schema becomes a contract (scoring-spec §3); changing it means a new
   prompt version and re-extraction.
