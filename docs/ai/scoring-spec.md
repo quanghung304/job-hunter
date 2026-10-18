@@ -143,7 +143,10 @@ Output schema:
 }
 ```
 
-Java validation: each breakdown value within its range; `score` must equal the sum
+Java validation (`ScoreResult`, T-012): each breakdown value within its range, lists ≤ 3
+items, summary not blank; over-long text is cut (strengths 120, summary and applyAdvice 200
+chars) instead of failing. The whole object is stored in `job_assessment.score_breakdown`.
+`score` must equal the sum
 (if not, replace with the sum and log a warning — do not retry for this alone).
 
 Score bands for UI: ≥ 85 excellent · 70–84 good · 50–69 maybe · < 50 weak.

@@ -83,7 +83,7 @@ Eligibility + score for one job and one profile. Owned by the `enrich` module;
 | eligibility_reasons | text[] | |
 | extraction_id | bigint FK | |
 | score | int | 0–100, null if not scored |
-| score_breakdown | jsonb | see `scoring-spec.md` §5 |
+| score_breakdown | jsonb | the whole scoring answer of `scoring-spec.md` §5 (breakdown, score, strengths, gaps, redFlags, summary, applyAdvice) |
 | summary | text | one line, profile summary language |
 | score_prompt_version, score_model | text | |
 | status | text | `PENDING`, `DONE`, `FAILED` |
@@ -98,7 +98,10 @@ Rows are written for the configured score prompt version (`app.llm.score-prompt`
 Analyze (ADR-0010, `AnalysisService`) records the prefilter if needed, then `extraction_id`,
 `eligibility` and `eligibility_reasons` (`RULE:UNKNOWN`/`RULE:FAIL` per non-OK rule, plus
 `FULL_TIME_ONLY_SOFT` and `CONFIDENCE:LOW`); INELIGIBLE → `status` DONE, otherwise PENDING until
-the owner scores it. A changed job description deletes the job's extractions and clears
+the owner scores it. Score (`ScoringService`) stores score, details, summary and `score_model`
+(`status` DONE); each SCORE attempt adds 1 to `attempts`, a failure without a score sets `status`
+FAILED, and 3 attempts end retries for that prompt version. A paused model or budget stop changes
+nothing (the row stays PENDING). A changed job description deletes the job's extractions and clears
 eligibility and score (`status` PENDING again).
 
 When the profile file changes (`profile_hash` differs), prefilter and eligibility are

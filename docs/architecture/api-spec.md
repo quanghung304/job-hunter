@@ -143,17 +143,24 @@ Bulk scoring of jobs the admin selected in the Admin page table (ADR-0010). Body
 `GET /api/jobs?analysisStage=ANALYZED&eligibility=ELIGIBLE&eligibility=UNCERTAIN`.
 
 Dry run → `{ "selected": 40, "willScore": 27, "skipped": { "notAnalyzed": 5, "ineligible": 6,
-"alreadyScored": 2 }, "estimatedCalls": 27, "estimatedCostUsd": 0.04 }`. Skipped jobs make no call.
+"alreadyScored": 2, "expired": 0, "failedPermanently": 0, "notFound": 0 }, "estimatedCalls": 27,
+"estimatedCostUsd": 0.04, "model": { "modelId": "groq-gpt-oss-120b", "label": "...", "tier": "FREE",
+"paidCallsAllowed": false } }`. Skipped jobs make no call. A PAID `model` must be named in the
+confirmation (ADR-0009).
 
 `dryRun: false` → 202 `{ "accepted": true }`. Progress appears in `pipelineProgress` (stage
-`SCORE`). Errors: 400 `TOO_MANY_JOBS`; 409 `LLM_PAUSED`; 409 `BUDGET_REACHED` (checked before the
+`SCORE`). Errors: 400 `TOO_MANY_JOBS`; 409 `PAID_CALLS_DISABLED` (PAID SCORE model and
+`app.llm.allow-paid-calls=false`); 409 `LLM_PAUSED`; 409 `BUDGET_REACHED` (checked before the
 run starts). If the budget runs out mid-run, the remaining jobs stay unscored and the report says so.
 
 ### `POST /api/admin/rescore`
 Bulk LLM action, admin only. Always run the dry run first; execute only after the owner confirms the count (ADR-0010).
-Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09 }`
-(cost = average `cost_usd` of SCORE calls in the last 30 days × calls; null if no history); with
-`dryRun: false` → 202.
+Re-scores ACTIVE jobs of the profile that are analyzed, ELIGIBLE or UNCERTAIN and already scored
+for the current score prompt version (after a profile or model change).
+Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09,
+"model": { "modelId": "...", "label": "...", "tier": "PAID", "paidCallsAllowed": true } }`
+(cost = 0 for FREE/LOCAL; for PAID the average `cost_usd` of that model's SCORE calls in the last
+30 days × calls, null if no history); with `dryRun: false` → 202, or 409 `PAID_CALLS_DISABLED`.
 
 ### `POST /api/admin/jobs/{id}/retry`
 Body `{ "purpose": "EXTRACT" | "SCORE" }` → resets attempts and re-runs for that job → 202.

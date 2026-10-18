@@ -96,6 +96,13 @@ public class LlmRouter {
         return callModels(purpose, List.of(registry.get(modelId)), null, prompt, jobId, responseType);
     }
 
+    /** The model that would serve {@code purpose} now (EXTRACT or SCORE), without calling it. */
+    public ModelChoice resolve(LlmPurpose purpose) {
+        String modelId = properties.forced() ? properties.forceModel() : assignments.current(purpose).modelId();
+        RegisteredModel model = registry.get(modelId);
+        return new ModelChoice(model.id(), model.label(), model.tier(), properties.allowPaidCalls());
+    }
+
     /** Assigned model first, then allowed fallbacks when auto-fallback is on. */
     List<RegisteredModel> candidates(Assignment assignment) {
         List<RegisteredModel> result = new ArrayList<>();

@@ -1,5 +1,6 @@
 package io.github.quanghung304.jobhunter.enrich;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessment;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessmentRepository;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
@@ -8,6 +9,7 @@ import io.github.quanghung304.jobhunter.llm.LlmProperties;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +105,82 @@ public class AssessmentService {
         }
         row.setUpdatedAt(clock.instant());
         assessments.save(row);
+    }
+
+    /** The row of this job and profile for the current score prompt version. */
+    @Transactional(readOnly = true)
+    public Optional<AssessmentView> find(long jobId, String profileId) {
+        return assessments.findByJobIdAndProfileIdAndScorePromptVersion(jobId, profileId, scorePromptVersion)
+                .map(AssessmentService::view);
+    }
+
+    /** Rows of these jobs for the profile and the current score prompt version, by job id. */
+    @Transactional(readOnly = true)
+    public Map<Long, AssessmentView> findAll(Collection<Long> jobIds, String profileId) {
+        if (jobIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, AssessmentView> result = new HashMap<>();
+        for (int from = 0; from < jobIds.size(); from += JOB_BATCH_SIZE) {
+            List<Long> ids = jobIds.stream().skip(from).limit(JOB_BATCH_SIZE).toList();
+            assessments.findByProfileIdAndScorePromptVersionAndJobIdIn(profileId, scorePromptVersion, ids)
+                    .forEach(row -> result.put(row.getJobId(), view(row)));
+        }
+        return result;
+    }
+
+    /** Job ids of this profile that have a score for the current score prompt version. */
+    @Transactional(readOnly = true)
+    public List<Long> scoredJobIds(String profileId) {
+        return assessments.findScoredJobIds(profileId, scorePromptVersion);
+    }
+
+    public String scorePromptVersion() {
+        return scorePromptVersion;
+    }
+
+    /**
+     * Stores a score (scoring writes only through this service): score, the full §5 object as
+     * {@code score_breakdown}, summary and model; status DONE; one more attempt.
+     */
+    @Transactional
+    public void recordScore(long jobId, String profileId, int score, JsonNode details, String summary,
+            String model) {
+        JobAssessment row = requireRow(jobId, profileId);
+        row.setScore(score);
+        row.setScoreBreakdown(details);
+        row.setSummary(summary);
+        row.setScoreModel(model);
+        row.setStatus(AssessmentStatus.DONE);
+        row.setAttempts(row.getAttempts() + 1);
+        row.setUpdatedAt(clock.instant());
+        assessments.save(row);
+    }
+
+    /** A failed scoring attempt: status FAILED and one more attempt; an earlier score is kept. */
+    @Transactional
+    public int recordScoreFailure(long jobId, String profileId) {
+        JobAssessment row = requireRow(jobId, profileId);
+        row.setAttempts(row.getAttempts() + 1);
+        if (row.getScore() == null) {
+            row.setStatus(AssessmentStatus.FAILED);
+        }
+        row.setUpdatedAt(clock.instant());
+        assessments.save(row);
+        return row.getAttempts();
+    }
+
+    private JobAssessment requireRow(long jobId, String profileId) {
+        return assessments.findByJobIdAndProfileIdAndScorePromptVersion(jobId, profileId, scorePromptVersion)
+                .orElseThrow(() -> new IllegalStateException(
+                        "no assessment row for job " + jobId + " and profile " + profileId));
+    }
+
+    static AssessmentView view(JobAssessment row) {
+        return new AssessmentView(row.getJobId(), row.getProfileId(), row.getProfileHash(), row.getPrefilterResult(),
+                row.getEligibility(), row.getEligibilityReasons(), row.getExtractionId(), row.getScore(),
+                row.getScoreBreakdown(), row.getSummary(), row.getScorePromptVersion(), row.getScoreModel(),
+                row.getStatus(), row.getAttempts());
     }
 
     /**

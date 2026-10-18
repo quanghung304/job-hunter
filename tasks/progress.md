@@ -10,6 +10,23 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — T-012 Scoring — DONE
+- `scoring`: `ScoreResult` (§5 validation, text cut, `withSumAsScore`), `ScoringService`
+  (`score(jobId, profile)` owner action, cached per job/profile/prompt version, max 3 attempts;
+  `computeScore(...)` pure for the eval; `scoreSelected` bulk max 200 with dry run naming the
+  model and cost; `rescoreActive` dry run + confirmed run), result records.
+- `enrich`: `AssessmentView`, `AssessmentService.find/findAll/scoredJobIds/recordScore/
+  recordScoreFailure`. `llm`: `ModelChoice` + `LlmRouter.resolve(purpose)`,
+  `BudgetGuard.estimateCostUsd`, `PaidCallsDisabledException` (409 `PAID_CALLS_DISABLED`).
+- Choices (docs updated: overview, api-spec, data-model, scoring-spec, prompts README):
+  `scoring` may read `ingest` (`JobView`, as the task's `computeScore` signature needs; ArchUnit
+  updated); `score_breakdown` stores the whole §5 object; eligibility is re-checked before each
+  SCORE call; bulk score and re-score are refused up front for a PAID model without consent.
+  score-v1 is now released.
+- Tests: `ScoreResultValidationTest` (12), `ScoringPromptRenderingTest` (4), `ScoringServiceIT`
+  (13), `ScoringPaidConsentIT` (3). No real LLM call.
+- Next: T-013 (pipeline) or T-014 (REST API).
+
 ## 2026-10-18 — T-011 Extraction + eligibility — DONE
 - `enrich`: `JobAttributes` (§3, Bean Validation; lenient: missing lists → empty, long text cut),
   `ExtractionService` (`extractAttributes(JobView)` pure for the eval; `extract(jobId)` cached per

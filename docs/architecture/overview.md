@@ -48,7 +48,7 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry; `JobQueryService` returns read-only `JobView`s to other modules | common, source (DTOs only) |
 | `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; publishes `LlmModelStatusChanged` events (ADR-0008) | common |
 | `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
-| `scoring` | Scoring (LLM); writes scores through `AssessmentService` | common, profile, llm, enrich |
+| `scoring` | Scoring (LLM, owner action); writes scores through `AssessmentService` | common, profile, ingest (read), llm, enrich |
 | `tracking` | `job_tracking` status machine, notes, history; `JobBoardQuery` (read-only SQL joining job + assessment + tracking for the UI) | common, profile, ingest (read), enrich (read) |
 | `notify` | Telegram client, digest builder, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
 | `pipeline` | `PipelineOrchestrator`, scheduler, admin trigger; the only place that calls modules in sequence | all above |
