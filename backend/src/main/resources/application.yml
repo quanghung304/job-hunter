@@ -51,7 +51,15 @@ app:
   pipeline:
     collector-timeout: 2m
   llm:
+    registry-path: ../config/llm.yaml
+    force-model:            # e.g. fake: every purpose uses this registry model
+    extract-prompt: extract-v1
     score-prompt: score-v1
+    max-calls-per-run: 150
+    monthly-budget-usd: 5.00
+    allow-paid-calls: ${LLM_ALLOW_PAID_CALLS:false}   # owner consent to PAID models (ADR-0009)
+    timeout: 60s
+    timeout-local: 180s
   sources:
     arbeitnow:
       enabled: true

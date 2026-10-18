@@ -57,7 +57,7 @@ Makefile    shortcuts for both toolchains
 | Frontend structure, pages, rules | `docs/architecture/frontend.md` |
 | Tables, enums, status lifecycle | `docs/architecture/data-model.md` |
 | `profile.yaml` / `application.yml` / `llm.yaml` fields | `docs/architecture/config-spec.md` |
-| Past decisions (do not re-litigate) | `docs/architecture/adr/` |
+| Past decisions (do not re-litigate) | `docs/architecture/adr/` (paid LLM consent: ADR-0009) |
 | Source list and status | `docs/sources/catalog.md` + `docs/sources/<source>.md` |
 | LLM extraction, eligibility, scoring | `docs/ai/scoring-spec.md`, `docs/ai/prompts/` |
 | Coding rules | `docs/conventions.md` |
@@ -98,6 +98,12 @@ Makefile    shortcuts for both toolchains
 - All LLM calls go through `LlmRouter`/`LlmClient`; never hard-code a provider or model
   name in Java — use registry ids from `config/llm.yaml`. Every call is logged in
   `llm_call` and counted against the budget guard. Quota errors (429) are not job failures. Prompts are versioned files; never inline prompt text in Java.
+- **Paid LLM calls need the owner's consent (ADR-0009).** Never run anything that could
+  call a paid LLM API (live checks, eval, the app with a paid key, `curl` to a provider)
+  without asking Hugh first, and never set `app.llm.allow-paid-calls=true` or a paid key
+  yourself. In the code, only `LlmRouter` calls `LlmClient`; every feature that may start
+  PAID calls shows model, call count and estimated cost and runs only after explicit
+  confirmation.
 - Changing a prompt means creating a new version file (`score-v2.md`), never editing a
   released one, then running the eval and recording results in `docs/ai/eval/results.md`.
 - Store times as UTC `Instant`/`timestamptz`. Do not use `LocalDateTime` for persisted data.

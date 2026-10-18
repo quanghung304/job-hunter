@@ -1,0 +1,46 @@
+# Registry for LlmRouterIT / BudgetGuardIT: every model is served by the FakeLlmClient.
+providers:
+  fake:
+    type: fake
+  keyed:
+    type: fake
+    apiKeyEnv: ROUTER_TEST_KEY        # never set in tests → missing key
+
+models:
+  primary:
+    label: Primary
+    provider: fake
+    modelId: primary-model
+    tier: FREE
+    limits: { rpd: 1000 }
+  backup:
+    label: Backup
+    provider: fake
+    modelId: backup-model
+    tier: FREE
+  paid:
+    label: Paid
+    provider: fake
+    modelId: paid-model
+    tier: PAID
+    pricing: { inputPerMTok: 1.00, outputPerMTok: 2.00 }
+  local:
+    label: Local
+    provider: fake
+    modelId: local-model
+    tier: LOCAL
+  nokey:
+    label: Without key
+    provider: keyed
+    modelId: nokey-model
+    tier: FREE
+
+defaults:
+  EXTRACT:
+    model: primary
+    fallbacks: [backup, paid]
+  SCORE:
+    model: primary
+    fallbacks: [backup, paid]
+    autoFallback: false
+    allowPaid: false

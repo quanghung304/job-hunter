@@ -20,21 +20,25 @@ exhausted or broken, and can switch the model per purpose at runtime through the
   NEAR_LIMIT, EXHAUSTED, ERROR, and "back to AVAILABLE" only if an EXHAUSTED/ERROR alert was
   sent that day. At most once per `<model>:<status>:<UTC date>` (`notification.ref`).
   Message (HTML):
-  - EXHAUSTED: "⚠️ <b>Llama 3.3 70B (Groq)</b> hết hạn mức hôm nay (1000/1000 requests).
+  - EXHAUSTED: "⚠️ <b>GPT-OSS 120B (Groq)</b> hết hạn mức hôm nay (1000/1000 requests).
     Extraction đang tạm dừng · 23 job chờ. Mở lại lúc 02:00. Đổi model: <link to /admin#llm>".
   - NEAR_LIMIT: "… đã dùng 80% hạn mức ngày (812/1000)."
   - ERROR: "… lỗi: <detail> (kiểm tra API key)."
   - Auto-fallback switch: "Đã tự chuyển Extraction sang <label> vì <reason>."
   Language follows `profile.summaryLanguage` (vi/en); keep both templates in one class.
   (Emoji only in Telegram text, never in the web UI.)
+- Paid consent (ADR-0009): `PUT …/assignments/{purpose}` to a PAID model or with
+  `allowPaid: true`, and `POST …/models/{modelId}/test` on a PAID model, require
+  `confirmPaid: true` (else 409 `PAID_CONFIRMATION_REQUIRED` with the estimated cost per call)
+  and are refused with 409 `PAID_CALLS_DISABLED` while `app.llm.allow-paid-calls=false`.
+  `GET /api/admin/llm` returns `paidCallsAllowed`.
 - Endpoints per api-spec: fill `llmAlerts` in `GET /api/status` (created in T-014), `GET /api/admin/llm`,
   `PUT /api/admin/llm/assignments/{purpose}` (validation, `llm_assignment_event`,
   `warning` for PAID, optional `runNow` → triggers `PipelineOrchestrator` for LLM stages only),
   `POST /api/admin/llm/models/{modelId}/test`; add `llmAlerts` to the overview.
-- Auto-fallback event: when `LlmRouter` switches automatically, write
-  `llm_assignment_event` (`AUTO_FALLBACK`) and update the assignment so the UI shows reality.
-  When the original model becomes AVAILABLE again it is **not** switched back automatically;
-  the alert suggests switching back.
+- Auto-fallback event: done in T-010 (`AssignmentService.switchToFallback`: assignment updated,
+  `updated_by = auto-fallback`, `AUTO_FALLBACK` event, no automatic switch back). T-022 adds
+  the Telegram message and the alert suggesting to switch back.
 - `usageToday` per model (UTC day) and `lastEval` from `eval_run` (if the table exists yet;
   else null).
 - Regenerate `openapi.json`.

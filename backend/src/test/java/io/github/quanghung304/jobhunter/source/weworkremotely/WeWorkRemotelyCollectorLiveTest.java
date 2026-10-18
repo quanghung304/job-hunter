@@ -8,7 +8,7 @@ import io.github.quanghung304.jobhunter.source.CollectStatus;
 import io.github.quanghung304.jobhunter.source.HttpClients;
 import io.github.quanghung304.jobhunter.source.HttpProperties;
 import io.github.quanghung304.jobhunter.source.Politeness;
-import io.github.quanghung304.jobhunter.source.Sleeper;
+import io.github.quanghung304.jobhunter.common.Sleeper;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Tag;

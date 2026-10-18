@@ -1,0 +1,9 @@
+{
+  "breakdown": {"skills": 32, "experience": 15, "arrangement": 14, "domain": 6, "other": 6},
+  "score": 73,
+  "strengths": ["Java and Spring Boot match the core skills (fake answer)"],
+  "gaps": ["No Kafka production experience mentioned"],
+  "redFlags": [],
+  "summary": "Fake score: good fit for a Java backend contract.",
+  "applyAdvice": "Emphasize Spring Boot microservices and banking experience."
+}

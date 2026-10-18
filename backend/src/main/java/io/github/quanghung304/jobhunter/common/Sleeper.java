@@ -1,4 +1,4 @@
-package io.github.quanghung304.jobhunter.source;
+package io.github.quanghung304.jobhunter.common;
 
 import java.time.Duration;
 

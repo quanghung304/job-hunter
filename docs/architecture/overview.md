@@ -42,7 +42,7 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 
 | Package | Responsibility | May depend on |
 |---|---|---|
-| `common` | Clock, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`) | — |
+| `common` | Clock, `Sleeper`, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`) | — |
 | `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
 | `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging | common |
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry; `JobQueryService` returns read-only `JobView`s to other modules | common, source (DTOs only) |
@@ -82,9 +82,12 @@ public record CollectRequest(Instant since, List<String> keywords, int maxItems)
 public record CollectResult(List<NormalizedPosting> postings, int fetched,  // fetched includes skipped items
                             List<String> warnings, CollectStatus status, String errorMessage) {}
 
-public interface LlmClient {
-    <T> LlmResult<T> completeJson(LlmRequest request, Class<T> responseType);
+// llm module: callers use the router; clients send exactly one HTTP request each
+public class LlmRouter {
+    <T> LlmOutcome<T> call(LlmPurpose purpose, String promptId, Map<String, String> variables,
+                           Long jobId, Class<T> responseType); // LlmResult | LlmUnavailable | LlmFailed
 }
+interface LlmClient { LlmResponse send(LlmRequest request); }  // only LlmRouter calls it (ADR-0009)
 
 public interface ProfileProvider { Profile current(); }
 ```

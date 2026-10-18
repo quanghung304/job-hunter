@@ -1,0 +1,19 @@
+{
+  "remoteType": "FULLY_REMOTE",
+  "allowedRegions": ["EUROPE"],
+  "regionEvidence": "Remote within Europe (fake answer)",
+  "timezoneRequirement": null,
+  "employmentTypes": ["CONTRACT"],
+  "hoursPerWeek": null,
+  "seniority": "MID",
+  "minYearsExperience": 3,
+  "requiredSkills": ["Java", "Spring Boot", "SQL"],
+  "niceToHaveSkills": ["Kafka"],
+  "requiredLanguages": [{"code": "en", "level": "B2"}],
+  "workAuthorization": null,
+  "salary": null,
+  "roleSummary": "Fake extraction: builds backend services in Java and Spring Boot.",
+  "isAgencyOrReposting": false,
+  "isScamSignal": false,
+  "confidence": "HIGH"
+}

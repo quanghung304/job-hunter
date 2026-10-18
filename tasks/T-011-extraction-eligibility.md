@@ -15,7 +15,7 @@ prompt version, and the deterministic eligibility evaluator classifies them for 
   string lengths); unknown JSON fields ignored.
 - `ExtractionService.extract(jobId)`: skip if an OK extraction exists for the configured
   prompt version; otherwise build variables (description truncation: first 9 000 + last
-  3 000 chars with "[…]" between when longer than 12 000), call `LlmClient`, store
+  3 000 chars with "[…]" between when longer than 12 000), call `LlmRouter.call(EXTRACT, …)`, store
   `job_extraction` (OK/FAILED, attempts). Honors `BudgetGuard`.
 - Split compute from persistence: `ExtractionService.extractAttributes(JobView)` returns
   `JobAttributes` without DB writes (reused by the eval in T-016); `extract(jobId)` wraps it.

@@ -1,58 +1,81 @@
 # LLM model registry. Spec: docs/architecture/config-spec.md §5 · Decision: ADR-0008
 # No secrets here: each provider names the environment variable that holds its key.
-# Model ids, base URLs and limits below were taken from public docs/summaries in Oct 2026.
-# VERIFY each against the provider's current documentation before relying on it (T-010).
+# Checked against provider docs on 2026-10-17 (T-010). Free-tier limits change without notice:
+# the provider's 429 is the real enforcement; the limits below only drive NEAR_LIMIT/EXHAUSTED
+# warnings and client-side pacing (rpm).
 
 providers:
   anthropic:
+    # Official Java SDK (com.anthropic:anthropic-java). Headers: anthropic-ratelimit-requests-remaining,
+    # anthropic-ratelimit-tokens-remaining, anthropic-ratelimit-*-reset (RFC 3339), retry-after.
+    # Optional baseUrl overrides https://api.anthropic.com (tests point it at WireMock).
     type: anthropic
     apiKeyEnv: ANTHROPIC_API_KEY
   groq:
+    # https://console.groq.com/docs — POST {baseUrl}/chat/completions, response_format json_object
+    # supported (a JSON-mode failure is HTTP 400 "json_validate_failed").
+    # Headers: x-ratelimit-limit/remaining/reset-requests (per DAY), ...-tokens (per MINUTE),
+    # reset values like "2m59.56s"; retry-after (seconds) on 429 only.
+    # 429 body: {"error":{"message":"Rate limit reached ... on requests per day (RPD): Limit 1000, Used 1000 ...",
+    # "type":"requests","code":"rate_limit_exceeded"}} — "per day"/"(RPD)"/"(TPD)" → EXHAUSTED.
     type: openai-compatible
     baseUrl: https://api.groq.com/openai/v1
     apiKeyEnv: GROQ_API_KEY
-  cerebras:
-    type: openai-compatible
-    baseUrl: https://api.cerebras.ai/v1
-    apiKeyEnv: CEREBRAS_API_KEY
   openrouter:
+    # https://openrouter.ai/docs — free model ids end in ":free"; free models: 20 rpm and
+    # 50 requests/day (1000/day after buying >= 10 credits once). 429 for rate limits
+    # (X-RateLimit-* headers on platform 429s), 402 for credits, 403 for budgets.
+    # Free endpoints may log prompts or use them for training (see each model's page): keep
+    # them out of SCORE, whose prompt contains the CV summary (ADR-0008 privacy constraint).
     type: openai-compatible
     baseUrl: https://openrouter.ai/api/v1
     apiKeyEnv: OPENROUTER_API_KEY
-  github:
-    type: openai-compatible
-    baseUrl: https://models.github.ai/inference      # verify
-    apiKeyEnv: GITHUB_MODELS_TOKEN
   ollama:
+    # https://docs.ollama.com/api/openai-compatibility — local server, no key, JSON mode supported.
     type: openai-compatible
     baseUrl: http://localhost:11434/v1
-    apiKeyEnv: ""                                     # local, no key
+    apiKeyEnv: ""
   fake:
     type: fake
+  # Removed: GitHub Models (retired 2026-07-30); Cerebras (no free tier without a credit card, 2026-10).
 
 models:
-  groq-llama-70b:
-    label: Llama 3.3 70B (Groq)
+  # Groq: model list read from GET /models with the owner's key on 2026-10-18
+  # (llama-3.3-70b-versatile is no longer offered: HTTP 404). Limits: Groq rate-limits page.
+  # gpt-oss and qwen3.8 are reasoning models: thinking tokens count against max_tokens, so
+  # minOutputTokens leaves room for the answer (a live gpt-oss-120b extraction used 840).
+  groq-gpt-oss-120b:
+    label: GPT-OSS 120B (Groq)
     provider: groq
-    modelId: llama-3.3-70b-versatile                 # verify on Groq's model list
+    modelId: openai/gpt-oss-120b
     tier: FREE
-    limits: { rpm: 30, rpd: 1000 }                    # verify in Groq console
-  cerebras-llama-70b:
-    label: Llama 3.3 70B (Cerebras)
-    provider: cerebras
-    modelId: llama-3.3-70b                            # verify
+    minOutputTokens: 4096
+    limits: { rpm: 30, rpd: 1000, tokensPerMinute: 8000, tokensPerDay: 200000 }
+  groq-gpt-oss-20b:
+    label: GPT-OSS 20B (Groq)
+    provider: groq
+    modelId: openai/gpt-oss-20b
     tier: FREE
-    limits: { rpm: 30, tokensPerDay: 1000000 }        # verify
-  github-gpt:
-    label: GitHub Models (choose model)
-    provider: github
-    modelId: openai/gpt-4o-mini                       # verify available model ids
+    minOutputTokens: 4096
+    limits: { rpm: 30, rpd: 1000, tokensPerMinute: 8000, tokensPerDay: 200000 }
+  groq-qwen3-27b:
+    label: Qwen 3.8 27B (Groq)
+    provider: groq
+    modelId: qwen/qwen3.8-27b
     tier: FREE
-    limits: { rpm: 15, rpd: 150 }                     # verify
+    minOutputTokens: 4096
+    limits: { rpm: 30, rpd: 1000, tokensPerMinute: 8000, tokensPerDay: 200000 }
+  openrouter-nemotron-super:
+    label: Nemotron 3 Super 120B (OpenRouter, free)
+    provider: openrouter
+    modelId: nvidia/nemotron-3-super-120b-a12b:free   # free model list checked 2026-10-18; supports response_format
+    tier: FREE
+    minOutputTokens: 4096                    # reasoning model
+    limits: { rpm: 20, rpd: 50 }             # OpenRouter free models: 20 rpm, 50/day (1000/day after 10 credits)
   ollama-local:
     label: Local model (Ollama)
     provider: ollama
-    modelId: qwen2.5:7b-instruct                      # any model you have pulled
+    modelId: qwen2.5:7b-instruct             # any model you have pulled
     tier: LOCAL
     limits: {}
   claude-haiku:
@@ -60,7 +83,7 @@ models:
     provider: anthropic
     modelId: claude-haiku-5-5
     tier: PAID
-    pricing: { inputPerMTok: null, outputPerMTok: null }   # fill from Anthropic's price page
+    pricing: { inputPerMTok: 0.10, outputPerMTok: 0.50 }   # prompts <= 100K tokens (0.50 / 2.50 above)
     limits: {}
   fake:
     label: Fake (tests / UI work)
@@ -71,13 +94,13 @@ models:
 
 defaults:
   EXTRACT:
-    model: groq-llama-70b
-    fallbacks: [cerebras-llama-70b, claude-haiku]
+    model: groq-gpt-oss-120b
+    fallbacks: [groq-qwen3-27b, groq-gpt-oss-20b, openrouter-nemotron-super, claude-haiku]
     autoFallback: false
     allowPaid: false
   SCORE:
-    model: groq-llama-70b
-    fallbacks: [claude-haiku]
+    model: groq-gpt-oss-120b
+    fallbacks: [groq-qwen3-27b, groq-gpt-oss-20b, claude-haiku]   # no free OpenRouter model: the prompt holds CV data
     autoFallback: false
     allowPaid: false
 

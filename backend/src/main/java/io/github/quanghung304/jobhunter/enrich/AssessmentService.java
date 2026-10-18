@@ -4,6 +4,7 @@ import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessment;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessmentRepository;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
 import io.github.quanghung304.jobhunter.ingest.JobView;
+import io.github.quanghung304.jobhunter.llm.LlmProperties;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import java.time.Clock;
 import java.time.Instant;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,12 +39,12 @@ public class AssessmentService {
     private final String scorePromptVersion;
 
     public AssessmentService(JobAssessmentRepository assessments, JobQueryService jobs, Prefilter prefilter,
-            Clock clock, @Value("${app.llm.score-prompt}") String scorePromptVersion) {
+            Clock clock, LlmProperties llmProperties) {
         this.assessments = assessments;
         this.jobs = jobs;
         this.prefilter = prefilter;
         this.clock = clock;
-        this.scorePromptVersion = scorePromptVersion;
+        this.scorePromptVersion = llmProperties.scorePrompt();
     }
 
     /** Creates or updates the row of this job and profile for the current score prompt version. */

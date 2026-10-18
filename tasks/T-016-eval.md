@@ -19,6 +19,9 @@ metrics in scoring-spec §7.
   Writes one `eval_run` row (data-model; create it in a new migration) with the metrics. Loads `docs/ai/eval/labeled-jobs.jsonl`, runs
   prefilter → extraction → eligibility → scoring in memory (no DB writes to job tables;
   LLM calls logged with purpose EVAL), prints estimated cost and requires `--yes`.
+  ADR-0009: a PAID model additionally needs `app.llm.allow-paid-calls=true`; without it the
+  runner stops before any call and says so. Agents never run the eval against a real
+  provider without asking the owner.
 - Report: metrics vs targets, eligibility confusion matrix, extraction field accuracy for
   labeled `allowedRegions`/`employmentTypes`, list of disagreements (id, label, predicted,
   reasons, score). Write to stdout and `data/eval/<timestamp>.md`.

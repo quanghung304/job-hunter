@@ -42,7 +42,7 @@ Run it before switching any prompt version or model, and after changing eligibil
 
 ```bash
 cd backend && ./mvnw -q exec:java -Dexec.mainClass=io.github.quanghung304.jobhunter.eval.EvalRunner \
-  -Dexec.args="--extract=extract-v1 --score=score-v1 --extract-model=groq-llama-70b --score-model=groq-llama-70b"
+  -Dexec.args="--extract=extract-v1 --score=score-v1 --extract-model=groq-gpt-oss-120b --score-model=groq-gpt-oss-120b"
 ```
 
 Model arguments are registry ids from `config/llm.yaml`. Uses the real LLM (free-tier
@@ -55,7 +55,7 @@ disagreements with reasons, to stdout and `data/eval/<timestamp>.md`.
 ## results.md entry template
 
 ```
-## 2026-10-25 — extract-v1 / score-v1 / groq-llama-70b + groq-llama-70b — 42 jobs
+## 2026-10-25 — extract-v1 / score-v1 / groq-gpt-oss-120b + groq-gpt-oss-120b — 42 jobs
 | Metric | Value | Target |
 | false-eligible | 2.4% | ≤ 5% |
 | ... |

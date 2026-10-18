@@ -15,6 +15,10 @@ Privacy constraint: the scoring prompt contains a summary of the owner's CV. Pro
 train on free-tier data (e.g. Gemini free tier, Mistral Experiment tier) are not added to
 the registry by default.
 
+Update 2026-10-18: GitHub Models was retired on 2026-07-30 and Cerebras no longer offers a
+free tier without a credit card; both were removed from the registry. Paid calls additionally
+need the owner's consent (ADR-0009).
+
 ## Decision
 1. **Model registry** in `config/llm.yaml` (committed, no secrets): providers (type, base
    URL, env var holding the key) and models (provider, provider model id, free/paid,

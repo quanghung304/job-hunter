@@ -28,7 +28,9 @@ model for extraction or scoring in two clicks.
 ## Acceptance criteria
 - [ ] With an EXHAUSTED EXTRACT model, every page shows the banner; switching from the banner
       updates the assignment and the banner disappears after the next status poll.
-- [ ] PAID models show the cost warning before saving.
+- [ ] PAID models show the cost warning and need an explicit confirmation before saving or
+      "Test" (ADR-0009); with paid calls disabled they are not selectable and the dialog says
+      how to enable them (`LLM_ALLOW_PAID_CALLS`).
 - [ ] ERROR / EXHAUSTED models cannot be selected; the reason is visible.
 - [ ] Matches frontend.md specs; readable without color.
 

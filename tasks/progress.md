@@ -10,6 +10,49 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — T-010 follow-up: real provider check, Cerebras removed, LF line endings — DONE
+- `.gitattributes`: `* text=auto eol=lf` (owner approved the T-009 proposal); frontend files
+  re-checked out with LF → Prettier passes. Other folders turn LF on their next checkout.
+- Cerebras removed (no free tier without a credit card): registry, `.env.example`, docs.
+  Replacement cross-provider fallback for EXTRACT only: `openrouter-nemotron-super`
+  (`nvidia/nemotron-3-super-120b-a12b:free`); not for SCORE, whose prompt holds CV data.
+- Real calls with the owner's Groq/OpenRouter keys (`LlmProvidersLiveTest`, tag `live`, FREE
+  models only, paid calls forced off): Groq `llama-3.3-70b-versatile` → 404 (no longer offered;
+  removed, default is now `groq-gpt-oss-120b`; added `groq-gpt-oss-20b`, `groq-qwen3-27b`);
+  OpenRouter nemotron returned no content because reasoning used up `max_tokens` → new
+  registry field `minOutputTokens` (4096 for reasoning models) and a clearer error.
+  Final run: 4/4 OK (gpt-oss-120b 1027/840 tokens 2.6 s, gpt-oss-20b 1027/1491 1.8 s,
+  qwen3 996/373 0.9 s, nemotron 1028/1751 37 s). OpenRouter spend $0 (3/50 free requests).
+- Open (for T-013): Groq free TPM is 8K and one extraction uses ~2-2.5K tokens, so a run will
+  hit per-minute 429s; the router waits once (≤ 10 s) then pauses the purpose. T-013 should
+  resume a purpose whose model is RATE_LIMITED for a short time instead of ending the run.
+- Next: T-011.
+
+## 2026-10-18 — T-010 LLM clients, model registry, router, call log, budget guard — DONE
+- `llm`: `ModelRegistry` (+ failure analyzer), `PromptRepository`/`PromptTemplate`, `JsonExtractor`,
+  clients (`AnthropicLlmClient` on SDK `com.anthropic:anthropic-java` 2.73.0,
+  `OpenAiCompatibleLlmClient`, `FakeLlmClient`), `LlmRouter` → `LlmResult | LlmUnavailable |
+  LlmFailed`, `QuotaTracker`, `CallPacer` (rpm), `BudgetGuard`, `LlmCallLogger`,
+  `AssignmentService`; V6 (llm_call columns, llm_assignment(_event), llm_model_state).
+- SDK findings: `withRawResponse()` gives headers; `maxRetries(0)` (router retries);
+  `baseUrl` override → WireMock tests; Haiku 5.5 (`claude-haiku-5-5`, $0.10/$0.50 per MTok)
+  rejects non-default temperature and thinks by default → client sends no temperature,
+  `effort: low`, `max_tokens = max(4096, 4 × prompt budget)`. Prompt caching not used yet.
+- Provider docs (comments in `config/llm.yaml`): GitHub Models retired 2026-07-30 → removed;
+  Cerebras no longer has llama-3.3-70b → `gpt-oss-120b` (5 rpm, 1M tokens/day); added
+  `groq-gpt-oss-120b`; Groq 429 body names RPD/TPD; OpenRouter free = `:free`, 20 rpm, 50/day.
+- **Owner request: paid calls need consent → ADR-0009**: `app.llm.allow-paid-calls` (default
+  false) blocks every PAID request (`PAID_NOT_ALLOWED`); only `LlmRouter` may call `LlmClient`
+  (ArchUnit); anthropic models must be PAID; AGENTS.md hard rule for agents; T-012/T-016/
+  T-021–T-023 now require cost confirmation.
+- Deviations: `LlmClient.send` is one raw HTTP request, JSON parsing/retries/logging live in
+  the router (overview.md updated); `RemoteHint`-style move of `Sleeper` to `common`;
+  fake answers keyed by prompt (`llm-fakes/score/…`), not purpose; auto-fallback switches the
+  assignment as T-022 planned (done here); `AssessmentService` now reads `LlmProperties`.
+- Tests: 12 new test classes (registry, prompts, JSON, clients with WireMock, quota table,
+  pacer, router/budget/consent/force-model ITs); backend 633 unit + 104 IT green.
+- No live LLM call was made in this step (see the follow-up entry above). Next: T-011.
+
 ## 2026-10-17 — T-009 Prefilter rules — DONE
 - `enrich`: `Prefilter` (all §2 rules, all reasons collected in rule order, injected `Clock`),
   `PrefilterDecision`/`PrefilterReason`, `SkillMatcher` (word-boundary, flexible word

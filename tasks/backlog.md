@@ -16,7 +16,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-007 | [Jobicy collector](T-007-jobicy.md) | T-005 | S |
 | [x] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |
 | [x] | T-009 | [Prefilter rules](T-009-prefilter.md) | T-002, T-005 | S |
-| [ ] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
+| [x] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
 | [ ] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
 | [ ] | T-012 | [Scoring](T-012-scoring.md) | T-011 | M |
 | [ ] | T-013 | [Pipeline orchestration, scheduling, expiry](T-013-pipeline.md) | T-012 | M |
@@ -33,8 +33,10 @@ Tick `[x]` when merged and add a line to `progress.md`.
 
 Owner tasks (not for agents):
 - [ ] Fill `config/profile.yaml`, `.env`.
-- [ ] Create free API keys (at least Groq; optionally Cerebras, GitHub Models) and check
+- [ ] Create free API keys (at least Groq; optionally OpenRouter) and check
       each provider's current model ids and limits against `config/llm.yaml`.
+- [ ] Decide on paid calls (ADR-0009): leave `LLM_ALLOW_PAID_CALLS=false` (default) or set
+      it to `true` in `.env` to allow Claude within the monthly budget.
 - [ ] Optional: create a free Himalayas API key (himalayas.app/api) → `HIMALAYAS_API_KEY`.
 - [x] Read We Work Remotely's terms in a browser (2026-10-17: personal use OK, no redistribution).
 - [ ] Re-read terms of each Phase 1 source and set "Verified" dates in the catalog.

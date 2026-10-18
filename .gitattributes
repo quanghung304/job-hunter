@@ -1,5 +1,4 @@
-* text=auto
-mvnw text eol=lf
-*.sh text eol=lf
-Makefile text eol=lf
+# LF everywhere in the working tree (Prettier and the shell scripts expect LF), also on
+# Windows with core.autocrlf=true. Windows-only scripts keep CRLF.
+* text=auto eol=lf
 *.cmd text eol=crlf

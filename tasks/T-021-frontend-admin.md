@@ -23,7 +23,8 @@ One page to see whether the system is healthy and to trigger maintenance actions
 
 ## Acceptance criteria
 - [ ] Run button disabled while running; 409 shows "already running" toast.
-- [ ] Re-score never executes without the confirm step showing the job count.
+- [ ] Re-score never executes without the confirm step showing the job count, the SCORE model
+      and the estimated cost; a PAID model is called out explicitly (ADR-0009).
 - [ ] Every status is readable without color.
 - [ ] Matches the "Admin · desktop" mockup at 1440 px; tables scroll horizontally on mobile.
 

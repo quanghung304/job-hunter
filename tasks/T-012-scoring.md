@@ -22,12 +22,16 @@ summary and apply advice, stored in `job_assessment`.
 - As in T-011, a pure `computeScore(JobView, JobAttributes, EligibilityResult, Profile)`
   without DB writes, wrapped by `score(...)` (reused by the eval).
 - `ScoringService.rescoreActive(profile)`: returns the count first (dry run) and executes
-  only when confirmed (used by admin page).
+  only when confirmed (used by admin page). ADR-0009: the dry run also returns the SCORE
+  model, its tier and the estimated cost; if that model is PAID the confirmation must say so,
+  and with `app.llm.allow-paid-calls=false` the run is refused (`PAID_CALLS_DISABLED`).
 
 ## Acceptance criteria
 - [ ] INELIGIBLE or prefilter-rejected jobs are never sent to the LLM.
 - [ ] Scoring the same job/profile/prompt version twice makes no second call.
 - [ ] Summary language follows the profile (`vi` in the example profile).
+- [ ] A PAID SCORE model is never called without consent (ADR-0009): `PAID_NOT_ALLOWED` leaves
+      the job PENDING; re-score with a PAID model needs the confirmed request.
 
 ## Tests
 `ScoreResultValidationTest`, `ScoringServiceIT` (FakeLlmClient: valid, wrong sum, invalid JSON,

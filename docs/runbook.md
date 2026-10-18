@@ -54,11 +54,19 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
 - **When a model runs out** you get a Telegram message and a banner on every page. Click
   "Switch model", pick another usable model, optionally tick "Process waiting jobs now".
   If you do nothing, waiting jobs are processed automatically after the limit resets.
+- **Paid models (Claude) are off by default** (ADR-0009). To allow them set
+  `LLM_ALLOW_PAID_CALLS=true` in `.env` and restart; the monthly budget
+  (`app.llm.monthly-budget-usd`) still applies. While off, a PAID assignment or fallback
+  pauses that step (`PAID_NOT_ALLOWED`), nothing is charged.
 - **Auto-switch**: Admin → LLM models → "Auto-switch to fallback". Leave "Allow paid
   fallback" off unless you accept Claude costs (they count against the monthly budget).
 - **Adding a model**: add an entry under `models:` in `config/llm.yaml` (provider, modelId,
-  tier, known limits), restart, press "Test" on the Admin page, run the eval with it, then
-  switch to it.
+  tier, known limits, `minOutputTokens` for reasoning models), restart, press "Test" on the
+  Admin page, run the eval with it, then switch to it. Before the Admin page exists:
+  `cd backend && ./mvnw test -Plive -Dtest=LlmProvidersLiveTest` (FREE models only; add the
+  id to the test's list).
+- **Check which models a key can use**: Groq lists them at `GET https://api.groq.com/openai/v1/models`
+  (a model missing there answers 404 → status ERROR). OpenRouter free models end in `:free`.
 - **Local model**: install Ollama, `ollama pull qwen2.5:7b-instruct`, keep Ollama running,
   choose "Local model (Ollama)". Slower on CPU; set `app.llm.timeout-local` higher if needed.
 - After switching the scoring model, existing scores keep their old model label. Use
@@ -81,7 +89,7 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
 | Many `FAILED` extractions | `llm_call.error` | Invalid JSON → the model may be too weak for the prompt: run the eval, switch model or write a new prompt version |
 | Banner "Extraction paused" / "Scoring paused" | Admin → LLM models (status, detail, resets at) | Switch model, wait for reset, or enable auto-switch |
 | Model shows "Error" | Detail text | Missing/invalid key in `.env`, or model id removed by the provider → fix `config/llm.yaml`, restart, press "Test" |
-| Hitting limits every day | Usage today vs limit | Tighten prefilter, lower run frequency, or split steps across two providers (e.g. extraction on Groq, scoring on Cerebras) |
+| Hitting limits every day | Usage today vs limit | Tighten prefilter, lower run frequency, or split steps across two providers (e.g. extraction on OpenRouter free, scoring on Groq) |
 | "Budget reached" in logs | Admin LLM usage | Raise `monthly-budget-usd` or tighten prefilter |
 | Telegram not sending | `notification.error` | Token/chat id; bot must have received a message from you first |
 | Page reload on `/jobs/42` gives 404 | SPA fallback | Check `SpaFallbackController` and that the app was started with `make run` |

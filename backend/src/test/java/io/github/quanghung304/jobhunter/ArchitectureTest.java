@@ -6,7 +6,11 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noFields;
 import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.tngtech.archunit.core.domain.JavaCall;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.properties.HasName;
+import com.tngtech.archunit.core.domain.properties.HasOwner;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
@@ -114,6 +118,35 @@ class ArchitectureTest {
 
         assertThat(persistenceStaysInsideItsModule("io.github.quanghung304.archfixture").evaluate(fixture).hasViolation())
                 .as("enrich -> ingest.persistence in the fixture must be reported")
+                .isTrue();
+    }
+
+    /**
+     * AGENTS.md / ADR-0009: provider clients are called only by {@code LlmRouter}, so every call
+     * passes the paid-call consent, budget guard, quota tracker and {@code llm_call} log.
+     */
+    static ArchRule onlyTheRouterCallsLlmClients(String base) {
+        return noClasses()
+                .that().doNotHaveFullyQualifiedName(base + ".llm.LlmRouter")
+                .and().resideOutsideOfPackage(base + ".llm.client..")
+                .should().callMethodWhere(JavaCall.Predicates.target(HasName.Predicates.name("send"))
+                        .and(JavaCall.Predicates.target(HasOwner.Predicates.With.owner(
+                                JavaClass.Predicates.assignableTo(base + ".llm.client.LlmClient")))))
+                .because("ADR-0009: LLM calls go through LlmRouter only");
+    }
+
+    @Test
+    void onlyTheRouterCallsLlmClients() {
+        onlyTheRouterCallsLlmClients(BASE).check(mainClasses);
+    }
+
+    @Test
+    void routerRuleDetectsADirectClientCall() {
+        JavaClasses fixture = new ClassFileImporter()
+                .importPackages("io.github.quanghung304.archfixture");
+
+        assertThat(onlyTheRouterCallsLlmClients("io.github.quanghung304.archfixture").evaluate(fixture).hasViolation())
+                .as("scoring -> LlmClient.send in the fixture must be reported")
                 .isTrue();
     }
 

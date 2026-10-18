@@ -6,6 +6,8 @@ import io.github.quanghung304.jobhunter.PostgresJpaTest;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessment;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessmentRepository;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
+import io.github.quanghung304.jobhunter.llm.LlmProperties;
+import io.github.quanghung304.jobhunter.llm.LlmRouterTestConfig;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.ProfileFixtures;
 import java.time.Clock;
@@ -203,6 +205,12 @@ class AssessmentServiceIT {
         @Bean
         Clock clock() {
             return Clock.fixed(NOW, ZoneOffset.UTC);
+        }
+
+        /** Score prompt version score-v1, as in application.yml. */
+        @Bean
+        LlmProperties llmProperties() {
+            return LlmRouterTestConfig.properties(null, false);
         }
     }
 }

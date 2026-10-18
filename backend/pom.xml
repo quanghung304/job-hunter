@@ -24,6 +24,7 @@
         <rome.version>2.1.0</rome.version>
         <wiremock.version>3.13.2</wiremock.version>
         <archunit.version>1.5.1</archunit.version>
+        <anthropic.version>2.73.0</anthropic.version>
         <!-- JUnit tags excluded by default; the `live` profile clears this -->
         <test.excludedGroups>live</test.excludedGroups>
         <test.groups></test.groups>
@@ -78,6 +79,11 @@
             <groupId>com.rometools</groupId>
             <artifactId>rome</artifactId>
             <version>${rome.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>${anthropic.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springdoc</groupId>

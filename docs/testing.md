@@ -14,7 +14,7 @@ and the eval.
 | API | Controllers: status codes, JSON shape, Problem Details | `@WebMvcTest` + `MockMvc` | `*ControllerTest` |
 | Contract export | Writes `/v3/api-docs` to `docs/architecture/openapi.json`; fails if the file is out of date (unless `-Dapi.export=true`) | Spring Boot test | `OpenApiExportIT` |
 | Architecture | Module dependency rules from `overview.md` | ArchUnit | `ArchitectureTest` |
-| Live (opt-in) | One real call per collector; asserts > 0 items and mapping works | JUnit tag `live` | excluded by default; `./mvnw verify -Plive` |
+| Live (opt-in) | One real call per collector; asserts > 0 items and mapping works. `LlmProvidersLiveTest`: one extract-v1 call per FREE model (keys from `.env`, paid calls forced off, ADR-0009) | JUnit tag `live` | excluded by default; `./mvnw verify -Plive`, or `./mvnw test -Plive -Dtest=LlmProvidersLiveTest` (ask the owner first) |
 | Eval | LLM quality on labeled jobs | `EvalRunner` | `docs/ai/eval/` |
 
 ## Frontend layers (`frontend/`)
@@ -43,8 +43,10 @@ E2E runs in `make e2e`, not in `make verify` (it needs a running stack).
 
 ## FakeLlmClient
 
-- Returns canned JSON keyed by (`purpose`, job external id) from
-  `backend/src/test/resources/llm-fakes/`, or a default valid object.
+- Returns canned JSON from `llm-fakes/<prompt>/job-<jobId>.json` (test resources) or
+  `llm-fakes/<prompt>/default.json` (main resources, so `force-model=fake` works in the app),
+  where `<prompt>` is the prompt id without version (`score-v1` → `score`). Tests can also
+  `enqueue` scripted steps (text, HTTP error, 429, timeout).
 - Can be configured to fail N times, return invalid JSON, exceed tokens, or answer like a
   provider out of quota (429 with daily-limit body, or 401), to test retries, the budget
   guard, `QuotaTracker`, alerts and model switching. In `make e2e` this is driven by the

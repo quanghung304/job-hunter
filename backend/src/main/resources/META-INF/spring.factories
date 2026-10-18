@@ -1,2 +1,3 @@
 org.springframework.boot.diagnostics.FailureAnalyzer=\
-  io.github.quanghung304.jobhunter.profile.InvalidProfileFailureAnalyzer
+  io.github.quanghung304.jobhunter.profile.InvalidProfileFailureAnalyzer,\
+  io.github.quanghung304.jobhunter.llm.registry.InvalidLlmRegistryFailureAnalyzer

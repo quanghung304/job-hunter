@@ -169,7 +169,7 @@ Rendered directly under the app header when `GET /api/status` returns `llmAlerts
 10px 24px (16px mobile), bottom border `--line`:
 - EXHAUSTED / ERROR / paused: `--attention-bg` background, `--attention-fg` text, warning
   icon. NEAR_LIMIT: `--surface-muted` background, `--ink-2` text, gauge icon.
-- Text (one line, wraps on mobile): **"Extraction paused"** · "Llama 3.3 70B (Groq) reached its
+- Text (one line, wraps on mobile): **"Extraction paused"** · "GPT-OSS 120B (Groq) reached its
   daily limit (1000/1000)" · mono "resets 02:00" · "23 jobs waiting". For NEAR_LIMIT:
   "Scoring model at 81% of today's limit".
 - Actions right-aligned: "Switch model" (secondary button, opens `SwitchModelDialog` for
@@ -300,7 +300,7 @@ Cancel (secondary), Save (primary).
 ### LLM alerts and switching
 - `useStatus()` polls `GET /api/status` every 60 s, every 10 s while any alert is shown.
 - Saving in `SwitchModelDialog` invalidates `['status']`, `['admin','llm']`,
-  `['admin','overview']`; toast "Extraction now uses Llama 3.3 70B (Cerebras)".
+  `['admin','overview']`; toast "Extraction now uses Nemotron 3 Super 120B (OpenRouter, free)".
 - Model status tags: Available = accent tint "Available"; Near limit = attention "Near limit";
   Rate limited = attention "Rate limited · 1 min"; Exhausted = strong "Exhausted until 02:00";
   Error = strong "Error". Words always present.

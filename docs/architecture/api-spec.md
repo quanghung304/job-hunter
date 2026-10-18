@@ -83,10 +83,10 @@ Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
 
 `LlmAlert` (also returned by `GET /api/status`, below):
 ```json
-{ "purpose": "EXTRACT", "modelId": "groq-llama-70b", "modelLabel": "Llama 3.3 70B (Groq)",
+{ "purpose": "EXTRACT", "modelId": "groq-gpt-oss-120b", "modelLabel": "GPT-OSS 120B (Groq)",
   "status": "EXHAUSTED", "detail": "Daily request limit 1000/1000", "until": "2026-10-18T00:00:00Z",
   "paused": true, "pendingJobs": 23,
-  "suggestions": [{ "modelId": "cerebras-llama-70b", "label": "...", "tier": "FREE", "status": "AVAILABLE" }] }
+  "suggestions": [{ "modelId": "openrouter-nemotron-super", "label": "...", "tier": "FREE", "status": "AVAILABLE" }] }
 ```
 One entry per purpose whose assigned model is not `AVAILABLE`. `paused` = LLM work for that
 purpose is waiting. `suggestions` = usable models from the assignment's fallbacks, then
@@ -127,12 +127,12 @@ is shown): `{ "lastRun": { "startedAt", "newJobs", "scored", "status" } | null,
 ### `GET /api/admin/llm`
 ```json
 { "assignments": [
-    { "purpose": "EXTRACT", "modelId": "groq-llama-70b", "fallbacks": ["cerebras-llama-70b", "claude-haiku"],
+    { "purpose": "EXTRACT", "modelId": "groq-gpt-oss-120b", "fallbacks": ["openrouter-nemotron-super", "claude-haiku"],
       "autoFallback": false, "allowPaid": false, "updatedAt": "...", "updatedBy": "user" },
     { "purpose": "SCORE", ... } ],
   "models": [
-    { "modelId": "groq-llama-70b", "label": "Llama 3.3 70B (Groq)", "provider": "groq",
-      "providerModel": "llama-3.3-70b-versatile", "tier": "FREE",
+    { "modelId": "groq-gpt-oss-120b", "label": "GPT-OSS 120B (Groq)", "provider": "groq",
+      "providerModel": "openai/gpt-oss-120b", "tier": "FREE",
       "status": "NEAR_LIMIT", "until": null, "detail": "812 / 1000 requests today",
       "limits": { "rpm": 30, "rpd": 1000 },
       "usageToday": { "calls": 812, "inputTokens": 2400000, "outputTokens": 310000, "costUsd": null },
@@ -143,7 +143,7 @@ is shown): `{ "lastRun": { "startedAt", "newJobs", "scored", "status" } | null,
 `lastEval` is read from the newest matching entry the eval runner records (T-016).
 
 ### `PUT /api/admin/llm/assignments/{purpose}`
-Body `{ "modelId": "cerebras-llama-70b", "fallbacks": [...], "autoFallback": false, "allowPaid": false }`
+Body `{ "modelId": "openrouter-nemotron-super", "fallbacks": [...], "autoFallback": false, "allowPaid": false }`
 (all but `modelId` optional) → 200 updated assignment. Errors: 400 `UNKNOWN_MODEL`,
 409 `MODEL_UNUSABLE` (status `ERROR`, e.g. missing key). A manual switch to a PAID model is
 allowed (`allowPaid` only limits auto-fallback); the response then includes

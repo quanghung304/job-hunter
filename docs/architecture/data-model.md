@@ -117,9 +117,9 @@ Created lazily: a job without a row is `NEW`.
 | Column | Type | Notes |
 |---|---|---|
 | id | bigint PK | |
-| purpose | text | `EXTRACT`, `SCORE`, `EVAL`, `TEST` |
+| purpose | text | `EXTRACT`, `SCORE`, `EVAL`, `TEST` (admin "Test" call) |
 | job_id | bigint | nullable; FK → job, `on delete set null` |
-| model_id | text | registry id from `config/llm.yaml` (e.g. `groq-llama-70b`) |
+| model_id | text | registry id from `config/llm.yaml` (e.g. `groq-gpt-oss-120b`) |
 | provider_model, prompt_version | text | model name sent to the provider |
 | tier | text | `FREE`, `PAID`, `LOCAL` at call time |
 | input_tokens, output_tokens | int | |
@@ -127,11 +127,14 @@ Created lazily: a job without a row is `NEW`.
 | latency_ms | int | |
 | success | boolean | |
 | http_status | int | nullable |
-| error_kind | text | `RATE_LIMIT`, `QUOTA_EXHAUSTED`, `AUTH`, `MODEL_NOT_FOUND`, `TIMEOUT`, `SERVER`, `INVALID_OUTPUT`, null |
+| error_kind | text | `RATE_LIMIT`, `QUOTA_EXHAUSTED`, `AUTH`, `MODEL_NOT_FOUND`, `TIMEOUT`, `SERVER`, `BAD_REQUEST` (other 4xx, not retried), `INVALID_OUTPUT`, null |
 | error | text | truncated 2000 chars |
 | created_at | timestamptz | |
 
-Index: `llm_call(model_id, created_at)`.
+Index: `llm_call(model_id, created_at)`. One row per HTTP attempt (retries and the corrective
+retry included); a 2xx answer that fails JSON/schema validation is `success=false`,
+`error_kind=INVALID_OUTPUT` with its tokens. V5 created the table with a `model` column; V6
+renamed it to `provider_model` and added `model_id`, `tier`, `http_status`, `error_kind`.
 
 ### `llm_assignment` (ADR-0008)
 Which model serves each purpose. One row per purpose; seeded from `config/llm.yaml`
@@ -144,7 +147,7 @@ Which model serves each purpose. One row per purpose; seeded from `config/llm.ya
 | auto_fallback | boolean | |
 | allow_paid | boolean | |
 | updated_at | timestamptz | |
-| updated_by | text | `config`, `user`, `auto-fallback` |
+| updated_by | text | `config` (seeded from `defaults`), `user`, `auto-fallback` (router switched to a fallback; never switched back automatically) |
 
 ### `llm_assignment_event`
 History of switches: `id`, `purpose`, `from_model_id`, `to_model_id`, `reason`

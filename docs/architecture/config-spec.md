@@ -79,7 +79,9 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.llm.score-prompt` | `score-v1` | |
 | `app.llm.max-calls-per-run` | `150` | Budget guard (all models) |
 | `app.llm.monthly-budget-usd` | `5.00` | Hard stop for **PAID** models when estimated month cost reaches it |
+| `app.llm.allow-paid-calls` | `false` (env `LLM_ALLOW_PAID_CALLS`) | Owner's consent to PAID models (ADR-0009). While false, no request is ever sent to a PAID model (assignment, fallback, eval, "Test"); the router answers `PAID_NOT_ALLOWED` |
 | `app.llm.timeout` | `60s` | Per call; local models may need more (`app.llm.timeout-local`, default `180s`) |
+| `app.llm.fake.simulate` | — | Test-only behaviour of the fake model: `quota-after:<n>` answers a daily-quota 429 after n calls |
 | `app.notify.telegram.enabled` | `false` | |
 | `app.notify.digest-cron` | `0 30 8 * * *` | |
 | `app.jobs.expire-after-days` | `14` | Not seen in any source for N days → EXPIRED |
@@ -90,7 +92,8 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 |---|---|
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | PostgreSQL |
 | `ANTHROPIC_API_KEY` | Claude models (paid) |
-| `GROQ_API_KEY`, `CEREBRAS_API_KEY`, `OPENROUTER_API_KEY`, `GITHUB_MODELS_TOKEN` | Free-tier providers; only the ones referenced by models you use are needed |
+| `GROQ_API_KEY`, `OPENROUTER_API_KEY` | Free-tier providers; only the ones referenced by models you use are needed (GitHub Models retired 2026-07-30; Cerebras removed 2026-10-18: no free tier without a credit card) |
+| `LLM_ALLOW_PAID_CALLS` | `true` = consent to PAID models (`app.llm.allow-paid-calls`); default false |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Notifications |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Phase 1.5 |
 | `OWNER_CONTACT_EMAIL` | User-Agent contact for polite API use |
@@ -117,15 +120,17 @@ of the bad field. A model whose provider key env var is empty is listed but mark
 | Field | Type | Meaning |
 |---|---|---|
 | `providers.<id>.type` | `anthropic` \| `openai-compatible` \| `fake` | Which `LlmClient` implementation |
-| `providers.<id>.baseUrl` | URL | For `openai-compatible`; the client calls `{baseUrl}/chat/completions` |
+| `providers.<id>.baseUrl` | URL | Required for `openai-compatible` (the client calls `{baseUrl}/chat/completions`); optional for `anthropic` (overrides the API URL, used by tests) |
 | `providers.<id>.apiKeyEnv` | string | Name of the env var with the key; `""` for keyless (Ollama) |
 | `models.<id>.label` | string | Shown in the UI |
 | `models.<id>.provider` | provider id | |
 | `models.<id>.modelId` | string | Model name sent to the provider |
-| `models.<id>.tier` | `FREE` \| `PAID` \| `LOCAL` | PAID calls count against `monthly-budget-usd`; fallback to PAID needs `allowPaid` |
+| `models.<id>.tier` | `FREE` \| `PAID` \| `LOCAL` | PAID calls need `app.llm.allow-paid-calls=true` and count against `monthly-budget-usd`; fallback to PAID also needs `allowPaid`. Models of an `anthropic` provider must be `PAID` |
+| `models.<id>.resetZone` | IANA zone, optional | Zone in which the provider resets daily limits; default UTC |
 | `models.<id>.limits` | `{rpm, rpd, tokensPerMinute, tokensPerDay, requestsPerMonth}` all optional | Known limits used for NEAR_LIMIT warnings and to avoid hitting 429; omit what you don't know |
 | `models.<id>.pricing` | `{inputPerMTok, outputPerMTok}` USD | PAID only; null → cost unknown (WARN once) |
 | `models.<id>.jsonMode` | boolean, default `true` for openai-compatible | Send `response_format: {type: json_object}` when the provider supports it |
+| `models.<id>.minOutputTokens` | int, optional | Lower bound for `max_tokens`. Reasoning models (gpt-oss, qwen3, nemotron) spend output tokens thinking before the answer; without room they return no content |
 | `defaults.<PURPOSE>.model` | model id | Initial assignment for `EXTRACT` / `SCORE` (used when the DB has none) |
 | `defaults.<PURPOSE>.fallbacks` | model ids | Ordered alternatives offered in the UI and used by auto-fallback |
 | `defaults.<PURPOSE>.autoFallback` | boolean (false) | Switch automatically when the assigned model is EXHAUSTED/ERROR |
