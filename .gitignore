@@ -10,3 +10,6 @@ node_modules/
 frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
+
+# Local bundles/archives (e.g. spec bundles shared with agents)
+*.zip
