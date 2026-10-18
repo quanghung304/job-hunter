@@ -20,7 +20,7 @@ model for extraction or scoring in two clicks.
   tag, today's usage vs limit meter, auto-fallback toggles; models table; switch history.
 - `SwitchModelDialog`: radio list of models (label, provider, tier tag FREE/PAID/LOCAL,
   status, usage today/limit, last eval summary), unusable models disabled with the reason,
-  "Process pending jobs now" checkbox (→ `runNow`), PAID confirmation line, Save →
+  PAID confirmation line, Save →
   `PUT /api/admin/llm/assignments/{purpose}`; success toast "Extraction now uses …".
 - "Test" button per model → `POST …/test`, result toast.
 - MSW handlers for the new endpoints.
@@ -36,6 +36,6 @@ model for extraction or scoring in two clicks.
 
 ## Tests
 `LlmAlertBanner.test.tsx` (render per status, dismiss per alert identity),
-`SwitchModelDialog.test.tsx` (disabled options, PAID warning, runNow, error 409),
+`SwitchModelDialog.test.tsx` (disabled options, PAID warning, error 409),
 `LlmModelsCard.test.tsx`, one Playwright flow: fake 429 → banner → switch → banner gone
 (backend `fake` model can simulate quota via a test-only config flag).

@@ -41,7 +41,7 @@ class NotificationRepositoryIT {
     @Test
     void failedSendKeepsTheError() {
         long id = notifications.saveAndFlush(new Notification("hugh", NotificationChannel.TELEGRAM,
-                NotificationKind.ALERT, List.of(7L), T0, false, "429 Too Many Requests")).getId();
+                NotificationKind.DIGEST, List.of(7L), T0, false, "429 Too Many Requests")).getId();
         em.clear();
 
         var loaded = notifications.findById(id).orElseThrow();
@@ -52,9 +52,9 @@ class NotificationRepositoryIT {
 
     @Test
     void findsNotificationsContainingAJobPerProfile() {
-        notifications.save(new Notification("hugh", NotificationChannel.TELEGRAM, NotificationKind.ALERT,
+        notifications.save(new Notification("hugh", NotificationChannel.TELEGRAM, NotificationKind.DIGEST,
                 List.of(10L, 11L), T0, true, null));
-        notifications.save(new Notification("other", NotificationChannel.TELEGRAM, NotificationKind.ALERT,
+        notifications.save(new Notification("other", NotificationChannel.TELEGRAM, NotificationKind.DIGEST,
                 List.of(12L), T0, true, null));
         notifications.flush();
 
@@ -68,5 +68,12 @@ class NotificationRepositoryIT {
         assertRejected(em.getEntityManager(), "check", """
                 insert into notification (profile_id, channel, kind, sent_at, success)
                 values ('hugh', 'TELEGRAM', 'WEEKLY', now(), true)""");
+    }
+
+    @Test
+    void instantAlertKindWasRemoved() {
+        assertRejected(em.getEntityManager(), "check", """
+                insert into notification (profile_id, channel, kind, sent_at, success)
+                values ('hugh', 'TELEGRAM', 'ALERT', now(), true)""");
     }
 }

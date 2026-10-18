@@ -183,8 +183,8 @@ Written by `EvalRunner` (T-016): `id`, `extract_model_id`, `score_model_id`,
 
 `profile_id` was added in T-003: without it "once per profile" cannot be checked.
 V4 created `notification` without `ref` and with `kind in (DIGEST, ALERT)` and
-`profile_id not null`; T-022 adds a new migration for `ref`, `LLM_QUOTA` and a nullable
-`profile_id` (quota alerts are not per profile).
+`profile_id not null`; V7 removed `ALERT` (instant alerts dropped, ADR-0010). T-022 adds a new
+migration for `ref`, `LLM_QUOTA` and a nullable `profile_id` (quota alerts are not per profile).
 
 A job appears in at most one digest per profile; the digest includes only jobs not in a previous
 digest. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status

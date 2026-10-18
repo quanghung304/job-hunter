@@ -99,11 +99,11 @@ Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
 ```json
 { "purpose": "EXTRACT", "modelId": "groq-gpt-oss-120b", "modelLabel": "GPT-OSS 120B (Groq)",
   "status": "EXHAUSTED", "detail": "Daily request limit 1000/1000", "until": "2026-10-18T00:00:00Z",
-  "paused": true, "pendingJobs": 23,
+  "paused": true,
   "suggestions": [{ "modelId": "openrouter-nemotron-super", "label": "...", "tier": "FREE", "status": "AVAILABLE" }] }
 ```
-One entry per purpose whose assigned model is not `AVAILABLE`. `paused` = LLM work for that
-purpose is waiting. `suggestions` = usable models from the assignment's fallbacks, then
+One entry per purpose whose assigned model is not `AVAILABLE`. `paused` = owner actions for that
+purpose (Analyze or Score) are refused with `LLM_PAUSED` until the model recovers or is switched. `suggestions` = usable models from the assignment's fallbacks, then
 other usable registry models (FREE/LOCAL before PAID).
 
 The app header's status line ("Last run 07:00 · 42 new · 9 scored") uses the newest
@@ -189,8 +189,8 @@ Body `{ "modelId": "openrouter-nemotron-super", "fallbacks": [...], "autoFallbac
 409 `MODEL_UNUSABLE` (status `ERROR`, e.g. missing key). A manual switch to a PAID model is
 allowed (`allowPaid` only limits auto-fallback); the response then includes
 `"warning": "PAID model: counts against the monthly budget"`.
-Switching writes `llm_assignment_event` (reason `USER`) and un-pauses that purpose; pending
-jobs are picked up by the next run, or immediately if the body has `"runNow": true`.
+Switching writes `llm_assignment_event` (reason `USER`) and un-pauses that purpose: its
+Analyze/Score buttons work again. Nothing runs by itself (ADR-0010); there is no `runNow`.
 
 ### `POST /api/admin/llm/models/{modelId}/test`
 Sends one tiny prompt ("Reply with {\"ok\":true}") → 200 `{ ok, latencyMs, status }`; a

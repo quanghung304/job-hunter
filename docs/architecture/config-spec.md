@@ -11,7 +11,9 @@ Invalid config fails startup with a message naming the field.
 
 For `profile.yaml` (loaded once at startup by `YamlProfileProvider`): every problem is listed
 with its path (e.g. `candidate.headline: must not be blank`, `prefilter.titleInclude[1]:
-invalid regex`); unknown keys are rejected to catch typos, except inside `tracks` items;
+invalid regex`); unknown keys are rejected to catch typos, except inside `tracks` items and
+the removed `notify.alertMinScore` (instant alerts dropped, ADR-0010), which is ignored so older
+profile files still load;
 an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the default applies.
 
 ## 1. `profile.yaml`

@@ -10,6 +10,15 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — Resolve contradictions with ADR-0010 — DONE
+- `runNow` / "Process pending jobs now" and `pendingJobs` removed (api-spec, frontend.md,
+  runbook, T-022, T-023): switching a model only un-pauses Analyze/Score; nothing runs by itself.
+- `Profile.Notify.alertMinScore` removed; the old key is ignored (not rejected) so existing
+  profile files still load (`@JsonIgnoreProperties`, test added, config-spec noted).
+- `NotificationKind.ALERT` removed; V7 narrows `notification.kind` to `DIGEST` (V4 untouched);
+  data-model updated; repository IT proves `ALERT` is rejected.
+- `make verify` green: 634 unit + 105 IT, frontend 6 files.
+
 ## 2026-10-18 — T-010 follow-up: real provider check, Cerebras removed, LF line endings — DONE
 - `.gitattributes`: `* text=auto eol=lf` (owner approved the T-009 proposal); frontend files
   re-checked out with LF → Prettier passes. Other folders turn LF on their next checkout.

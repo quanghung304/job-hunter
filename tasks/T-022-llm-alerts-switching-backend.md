@@ -14,14 +14,14 @@ exhausted or broken, and can switch the model per purpose at runtime through the
 - New Flyway migration for `notification` (created by V4): add `ref text`, allow kind
   `LLM_QUOTA`, make `profile_id` nullable (quota alerts are not per profile). Never edit V4.
 - `LlmAlertService`: builds `LlmAlert` list (one per purpose whose assigned model is not
-  AVAILABLE), `pendingJobs` per purpose (assessments/extractions PENDING), `suggestions`
+  AVAILABLE), `paused`, `suggestions`
   (fallbacks first, then other usable models; FREE/LOCAL before PAID; exclude ERROR/EXHAUSTED).
 - Telegram (`notify`): listen to `LlmModelStatusChanged`; send for transitions to
   NEAR_LIMIT, EXHAUSTED, ERROR, and "back to AVAILABLE" only if an EXHAUSTED/ERROR alert was
   sent that day. At most once per `<model>:<status>:<UTC date>` (`notification.ref`).
   Message (HTML):
   - EXHAUSTED: "⚠️ <b>GPT-OSS 120B (Groq)</b> hết hạn mức hôm nay (1000/1000 requests).
-    Extraction đang tạm dừng · 23 job chờ. Mở lại lúc 02:00. Đổi model: <link to /admin#llm>".
+    Nút Analyze tạm khoá. Mở lại lúc 02:00. Đổi model: <link to /admin#llm>".
   - NEAR_LIMIT: "… đã dùng 80% hạn mức ngày (812/1000)."
   - ERROR: "… lỗi: <detail> (kiểm tra API key)."
   - Auto-fallback switch: "Đã tự chuyển Extraction sang <label> vì <reason>."
@@ -34,7 +34,7 @@ exhausted or broken, and can switch the model per purpose at runtime through the
   `GET /api/admin/llm` returns `paidCallsAllowed`.
 - Endpoints per api-spec: fill `llmAlerts` in `GET /api/status` (created in T-014), `GET /api/admin/llm`,
   `PUT /api/admin/llm/assignments/{purpose}` (validation, `llm_assignment_event`,
-  `warning` for PAID, optional `runNow` → triggers `PipelineOrchestrator` for LLM stages only),
+  `warning` for PAID; no `runNow`: switching only un-pauses the owner actions, ADR-0010),
   `POST /api/admin/llm/models/{modelId}/test`; add `llmAlerts` to the overview.
 - Auto-fallback event: done in T-010 (`AssignmentService.switchToFallback`: assignment updated,
   `updated_by = auto-fallback`, `AUTO_FALLBACK` event, no automatic switch back). T-022 adds
@@ -48,10 +48,10 @@ Web UI (T-023).
 
 ## Acceptance criteria
 - [ ] Simulated 429 daily quota on the EXTRACT model → one Telegram message, `GET /api/status`
-      returns an alert with `paused: true`, `pendingJobs`, and suggestions.
+      returns an alert with `paused: true` and suggestions.
 - [ ] A second 429 the same day sends no new message.
 - [ ] `PUT` to another model clears the alert for that purpose, records history, and the next
-      run uses the new model; with `runNow: true` pending jobs are processed immediately.
+      Analyze/Score request uses the new model; no LLM call is made by the switch itself.
 - [ ] Switching to a model in ERROR returns 409 `MODEL_UNUSABLE`.
 - [ ] Test endpoint clears ERROR on success.
 

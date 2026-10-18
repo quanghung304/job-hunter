@@ -182,7 +182,7 @@ list rows: label (600) + provider (muted) · tier tag (FREE = `--accent-tint`, L
 `--line-faint`, PAID = `--attention-bg` with text "PAID") · status tag · mono usage
 "812 / 1000 today" (or "no known limit") · last eval line in muted 12.5px ("Eval Oct 25:
 false-eligible 2.4%, HIGH recall 83%" or "Not evaluated yet"). Unusable models are disabled
-with the reason in muted text. Below: checkbox "Process waiting jobs now (23)"; for a PAID
+with the reason in muted text. Below: for a PAID
 selection an attention box "Paid model — counts against the $5.00 monthly budget". Footer:
 Cancel (secondary), Save (primary).
 

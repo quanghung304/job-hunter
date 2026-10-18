@@ -43,7 +43,7 @@ public record Profile(
 
     public Profile {
         summaryLanguage = summaryLanguage != null ? summaryLanguage : SummaryLanguage.EN;
-        notifySettings = notifySettings != null ? notifySettings : new Notify(null, null);
+        notifySettings = notifySettings != null ? notifySettings : new Notify(null);
         tracks = immutable(tracks);
     }
 
@@ -142,16 +142,17 @@ public record Profile(
         }
     }
 
-    public record Notify(
-            @Min(0) @Max(100) Integer digestMinScore,
-            @Min(0) @Max(100) Integer alertMinScore) {
+    /**
+     * Telegram settings: the daily digest only. {@code alertMinScore} belonged to the removed
+     * instant alerts (ADR-0010); it is ignored, not rejected, so older profile files still load.
+     */
+    @JsonIgnoreProperties({"alertMinScore"})
+    public record Notify(@Min(0) @Max(100) Integer digestMinScore) {
 
         public static final int DEFAULT_DIGEST_MIN_SCORE = 65;
-        public static final int DEFAULT_ALERT_MIN_SCORE = 85;
 
         public Notify {
             digestMinScore = digestMinScore != null ? digestMinScore : DEFAULT_DIGEST_MIN_SCORE;
-            alertMinScore = alertMinScore != null ? alertMinScore : DEFAULT_ALERT_MIN_SCORE;
         }
     }
 

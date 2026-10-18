@@ -80,7 +80,6 @@ class YamlProfileProviderTest {
         assertThat(profile.prefilter().minSkillHits()).isEqualTo(2);
         assertThat(profile.prefilter().titleExclude()).isEmpty();
         assertThat(profile.notifySettings().digestMinScore()).isEqualTo(65);
-        assertThat(profile.notifySettings().alertMinScore()).isEqualTo(85);
         assertThat(profile.tracks()).isEmpty();
     }
 
@@ -108,9 +107,16 @@ class YamlProfileProviderTest {
     }
 
     @Test
+    void removedAlertMinScoreIsIgnored() throws Exception {
+        Path old = writeExample(root -> root.with("notify").put("alertMinScore", 90));
+
+        assertThat(ProfileFixtures.load(old).current().notifySettings().digestMinScore()).isEqualTo(65);
+    }
+
+    @Test
     void hashChangesWhenTheFileChanges() throws Exception {
         String original = ProfileFixtures.load(ProfileFixtures.EXAMPLE).profileHash();
-        Path edited = writeExample(root -> root.with("notify").put("alertMinScore", 90));
+        Path edited = writeExample(root -> root.with("notify").put("digestMinScore", 70));
 
         assertThat(ProfileFixtures.load(edited).profileHash()).isNotEqualTo(original);
     }
@@ -151,7 +157,7 @@ class YamlProfileProviderTest {
             candidate.residenceCountry| Italy         | candidate.residenceCountry: must be an ISO-3166 alpha-2 code
             candidate.yearsExperience | -1            | candidate.yearsExperience: must be greater than or equal to 0
             preferences.maxHoursPerWeek | 0           | preferences.maxHoursPerWeek: must be greater than 0
-            notify.alertMinScore      | 101           | notify.alertMinScore: must be less than or equal to 100
+            notify.digestMinScore     | 101           | notify.digestMinScore: must be less than or equal to 100
             """)
     void invalidValueIsReportedByPath(String field, String value, String expected) throws Exception {
         Path file = writeExample(root -> setValue(root, field, value));

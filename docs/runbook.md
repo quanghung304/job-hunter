@@ -56,7 +56,7 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
   free tier for both steps. Get a key from each provider you want to use and add it to
   `.env`, then restart (keys are read at startup).
 - **When a model runs out** you get a Telegram message and a banner on every page. Click
-  "Switch model", pick another usable model, optionally tick "Process waiting jobs now".
+  "Switch model" and pick another usable model; the Analyze/Score buttons work again.
   If you do nothing, the Analyze/Score buttons for that step stay disabled until the limit resets.
 - **Paid models (Claude) are off by default** (ADR-0009). To allow them set
   `LLM_ALLOW_PAID_CALLS=true` in `.env` and restart; the monthly budget
