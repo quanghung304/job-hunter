@@ -1,0 +1,6 @@
+# Test-only overrides (classpath:/config/ wins over classpath:/application.yml).
+# No scheduled or catch-up pipeline runs in tests: they would call the real job sources.
+app:
+  pipeline:
+    cron: "-"
+    catch-up-enabled: false

@@ -13,6 +13,8 @@ public interface LlmCallRepository extends JpaRepository<LlmCall, Long> {
     /** HTTP attempts sent to a model since {@code since} (quota counting). */
     long countByModelIdAndCreatedAtGreaterThanEqual(String modelId, Instant since);
 
+    long countByCreatedAtGreaterThanEqual(Instant since);
+
     @Query("""
             select coalesce(sum(c.inputTokens + c.outputTokens), 0) from LlmCall c
             where c.modelId = :modelId and c.createdAt >= :since""")

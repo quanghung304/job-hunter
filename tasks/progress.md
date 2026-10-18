@@ -10,6 +10,24 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — T-013 Pipeline orchestration, scheduling, expiry — DONE
+- `pipeline`: `PipelineOrchestrator` (`runOnce`, `startAsync` on one thread, last 20 reports,
+  `isRunning`), `PipelineLock` (`pg_try_advisory_lock` on a held connection), `PipelineScheduler`
+  (cron + startup catch-up), `PipelineProperties`, `PipelineReport`/`SourceReport`, `Trigger`,
+  `PipelineAlreadyRunningException`; `POST /api/admin/pipeline/run` (202 / 409), openapi.json
+  and schema.d.ts regenerated.
+- Steps: collect + ingest per source (isolated failures, timeouts), `reassessPrefilter`,
+  `AssessmentService.prefilterJobs` (writes only new/changed rows), `JobExpiryService`,
+  NOT_ANALYZED count, `RunCompleted` (in `common`, notify may not depend on pipeline). 0 LLM calls:
+  ArchUnit rule `pipelineNeverCallsTheLlm` (+ fixture) and the report's `llmCalls`.
+- Expired jobs: single Analyze/Score now refuse them (`JOB_EXPIRED`; bulk already skipped them).
+- Tests no longer run the schedule or catch-up (`src/test/resources/config/application.yml`):
+  otherwise every full-context test would call the real job sources.
+- Tests: `PipelineOrchestratorIT` (6: first run 0 LLM calls, idempotent second run, failing and
+  hanging source, profile change, expiry with fixed clock), `PipelineLockIT` (2), controller
+  and ArchUnit tests.
+- Next: T-014 (REST API).
+
 ## 2026-10-18 — T-012 Scoring — DONE
 - `scoring`: `ScoreResult` (§5 validation, text cut, `withSumAsScore`), `ScoringService`
   (`score(jobId, profile)` owner action, cached per job/profile/prompt version, max 3 attempts;

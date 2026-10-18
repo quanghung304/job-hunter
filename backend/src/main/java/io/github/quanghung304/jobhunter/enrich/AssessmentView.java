@@ -13,6 +13,7 @@ public record AssessmentView(
         String profileId,
         String profileHash,
         PrefilterResult prefilterResult,
+        List<String> prefilterReasons,
         Eligibility eligibility,
         List<String> eligibilityReasons,
         Long extractionId,
@@ -25,6 +26,7 @@ public record AssessmentView(
         int attempts) {
 
     public AssessmentView {
+        prefilterReasons = List.copyOf(prefilterReasons);
         eligibilityReasons = List.copyOf(eligibilityReasons);
     }
 

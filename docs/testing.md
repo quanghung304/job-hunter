@@ -10,7 +10,7 @@ and the eval.
 |---|---|---|---|
 | Unit | Mappers, normalization, fingerprint, prefilter rules, eligibility rules, status machine, prompt rendering, budget guard | JUnit 5, AssertJ, parameterized tests | `src/test/java/**` (`*Test`) |
 | HTTP contract | Each collector against a recorded response | WireMock serving `fixtures/<code>/*` | `*CollectorTest` |
-| Integration | Repositories, ingest upsert/dedupe, pipeline end-to-end with `FakeLlmClient` | Spring Boot test + Testcontainers PostgreSQL | `*IT` (failsafe) |
+| Integration | Repositories, ingest upsert/dedupe, pipeline end-to-end (WireMock sources, `FakeLlmClient`, 0 LLM calls) | Spring Boot test + Testcontainers PostgreSQL; `src/test/resources/config/application.yml` turns off the pipeline cron and startup catch-up so no test reaches a real source | `*IT` (failsafe) |
 | API | Controllers: status codes, JSON shape, Problem Details | `@WebMvcTest` + `MockMvc` | `*ControllerTest` |
 | Contract export | Writes `/v3/api-docs` to `docs/architecture/openapi.json`; fails if the file is out of date (unless `-Dapi.export=true`) | Spring Boot test | `OpenApiExportIT` |
 | Architecture | Module dependency rules from `overview.md` | ArchUnit | `ArchitectureTest` |

@@ -1,6 +1,15 @@
 {
   "components" : {
     "schemas" : {
+      "AcceptedResponse" : {
+        "properties" : {
+          "accepted" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "accepted" ],
+        "type" : "object"
+      },
       "CollectRunResponse" : {
         "properties" : {
           "collectStatus" : {
@@ -123,6 +132,24 @@
               }
             },
             "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/pipeline/run" : {
+      "post" : {
+        "operationId" : "runPipeline",
+        "responses" : {
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description" : "Accepted"
           }
         },
         "tags" : [ "admin-controller" ]

@@ -79,6 +79,11 @@ public class CollectorRunner {
         return CollectorRunOutcome.ran(run.getId(), result);
     }
 
+    /** Start of the newest SUCCESS run of any source (pipeline catch-up on startup). */
+    public Optional<Instant> lastSuccessfulRunAt() {
+        return runs.findFirstByStatusOrderByStartedAtDesc(CollectStatus.SUCCESS).map(CollectorRun::getStartedAt);
+    }
+
     /** {@code max-items} from the source settings, no keywords. */
     public CollectRequest defaultRequest(String sourceCode, Instant since) {
         int maxItems = sources.source(sourceCode)

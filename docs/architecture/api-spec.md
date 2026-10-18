@@ -61,14 +61,14 @@ Owner action "Analyze" (ADR-0010). Runs extraction if no OK extraction exists fo
 current prompt version (one EXTRACT call), then eligibility (no LLM). No body → 200 `JobDetail`.
 Repeating it makes no LLM call. A failed attempt (invalid output after the corrective retry,
 provider errors) still answers 200 with `analysisStage: FAILED`; after 3 failed attempts for the
-prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_PREFILTER_REJECTED`
+prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_PREFILTER_REJECTED`
 (no call: the prefilter rejects the job for this profile); 409 `LLM_PAUSED` (the response
 includes the `LlmAlert` for that purpose); 409 `BUDGET_REACHED`.
 
 ### `POST /api/jobs/{id}/score`
 Owner action "Score" (ADR-0010). Requires an analyzed job whose eligibility is
 ELIGIBLE or UNCERTAIN; makes one SCORE call → 200 `JobDetail`. Repeating it makes no call.
-Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_NOT_ANALYZED`; 409 `JOB_NOT_ELIGIBLE`; 409 `LLM_PAUSED`;
+Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_NOT_ANALYZED`; 409 `JOB_NOT_ELIGIBLE`; 409 `LLM_PAUSED`;
 409 `BUDGET_REACHED`.
 
 ### `PUT /api/jobs/{id}/notes`

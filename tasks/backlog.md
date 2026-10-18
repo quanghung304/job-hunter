@@ -19,7 +19,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
 | [x] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
 | [x] | T-012 | [Scoring](T-012-scoring.md) | T-011 | M |
-| [ ] | T-013 | [Pipeline orchestration, scheduling, expiry](T-013-pipeline.md) | T-012 | M |
+| [x] | T-013 | [Pipeline orchestration, scheduling, expiry](T-013-pipeline.md) | T-012 | M |
 | [ ] | T-014 | [REST API for board, job detail and admin](T-014-rest-api.md) | T-013 | M |
 | [x] | T-019 | [Frontend bootstrap (React)](T-019-frontend-bootstrap.md) | T-001 (can run in parallel any time after T-001) | M |
 | [ ] | T-020 | [Frontend: board and job detail](T-020-frontend-board-detail.md) | T-014, T-019 | M |

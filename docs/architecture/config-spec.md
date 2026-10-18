@@ -65,9 +65,10 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.profile.path` | `../config/profile.yaml` | |
 | `app.companies.path` | `../config/companies.yaml` | |
 | `app.public-base-url` | `http://localhost:8080` | Used in Telegram links |
-| `app.pipeline.cron` | `0 0 7,19 * * *` | |
+| `app.pipeline.cron` | `0 0 7,19 * * *` | `-` disables the schedule (tests do this in `src/test/resources/config/application.yml`) |
 | `app.pipeline.zone` | `Europe/Rome` | Zone for all crons |
 | `app.pipeline.catch-up-after` | `6h` | |
+| `app.pipeline.catch-up-enabled` | `true` | Run once on startup when the last successful collector run is older than `catch-up-after`; false in tests |
 | `app.pipeline.collector-timeout` | `2m` | Per collector |
 | `app.http.connect-timeout` / `read-timeout` | `5s` / `20s` | Source HTTP clients (overview.md, Cross-cutting) |
 | `app.sources.<code>.enabled` | per catalog | |

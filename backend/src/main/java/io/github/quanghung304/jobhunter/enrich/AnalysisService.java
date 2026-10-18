@@ -106,6 +106,7 @@ public class AnalysisService {
                 case ANALYZED -> analyzed++;
                 case FAILED, FAILED_PERMANENTLY -> failed++;
                 case PREFILTER_REJECTED -> skipped.merge("prefilterRejected", 1, Integer::sum);
+                case JOB_EXPIRED -> skipped.merge("expired", 1, Integer::sum);
                 case LLM_PAUSED, BUDGET_REACHED -> {
                     List<Long> rest = toAnalyze.subList(i, toAnalyze.size()).stream().map(JobView::id).toList();
                     log.info("bulk analyze stopped by {} after {} job(s); {} left", result.outcome(), analyzed + failed,
@@ -121,6 +122,10 @@ public class AnalysisService {
     }
 
     private AnalysisResult analyze(JobView job) {
+        if (job.status() == JobStatus.EXPIRED) {
+            return new AnalysisResult(job.id(), AnalysisResult.Outcome.JOB_EXPIRED, null, List.of(), false,
+                    "the job is no longer listed by any source");
+        }
         Profile profile = profiles.current();
         String profileHash = profiles.profileHash();
         if (assessments.ensurePrefilter(job, profile, profileHash) != PrefilterResult.PASS) {

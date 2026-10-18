@@ -23,6 +23,8 @@ public record AnalysisResult(
     public enum Outcome {
         /** Extraction available and eligibility stored. */
         ANALYZED,
+        /** The job is EXPIRED: no LLM call (api {@code JOB_EXPIRED}). */
+        JOB_EXPIRED,
         /** The prefilter rejects the job for this profile: no LLM call. */
         PREFILTER_REJECTED,
         /** No model may serve EXTRACT now (quota, error, paid consent): api {@code LLM_PAUSED}. */

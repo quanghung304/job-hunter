@@ -150,6 +150,36 @@ class ArchitectureTest {
                 .isTrue();
     }
 
+    /**
+     * ADR-0010 / T-013: the pipeline run makes no LLM calls, so the pipeline module has no path to
+     * the services that call the LLM.
+     */
+    static ArchRule pipelineNeverCallsTheLlm(String base) {
+        return noClasses()
+                .that().resideInAPackage(base + ".pipeline..")
+                .should().dependOnClassesThat().haveFullyQualifiedName(base + ".enrich.ExtractionService")
+                .orShould().dependOnClassesThat().haveFullyQualifiedName(base + ".enrich.AnalysisService")
+                .orShould().dependOnClassesThat().resideInAPackage(base + ".scoring..")
+                .orShould().dependOnClassesThat().haveFullyQualifiedName(base + ".llm.LlmRouter")
+                .orShould().dependOnClassesThat().resideInAPackage(base + ".llm.client..")
+                .because("ADR-0010: LLM calls happen only on an owner action");
+    }
+
+    @Test
+    void pipelineNeverCallsTheLlm() {
+        pipelineNeverCallsTheLlm(BASE).check(mainClasses);
+    }
+
+    @Test
+    void pipelineRuleDetectsAnLlmDependency() {
+        JavaClasses fixture = new ClassFileImporter()
+                .importPackages("io.github.quanghung304.archfixture");
+
+        assertThat(pipelineNeverCallsTheLlm("io.github.quanghung304.archfixture").evaluate(fixture).hasViolation())
+                .as("pipeline -> ExtractionService in the fixture must be reported")
+                .isTrue();
+    }
+
     @Test
     void controllersLiveInTheApiModule() {
         classes().that().areAnnotatedWith(RestController.class)

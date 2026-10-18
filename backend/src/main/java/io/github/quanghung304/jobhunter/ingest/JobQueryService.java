@@ -2,6 +2,7 @@ package io.github.quanghung304.jobhunter.ingest;
 
 import io.github.quanghung304.jobhunter.ingest.persistence.Job;
 import io.github.quanghung304.jobhunter.ingest.persistence.JobRepository;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,16 @@ public class JobQueryService {
             return List.of();
         }
         return jobs.findAllByIdInOrderById(jobIds).stream().map(JobQueryService::toView).toList();
+    }
+
+    /** Ids of ACTIVE jobs, ascending. */
+    public List<Long> activeJobIds() {
+        return List.copyOf(jobs.findIdsByStatus(JobStatus.ACTIVE));
+    }
+
+    /** Ids of jobs first seen at or after {@code since} (new jobs of a run), ascending. */
+    public List<Long> idsFirstSeenSince(Instant since) {
+        return List.copyOf(jobs.findIdsFirstSeenSince(since));
     }
 
     static JobView toView(Job job) {

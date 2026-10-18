@@ -12,6 +12,8 @@ public record ScoringResult(long jobId, Outcome outcome, Integer score, String s
         SCORED,
         /** A score exists for this job, profile and prompt version: no call. */
         ALREADY_SCORED,
+        /** The job is EXPIRED: no LLM call (api {@code JOB_EXPIRED}). */
+        JOB_EXPIRED,
         /** No OK extraction or eligibility yet (api {@code JOB_NOT_ANALYZED}). */
         NOT_ANALYZED,
         /** Eligibility is INELIGIBLE (api {@code JOB_NOT_ELIGIBLE}). */

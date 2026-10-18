@@ -107,6 +107,37 @@ public class AssessmentService {
         assessments.save(row);
     }
 
+    /**
+     * Prefilters these jobs for the profile (pipeline step, no LLM). A row is written only when
+     * it is missing or the decision changed, so a run with no new data writes nothing.
+     */
+    @Transactional
+    public PrefilterSummary prefilterJobs(List<JobView> jobViews, Profile profile, String profileHash) {
+        Map<Long, AssessmentView> existing = findAll(jobViews.stream().map(JobView::id).toList(), profile.id());
+        int recorded = 0;
+        int passed = 0;
+        for (JobView job : jobViews) {
+            PrefilterDecision decision = prefilter.evaluate(job, profile);
+            passed += decision.passed() ? 1 : 0;
+            AssessmentView row = existing.get(job.id());
+            boolean same = row != null && row.prefilterResult() == decision.result()
+                    && row.prefilterReasons().equals(decision.reasonCodes()) && profileHash.equals(row.profileHash());
+            if (!same) {
+                recordPrefilter(job.id(), profile.id(), profileHash, decision);
+                recorded++;
+            }
+        }
+        return new PrefilterSummary(jobViews.size(), recorded, passed, jobViews.size() - passed);
+    }
+
+    /** Among these jobs: prefilter PASS for the profile but not analyzed yet (no eligibility). */
+    @Transactional(readOnly = true)
+    public int countNotAnalyzed(Collection<Long> jobIds, String profileId) {
+        return (int) findAll(jobIds, profileId).values().stream()
+                .filter(row -> row.prefilterResult() == PrefilterResult.PASS && row.eligibility() == null)
+                .count();
+    }
+
     /** The row of this job and profile for the current score prompt version. */
     @Transactional(readOnly = true)
     public Optional<AssessmentView> find(long jobId, String profileId) {
@@ -178,7 +209,7 @@ public class AssessmentService {
 
     static AssessmentView view(JobAssessment row) {
         return new AssessmentView(row.getJobId(), row.getProfileId(), row.getProfileHash(), row.getPrefilterResult(),
-                row.getEligibility(), row.getEligibilityReasons(), row.getExtractionId(), row.getScore(),
+                row.getPrefilterReasons(), row.getEligibility(), row.getEligibilityReasons(), row.getExtractionId(), row.getScore(),
                 row.getScoreBreakdown(), row.getSummary(), row.getScorePromptVersion(), row.getScoreModel(),
                 row.getStatus(), row.getAttempts());
     }

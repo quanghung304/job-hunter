@@ -9,4 +9,6 @@ public interface CollectorRunRepository extends JpaRepository<CollectorRun, Long
     Optional<CollectorRun> findFirstBySourceCodeOrderByStartedAtDesc(String sourceCode);
 
     Optional<CollectorRun> findFirstBySourceCodeAndStatusOrderByStartedAtDesc(String sourceCode, CollectStatus status);
+
+    Optional<CollectorRun> findFirstByStatusOrderByStartedAtDesc(CollectStatus status);
 }

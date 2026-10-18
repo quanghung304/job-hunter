@@ -2,6 +2,7 @@ package io.github.quanghung304.jobhunter.api;
 
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -11,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.github.quanghung304.jobhunter.ingest.IngestResult;
 import io.github.quanghung304.jobhunter.ingest.IngestService;
+import io.github.quanghung304.jobhunter.pipeline.PipelineAlreadyRunningException;
+import io.github.quanghung304.jobhunter.pipeline.PipelineOrchestrator;
+import io.github.quanghung304.jobhunter.pipeline.Trigger;
 import io.github.quanghung304.jobhunter.profile.ProfileFixtures;
 import io.github.quanghung304.jobhunter.profile.ProfileProvider;
 import io.github.quanghung304.jobhunter.source.CollectRequest;
@@ -55,6 +59,9 @@ class AdminControllerTest {
 
     @MockitoBean
     Clock clock;
+
+    @MockitoBean
+    PipelineOrchestrator pipeline;
 
     private final JobCollector arbeitnow = mock(JobCollector.class);
 
@@ -112,5 +119,23 @@ class AdminControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value("SOURCE_NOT_FOUND"));
+    }
+
+    @Test
+    void pipelineRunIsAcceptedAndStartedAsync() throws Exception {
+        mvc.perform(post("/api/admin/pipeline/run"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.accepted").value(true));
+
+        verify(pipeline).startAsync(Trigger.MANUAL);
+    }
+
+    @Test
+    void pipelineRunWhileRunningIs409() throws Exception {
+        willThrow(new PipelineAlreadyRunningException()).given(pipeline).startAsync(Trigger.MANUAL);
+
+        mvc.perform(post("/api/admin/pipeline/run"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("PIPELINE_ALREADY_RUNNING"));
     }
 }

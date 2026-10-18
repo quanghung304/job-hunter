@@ -88,6 +88,11 @@ public class BudgetGuard {
         return Optional.ofNullable(average).map(a -> a.multiply(BigDecimal.valueOf(calls)).setScale(4, RoundingMode.HALF_UP));
     }
 
+    /** {@code llm_call} rows (HTTP attempts, all purposes) since {@code since}; the pipeline report shows it. */
+    public long callsSince(Instant since) {
+        return calls.countByCreatedAtGreaterThanEqual(since);
+    }
+
     public BigDecimal monthToDatePaidCost() {
         Instant monthStart = LocalDate.ofInstant(clock.instant(), ZoneOffset.UTC).withDayOfMonth(1)
                 .atStartOfDay(ZoneOffset.UTC).toInstant();

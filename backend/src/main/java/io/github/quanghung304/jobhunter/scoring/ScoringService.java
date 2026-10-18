@@ -179,7 +179,7 @@ public class ScoringService {
             switch (result.outcome()) {
                 case SCORED, ALREADY_SCORED -> run.scored++;
                 case FAILED, FAILED_PERMANENTLY -> run.failed++;
-                case NOT_ANALYZED, NOT_ELIGIBLE -> {
+                case NOT_ANALYZED, NOT_ELIGIBLE, JOB_EXPIRED -> {
                     // checked before the run; a concurrent change makes no call
                 }
                 case LLM_PAUSED, BUDGET_REACHED -> {
@@ -193,6 +193,9 @@ public class ScoringService {
     }
 
     private ScoringResult score(JobView job, Profile profile, boolean rescore) {
+        if (job.status() == JobStatus.EXPIRED) {
+            return refused(job, ScoringResult.Outcome.JOB_EXPIRED, "the job is no longer listed by any source");
+        }
         Optional<AssessmentView> row = assessments.find(job.id(), profile.id());
         Optional<ExtractionResult> extracted = extraction.current(job.id())
                 .filter(r -> r.status() == ExtractionResult.Status.OK);
