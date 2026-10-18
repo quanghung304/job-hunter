@@ -95,6 +95,12 @@ Rows are written for the configured score prompt version (`app.llm.score-prompt`
 `AssessmentService.recordPrefilter`: prefilter REJECT → `eligibility` null, `status` DONE
 (no LLM work); PASS on a new row or after a REJECT → `status` PENDING.
 
+Analyze (ADR-0010, `AnalysisService`) records the prefilter if needed, then `extraction_id`,
+`eligibility` and `eligibility_reasons` (`RULE:UNKNOWN`/`RULE:FAIL` per non-OK rule, plus
+`FULL_TIME_ONLY_SOFT` and `CONFIDENCE:LOW`); INELIGIBLE → `status` DONE, otherwise PENDING until
+the owner scores it. A changed job description deletes the job's extractions and clears
+eligibility and score (`status` PENDING again).
+
 When the profile file changes (`profile_hash` differs), prefilter and eligibility are
 re-evaluated (cheap, no LLM): `AssessmentService.reassessPrefilter` re-runs the prefilter
 and clears `eligibility` of every row with another hash, so it is evaluated again; scores are kept. Re-scoring after a profile change is manual

@@ -17,7 +17,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-008 | [We Work Remotely collector](T-008-weworkremotely.md) | T-005 | S |
 | [x] | T-009 | [Prefilter rules](T-009-prefilter.md) | T-002, T-005 | S |
 | [x] | T-010 | [LLM clients, model registry, router, call log, budget guard](T-010-llm-client.md) | T-003 | M–L |
-| [ ] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
+| [x] | T-011 | [Extraction + eligibility](T-011-extraction-eligibility.md) | T-009, T-010 | M |
 | [ ] | T-012 | [Scoring](T-012-scoring.md) | T-011 | M |
 | [ ] | T-013 | [Pipeline orchestration, scheduling, expiry](T-013-pipeline.md) | T-012 | M |
 | [ ] | T-014 | [REST API for board, job detail and admin](T-014-rest-api.md) | T-013 | M |

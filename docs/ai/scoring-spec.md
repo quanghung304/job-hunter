@@ -100,6 +100,13 @@ Timezone note: compute the residence offset for the current date (DST-aware) and
 d = `preferences.timezone.maxOffsetDiffHours`. OK if `minUtcOffset - d ≤ offset ≤ maxUtcOffset + d`. The eligibility unit test must contain one
 table row per cell of this table.
 
+Implementation notes (T-011): `EligibilityEvaluator`; stored reasons are `RULE:UNKNOWN` /
+`RULE:FAIL` for non-OK rules plus `FULL_TIME_ONLY_SOFT` and `CONFIDENCE:LOW`. `WORK_AUTH` looks for
+country names/adjectives (table in code) and the upper-case codes US, USA, UK, EU, EEA ("work with
+us" is not the US); a sentence naming no listed country is OK. Extraction output is parsed
+leniently: missing lists become empty and over-long `roleSummary`/`regionEvidence`/
+`workAuthorization` are cut to their limit instead of failing.
+
 Important for this owner: many contract/freelance roles say only "full-time" in a template
 while hiring contractors. Therefore when `employmentTypes == [FULL_TIME]` and the profile
 does not accept FULL_TIME, the result is FAIL **only if** the text also gives

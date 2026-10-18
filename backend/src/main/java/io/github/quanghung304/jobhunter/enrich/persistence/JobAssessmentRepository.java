@@ -9,6 +9,8 @@ public interface JobAssessmentRepository extends JpaRepository<JobAssessment, Lo
     Optional<JobAssessment> findByJobIdAndProfileIdAndScorePromptVersion(
             Long jobId, String profileId, String scorePromptVersion);
 
+    List<JobAssessment> findByJobId(Long jobId);
+
     /** Rows of a profile and score prompt version evaluated with another profile file. */
     List<JobAssessment> findByProfileIdAndScorePromptVersionAndProfileHashNotOrderById(
             String profileId, String scorePromptVersion, String profileHash);

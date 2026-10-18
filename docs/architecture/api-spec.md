@@ -59,7 +59,10 @@ Body `{ "to": "SHORTLISTED", "note": "optional" }` → 200 with updated `JobSumm
 ### `POST /api/jobs/{id}/analyze`
 Owner action "Analyze" (ADR-0010). Runs extraction if no OK extraction exists for the
 current prompt version (one EXTRACT call), then eligibility (no LLM). No body → 200 `JobDetail`.
-Repeating it makes no LLM call. Errors: 404 `JOB_NOT_FOUND`; 409 `LLM_PAUSED` (the response
+Repeating it makes no LLM call. A failed attempt (invalid output after the corrective retry,
+provider errors) still answers 200 with `analysisStage: FAILED`; after 3 failed attempts for the
+prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_PREFILTER_REJECTED`
+(no call: the prefilter rejects the job for this profile); 409 `LLM_PAUSED` (the response
 includes the `LlmAlert` for that purpose); 409 `BUDGET_REACHED`.
 
 ### `POST /api/jobs/{id}/score`
@@ -126,7 +129,7 @@ Bulk analysis (extraction, then eligibility) of jobs the admin selected, with th
 as `/analyze` (ADR-0010). Body `{ "jobIds": [42, 57], "dryRun": true }`, at most 200 ids.
 The admin picks jobs from `GET /api/jobs?analysisStage=NOT_ANALYZED`.
 
-Dry run → `{ "selected": 40, "willAnalyze": 33, "skipped": { "alreadyAnalyzed": 7, "expired": 0 },
+Dry run → `{ "selected": 40, "willAnalyze": 33, "skipped": { "alreadyAnalyzed": 7, "expired": 0, "prefilterRejected": 0, "failedPermanently": 0, "notFound": 0 },
 "estimatedCalls": 33, "estimatedCostUsd": 0.0 }`. `estimatedCalls` counts the jobs without a
 current extraction (one EXTRACT call each). Skipped jobs make no call.
 

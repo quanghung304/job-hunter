@@ -33,5 +33,5 @@ temperature: 0
 
 | Id | Status | Notes |
 |---|---|---|
-| extract-v1 | draft → released when T-011 merges | |
+| extract-v1 | released (T-011) | referenced by `app.llm.extract-prompt`; never edit, create extract-v2 |
 | score-v1 | draft → released when T-012 merges | |

@@ -10,6 +10,22 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — T-011 Extraction + eligibility — DONE
+- `enrich`: `JobAttributes` (§3, Bean Validation; lenient: missing lists → empty, long text cut),
+  `ExtractionService` (`extractAttributes(JobView)` pure for the eval; `extract(jobId)` cached per
+  prompt version, max 3 failed attempts, UNAVAILABLE uses no attempt; description truncation
+  9 000 + "[…]" + 3 000; `JobDescriptionChanged` listener clears extractions, eligibility, score),
+  `EligibilityEvaluator` (all §4 rules, `FULL_TIME_ONLY_SOFT`, DST-aware timezone, `CONFIDENCE:LOW`
+  cap), `AnalysisService` (`analyze`, `analyzeMany` max 200 with dry run, stops at pause/budget),
+  `AssessmentService.ensurePrefilter/recordEligibility`; `ingest.JobNotFoundException`.
+- Choices (docs updated: api-spec, config-spec, data-model, scoring-spec, prompts README):
+  analyze refuses prefilter-rejected jobs (`JOB_PREFILTER_REJECTED`, no call); each owner action
+  is one budget "run" (`max-calls-per-run` now caps one action, the pipeline makes no calls);
+  WORK_AUTH matches US/UK/EU only in upper case. extract-v1 is now released.
+- Tests: `EligibilityEvaluatorTest` (47 rows + 2), `JobAttributesValidationTest` (12),
+  `ExtractionServiceIT` (9), `AnalysisServiceIT` (10). No real LLM call.
+- Next: T-012 (scoring).
+
 ## 2026-10-18 — Resolve contradictions with ADR-0010 — DONE
 - `runNow` / "Process pending jobs now" and `pendingJobs` removed (api-spec, frontend.md,
   runbook, T-022, T-023): switching a model only un-pauses Analyze/Score; nothing runs by itself.

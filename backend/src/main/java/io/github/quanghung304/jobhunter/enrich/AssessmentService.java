@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -59,6 +60,48 @@ public class AssessmentService {
             row.setScorePromptVersion(scorePromptVersion);
         }
         apply(row, profileHash, decision, now);
+        assessments.save(row);
+    }
+
+    /**
+     * The prefilter result of this job for the profile: the stored one when it was computed with
+     * this profile hash, otherwise evaluated now and stored (no LLM).
+     */
+    @Transactional
+    public PrefilterResult ensurePrefilter(JobView job, Profile profile, String profileHash) {
+        Optional<JobAssessment> row = assessments
+                .findByJobIdAndProfileIdAndScorePromptVersion(job.id(), profile.id(), scorePromptVersion);
+        if (row.isPresent() && profileHash.equals(row.get().getProfileHash())
+                && row.get().getPrefilterResult() != null) {
+            return row.get().getPrefilterResult();
+        }
+        PrefilterDecision decision = prefilter.evaluate(job, profile);
+        recordPrefilter(job.id(), profile.id(), profileHash, decision);
+        return decision.result();
+    }
+
+    /**
+     * Stores the eligibility of an analyzed job (the row exists: {@link #ensurePrefilter} first).
+     * INELIGIBLE needs no further LLM work (status DONE); otherwise the row waits for the owner's
+     * Score action (PENDING) unless it is already scored.
+     */
+    @Transactional
+    public void recordEligibility(long jobId, String profileId, String profileHash, long extractionId,
+            EligibilityResult result) {
+        JobAssessment row = assessments
+                .findByJobIdAndProfileIdAndScorePromptVersion(jobId, profileId, scorePromptVersion)
+                .orElseThrow(() -> new IllegalStateException(
+                        "no assessment row for job " + jobId + "; record the prefilter first"));
+        row.setProfileHash(profileHash);
+        row.setExtractionId(extractionId);
+        row.setEligibility(result.eligibility());
+        row.setEligibilityReasons(result.reasons());
+        if (result.eligibility() == Eligibility.INELIGIBLE || row.getScore() != null) {
+            row.setStatus(AssessmentStatus.DONE);
+        } else {
+            row.setStatus(AssessmentStatus.PENDING);
+        }
+        row.setUpdatedAt(clock.instant());
         assessments.save(row);
     }
 
