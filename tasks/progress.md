@@ -10,6 +10,25 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-19 — T-021 Frontend: admin page — DONE (visual check by owner pending)
+- `api/queries.ts`: `useAdminOverview` (3 s while a run or bulk action is in progress, else 60 s),
+  `useRunPipeline`, `useRescore` and `useBulkAction(mode)` (each `{ dryRun, execute }`), `useBulkCandidates`
+  (GET /api/jobs, 50 per page), `useRetry`, `useCompanies`, `useEvalExport`.
+- `features/admin`: `AdminPage` (title row with schedule line, Export / Re-score / Run pipeline),
+  `PipelineBanner`, `KpiRow`, `SourcesTable`, `LlmUsageCard` (CSS meter + 14 bars), `RunsList`,
+  `FailuresList` (Retry), `CompaniesTable`, `RescoreDialog`, `BulkActionTable` + `BulkActionDialog`
+  (Analyze | Score, max 200, dry run → confirm), `CostSummary` (model, tier, calls, cost, PAID note; confirm
+  disabled when paid calls are off), `AdminTag` (icon + word per status). New token `--accent-bar`.
+- The header status line already read `GET /api/status` (T-020); runs now refresh it. LLM models card and
+  banner stay for T-023.
+- Deviations (frontend.md updated): usage bars show calls while no day cost money; bulk table pages of 50
+  with the selection kept across pages; export answers 501 until T-016, shown as a toast.
+- Tests: `AdminPage.test.tsx` (9: overview, run → polling → done, 409, rescore confirm, PAID callout and
+  paid-off block, retry, bulk 200 cap + confirm, Score mode, export 501), `LlmUsageCard.test.tsx` (3);
+  `App.test` /admin route. Frontend 208 tests green, lint/typecheck/build clean. Playwright
+  `e2e/admin.spec.ts` (flow 3) written, not run (needs the running stack).
+- Next: T-022 (LLM quota alerts and model switching — backend).
+
 ## 2026-10-19 — T-026 Frontend: board grid, split view and eligibility decision — DONE (visual check by owner pending)
 - `api/queries.ts`: `PAGE_SIZE` 12; `useJobs(query, page)` (one grid page, keeps the previous page while
   loading), `useInfiniteJobs(query, seedPages)` (list panel, tops up a shorter cached list to pages 1…page),

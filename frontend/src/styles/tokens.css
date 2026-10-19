@@ -30,6 +30,8 @@
   --accent-tint: #e0e6f8;
   --accent-tint-2: #f0f4fc;
   --accent-deep: #1f3b89;
+  /* Past days in the LLM cost bars: accent mixed 55% with white */
+  --accent-bar: color-mix(in srgb, var(--accent) 55%, #ffffff);
 
   /* States */
   --attention-bg: #fcefd9;

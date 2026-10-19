@@ -1,15 +1,20 @@
 import { screen } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { AppShell } from '@/App'
+import { mockAdminApi } from '@/test/adminFixtures'
 import { server } from '@/test/server'
 import { renderWithProviders } from '@/test/render'
 
 describe('App routes', () => {
+  beforeEach(() => {
+    mockAdminApi()
+  })
+
   it.each([
     ['/', 'Nothing new to review. The next pipeline run brings new jobs.'],
     ['/jobs/1', 'Job 1 not found'],
-    ['/admin', 'Pipeline, sources and LLM usage arrive with T-021.'],
+    ['/admin', 'Next scheduled run 19:00 Europe/Rome · digest 08:30'],
   ])('renders %s', async (route, text) => {
     renderWithProviders(<AppShell />, { route })
 

@@ -50,7 +50,8 @@ frontend/
                     MobileActionBar, AnalysisActions, useStatusChanger, useDecisionChanger
     features/profile/ ProfilePage, ProfileForm, ChipsInput, ToggleChips, useProfileForm
     features/admin/ AdminPage, KpiRow, SourcesTable, LlmUsageCard, RunsList, FailuresList,
-                    CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard, BulkActionTable, BulkActionDialog
+                    CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard (T-023), BulkActionTable,
+                    BulkActionDialog, CostSummary (model, calls, cost, PAID note), AdminTag
     features/llm/   LlmAlertBanner, SwitchModelDialog, TierTag, ModelStatusTag
     lib/            format.ts, labels.ts, statusMachine.ts, scoreBand.ts, useMediaQuery.ts
     styles/         tokens.css (CSS variables), index.css
@@ -89,6 +90,7 @@ names — **no raw hex values in components**. shadcn's own variables (`--backgr
 | `--accent-tint` | `#E0E6F8` | score 70–84, OK rule tags (no longer status tags) |
 | `--accent-tint-2` | `#F0F4FC` | selected card background, running banner background |
 | `--accent-deep` | `#1F3B89` | text on `--accent-tint`, text links inside cards |
+| `--accent-bar` | accent mixed 55% with white | past days in the LLM usage bars (Admin) |
 | `--attention-bg` | `#FCEFD9` | "Check N criteria", "Unclear", Partial, warnings |
 | `--attention-fg` | `#7A4A00` | text on `--attention-bg` |
 | `--attention-icon` | `#B56A00` | warning icon stroke (ErrorState, attention rows) |
@@ -370,9 +372,10 @@ only (not on cards).
   To review — label (section label), mono 26px value, muted sub-line.
 - Row: Sources table (flex 999 1 640px; columns Source, Status tag, Fetched, New jobs,
   Last success, Note; numbers right-aligned mono; table in an `overflow-x: auto` box) and
-  LLM usage card (flex 1 1 340px: mono $ value "of $5.00 budget", meter 10px, mono calls
-  and tokens line, 14-day cost bars 84px high — today's bar `--accent`, others accent mixed
-  55% with white — first and last date labels).
+  LLM usage card (flex 1 1 340px: mono $ value "of $5.00 budget", meter 10px (fill turns
+  `--attention-fg` at ≥ 80%), mono calls and tokens line, 14-day cost bars 84px high — today's
+  bar `--accent`, others `--accent-bar` — first and last date labels). While no day of the 14
+  cost money (free models only), the bars show calls instead, labelled "calls".
 - Row: Recent pipeline runs (time · summary · status tag) and Failed LLM work (purpose tag
   · job title · mono error · Retry button).
 - **LLM models card** (`id="llm"`, full width, placed right after the KPI row so problems
@@ -391,8 +394,9 @@ only (not on cards).
 - **Bulk actions** (ADR-0010): a table of jobs with a segmented control "Analyze | Score".
   Analyze mode lists NOT_ANALYZED jobs. Score mode lists ANALYZED jobs that are not scored and
   not marked INELIGIBLE. Columns: checkbox, title, company, DecisionTag + ChecksTag, analysis
-  tag, posted. The header checkbox selects the visible page (max
-  200). Above the table: mono "N selected", a Clear button, and a secondary button "Analyze
+  tag, posted. The table shows 50 jobs per page (numbered pages); the selection is kept across
+  pages. The header checkbox selects the visible page; at 200 selected the other checkboxes are
+  disabled. Above the table: mono "N selected", a Clear button, and a secondary button "Analyze
   selected…" or "Score selected…" (matching the mode, disabled at 0), which opens
   `BulkActionDialog`.
 - `BulkActionDialog`: shadcn Dialog, max-width 460px; title "Analyze N jobs?" or "Score N
@@ -401,6 +405,12 @@ only (not on cards).
 - `RescoreDialog`: shadcn Dialog, max-width 460px; title "Re-score active jobs?", text with
   mono job count, a `--ground` box "Estimated cost ≈ $x", Cancel (secondary) and
   "Re-score N jobs" (primary).
+- Both dialogs show the model with its tier tag. A PAID model adds an attention box "Paid model —
+  counts against the $5.00 monthly budget"; with paid calls switched off it says the run would be
+  refused and the confirm button is disabled (ADR-0009). Unknown cost reads "unknown (no cost
+  history yet)".
+- "Export for labeling": success toast "Exported N jobs for labeling to <path>"; until T-016 the
+  backend answers 501 and the toast says the export comes with the eval harness.
 - Source/company/run status tags: OK = accent tint; Partial, Budget, Not found n/3 =
   attention; Failed, Error = strong; Skipped, Off = neutral.
 
@@ -451,7 +461,8 @@ only (not on cards).
   Error = strong "Error". Words always present.
 
 ### Admin
-- Overview refetch every 3 s while `pipelineRunning`, else every 60 s.
+- Overview refetch every 3 s while `pipelineRunning` or `pipelineProgress` is set (bulk actions),
+  else every 60 s. When that ends, the board lists, `['status']` and the companies are refetched.
 - Run → 202 → banner; 409 → toast "Pipeline is already running".
 - Re-score and bulk actions: dry run first; the dialog must show the count, and for bulk actions the skipped counts, before executing.
 

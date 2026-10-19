@@ -109,3 +109,27 @@ export function hoursRange(h: { min?: number | null; max?: number | null }): str
   if (hasMax) return `≤ ${h.max} h`
   return null
 }
+
+/** "$1.23"; costs below a cent show 4 decimals ("$0.0040"). */
+export function usd(value: number): string {
+  return `$${value !== 0 && Math.abs(value) < 0.01 ? value.toFixed(4) : value.toFixed(2)}`
+}
+
+/** "950", "12.3k", "1.2M" (token counts). */
+export function compactCount(value: number): string {
+  if (value < 1000) return String(value)
+  if (value < 1_000_000) return `${(value / 1000).toFixed(value < 10_000 ? 1 : 0)}k`
+  return `${(value / 1_000_000).toFixed(1)}M`
+}
+
+/** "07:00" in the given IANA zone (the pipeline schedule). */
+export function clockTimeIn(iso: string, zone: string): string {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: zone })
+}
+
+/** "1m 05s", "12s" (pipeline run durations). */
+export function duration(ms: number): string {
+  const seconds = Math.round(ms / 1000)
+  if (seconds < 60) return `${seconds}s`
+  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`
+}

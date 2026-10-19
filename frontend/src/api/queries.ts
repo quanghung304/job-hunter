@@ -20,6 +20,16 @@ export type JobDetail = components['schemas']['JobDetailResponse']
 export type JobPage = components['schemas']['JobPageResponse']
 export type Status = components['schemas']['StatusResponse']
 export type LlmAlert = components['schemas']['LlmAlertResponse']
+export type AdminOverview = components['schemas']['AdminOverviewResponse']
+export type AdminSource = components['schemas']['AdminSourceStatus']
+export type PipelineReport = components['schemas']['PipelineReportResponse']
+export type LlmUsage = components['schemas']['AdminLlmUsage']
+export type FailedJob = components['schemas']['AdminFailedJob']
+export type Company = components['schemas']['CompanyResponse']
+export type ModelChoice = components['schemas']['ModelChoiceResponse']
+export type RescoreDryRun = components['schemas']['RescoreResponse']
+export type BulkAnalyzeDryRun = components['schemas']['BulkAnalyzeResponse']
+export type BulkScoreDryRun = components['schemas']['BulkScoreResponse']
 
 /** Filters and sort of `GET /api/jobs` without paging; omitted values mean "no filter". */
 export type JobsQuery = Omit<NonNullable<paths['/api/jobs']['get']['parameters']['query']>, 'page' | 'size'>
@@ -37,6 +47,10 @@ export const queryKeys = {
   /** The appendable job list of the split view. */
   jobsList: (query: JobsQuery) => ['jobs', query, 'list'] as const,
   job: (id: number) => ['job', id] as const,
+  /** Candidates of a bulk action in the Admin page (one page of the table). */
+  jobsAdmin: (query: JobsQuery, page: number) => ['jobs', query, 'admin', page] as const,
+  adminOverview: ['admin', 'overview'] as const,
+  companies: ['admin', 'companies'] as const,
 }
 
 function isGridKey(key: QueryKey): boolean {
@@ -324,4 +338,111 @@ export function cachedPosition(
   const index = data?.items.findIndex((job) => job.id === id) ?? -1
   if (!data || index < 0) return undefined
   return { position: (page - 1) * PAGE_SIZE + index + 1, total: data.totalItems }
+}
+
+/** Admin overview: every 3 s while the pipeline or a bulk action runs, else every 60 s. */
+export function useAdminOverview() {
+  return useQuery({
+    queryKey: queryKeys.adminOverview,
+    queryFn: () => unwrap(api.GET('/api/admin/overview')),
+    refetchInterval: (query) => {
+      const data = query.state.data
+      return data && (data.pipelineRunning || data.pipelineProgress !== null) ? 3_000 : 60_000
+    },
+  })
+}
+
+/** After an admin action: overview, header status and (a run changes them) the board lists. */
+function refreshAdmin(client: QueryClient) {
+  void client.invalidateQueries({ queryKey: queryKeys.adminOverview })
+  void client.invalidateQueries({ queryKey: queryKeys.status })
+}
+
+/** "Run pipeline": 202 starts it (no LLM calls, ADR-0010); 409 PIPELINE_ALREADY_RUNNING. */
+export function useRunPipeline() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () => unwrap(api.POST('/api/admin/pipeline/run')),
+    onSettled: () => refreshAdmin(client),
+  })
+}
+
+/**
+ * Re-score active jobs (ADR-0010): `dryRun: true` returns the count, model and cost for the
+ * confirmation; only the confirmed `dryRun: false` starts LLM calls.
+ */
+export function useRescore() {
+  const client = useQueryClient()
+  return {
+    dryRun: useMutation({
+      mutationFn: () => unwrap(api.POST('/api/admin/rescore', { body: { dryRun: true } })) as Promise<RescoreDryRun>,
+    }),
+    execute: useMutation({
+      mutationFn: () => unwrap(api.POST('/api/admin/rescore', { body: { dryRun: false } })),
+      onSuccess: () => refreshAdmin(client),
+    }),
+  }
+}
+
+export type BulkMode = 'analyze' | 'score'
+
+/** Bulk Analyze or Score of selected jobs (ADR-0010): dry run first, then the confirmed run. */
+export function useBulkAction(mode: BulkMode) {
+  const client = useQueryClient()
+  const post = (jobIds: number[], dryRun: boolean): Promise<unknown> =>
+    mode === 'analyze'
+      ? unwrap(api.POST('/api/admin/jobs/analyze', { body: { jobIds, dryRun } }))
+      : unwrap(api.POST('/api/admin/jobs/score', { body: { jobIds, dryRun } }))
+  return {
+    dryRun: useMutation({
+      mutationFn: (jobIds: number[]) => post(jobIds, true) as Promise<BulkAnalyzeDryRun | BulkScoreDryRun>,
+    }),
+    execute: useMutation({
+      mutationFn: (jobIds: number[]) => post(jobIds, false),
+      onSuccess: () => {
+        refreshAdmin(client)
+        void client.invalidateQueries({ queryKey: queryKeys.jobsAll })
+      },
+    }),
+  }
+}
+
+/** Jobs a bulk action can take: NOT_ANALYZED for Analyze; analyzed and not marked INELIGIBLE for Score. */
+export function bulkCandidatesQuery(mode: BulkMode): JobsQuery {
+  return mode === 'analyze'
+    ? { analysisStage: ['NOT_ANALYZED'], sort: 'posted' }
+    : { analysisStage: ['ANALYZED'], decision: ['ELIGIBLE', 'UNDECIDED'], sort: 'posted' }
+}
+
+export const BULK_PAGE_SIZE = 50
+
+export function useBulkCandidates(mode: BulkMode, page: number) {
+  const query = bulkCandidatesQuery(mode)
+  return useQuery({
+    queryKey: queryKeys.jobsAdmin(query, page),
+    queryFn: () =>
+      unwrap(api.GET('/api/jobs', { params: { query: { ...query, page: page - 1, size: BULK_PAGE_SIZE } } })),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Retry a failed extraction or scoring (runs in the background, one job). */
+export function useRetry() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, purpose }: { id: number; purpose: 'EXTRACT' | 'SCORE' }) =>
+      unwrap(api.POST('/api/admin/jobs/{id}/retry', { params: { path: { id } }, body: { purpose } })),
+    onSuccess: () => refreshAdmin(client),
+  })
+}
+
+export function useCompanies() {
+  return useQuery({ queryKey: queryKeys.companies, queryFn: () => unwrap(api.GET('/api/admin/companies')) })
+}
+
+/** "Export for labeling" → `{ path, count }` (501 NOT_IMPLEMENTED until T-016). */
+export function useEvalExport() {
+  return useMutation({
+    mutationFn: () => unwrap(api.POST('/api/admin/eval/export')) as Promise<{ path: string; count: number }>,
+  })
 }

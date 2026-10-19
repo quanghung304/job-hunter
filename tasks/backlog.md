@@ -25,7 +25,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-020 | [Frontend: board and job detail](T-020-frontend-board-detail.md) | T-014, T-019 | M |
 | [x] | T-025 | [Eligibility checks and owner decision — backend](T-025-eligibility-checks-owner-decision.md) | T-011, T-012, T-014 | M–L |
 | [x] | T-026 | [Frontend: board grid, split view and eligibility decision](T-026-frontend-board-grid-split-view.md) | T-020, T-025 | M–L |
-| [ ] | T-021 | [Frontend: admin page](T-021-frontend-admin.md) | T-014, T-019, T-025 | S–M |
+| [x] | T-021 | [Frontend: admin page](T-021-frontend-admin.md) | T-014, T-019, T-025 | S–M |
 | [ ] | T-022 | [LLM quota alerts and model switching — backend](T-022-llm-alerts-switching-backend.md) | T-010, T-014, T-015 | M |
 | [ ] | T-023 | [LLM quota banner and model switcher — frontend](T-023-llm-alerts-switching-frontend.md) | T-022, T-019, T-021 | S–M |
 | [ ] | T-027 | [Profile editing — backend](T-027-profile-editing-backend.md) | T-002, T-009, T-014, T-025 | M |

@@ -33,6 +33,7 @@
   --color-accent-tint: var(--accent-tint);
   --color-accent-tint-2: var(--accent-tint-2);
   --color-accent-deep: var(--accent-deep);
+  --color-accent-bar: var(--accent-bar);
   --color-attention-bg: var(--attention-bg);
   --color-attention-fg: var(--attention-fg);
   --color-attention-icon: var(--attention-icon);
