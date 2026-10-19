@@ -16,7 +16,8 @@ export function summary(id: number, overrides: Partial<JobSummary> = {}): JobSum
     score: 80,
     scoreBand: 'GOOD',
     summary: `Good match ${id}`,
-    eligibility: 'ELIGIBLE',
+    eligibilityDecision: null,
+    checks: { ok: 10, unknown: 0, fail: 0 },
     remoteType: 'REMOTE_RESTRICTED',
     allowedRegions: ['EU'],
     employmentTypes: ['CONTRACT'],
@@ -28,6 +29,31 @@ export function summary(id: number, overrides: Partial<JobSummary> = {}): JobSum
     analysisStage: 'SCORED',
     ...overrides,
   }
+}
+
+const CHECK_CODES = [
+  'WORK_MODE',
+  'REGION',
+  'WORK_AUTH',
+  'TIMEZONE',
+  'EMPLOYMENT_TYPE',
+  'HOURS',
+  'SENIORITY',
+  'LANGUAGE',
+  'SCAM',
+  'EXTRACTION_CONFIDENCE',
+] as const
+
+/** Ten checks: TIMEZONE is UNKNOWN when `unknown` > 0, REGION fails when `fail` > 0. */
+function checksFor(counts: { unknown: number; fail: number }): JobDetail['eligibilityChecks'] {
+  return CHECK_CODES.map((code) => ({
+    code,
+    critical: code !== 'TIMEZONE' && code !== 'HOURS' && code !== 'SENIORITY',
+    result:
+      code === 'TIMEZONE' && counts.unknown > 0 ? 'UNKNOWN' : code === 'REGION' && counts.fail > 0 ? 'FAIL' : 'OK',
+    value: code === 'TIMEZONE' && counts.unknown > 0 ? 'Not stated' : 'EU',
+    reason: null,
+  }))
 }
 
 export function detail(job: JobSummary, overrides: Partial<JobDetail> = {}): JobDetail {
@@ -51,7 +77,8 @@ export function detail(job: JobSummary, overrides: Partial<JobDetail> = {}): Job
             isScamSignal: false,
             confidence: 'HIGH',
           },
-    eligibilityReasons: job.eligibility === 'UNCERTAIN' ? ['TIMEZONE:UNKNOWN'] : [],
+    eligibilityChecks: job.checks === null ? [] : checksFor(job.checks),
+    eligibilityDecidedAt: null,
     prefilterReasons: [],
     scoreBreakdown: scored ? { skills: 32, experience: 16, arrangement: 18, domain: 8, other: 6 } : null,
     strengths: scored ? ['Java 17 and Spring'] : [],
@@ -151,7 +178,7 @@ export function mockJobsApi(jobs: JobSummary[], details: Record<number, Partial<
       const job = find(Number(params.id))
       if (!job) return HttpResponse.json({ status: 404, code: 'JOB_NOT_FOUND' }, { status: 404 })
       if (action === 'analyze') {
-        Object.assign(job, { analysisStage: 'ANALYZED', eligibility: 'ELIGIBLE' })
+        Object.assign(job, { analysisStage: 'ANALYZED', checks: { ok: 10, unknown: 0, fail: 0 } })
       } else if (action === 'score') {
         Object.assign(job, { analysisStage: 'SCORED', score: 77, scoreBand: 'GOOD', summary: 'Scored now' })
       }

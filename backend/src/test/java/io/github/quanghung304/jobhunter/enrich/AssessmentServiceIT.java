@@ -2,10 +2,12 @@ package io.github.quanghung304.jobhunter.enrich;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.quanghung304.jobhunter.PostgresJpaTest;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessment;
 import io.github.quanghung304.jobhunter.enrich.persistence.JobAssessmentRepository;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
+import io.github.quanghung304.jobhunter.ingest.JobView;
 import io.github.quanghung304.jobhunter.llm.LlmProperties;
 import io.github.quanghung304.jobhunter.llm.LlmRouterTestConfig;
 import io.github.quanghung304.jobhunter.profile.Profile;
@@ -22,15 +24,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
 @PostgresJpaTest
-@Import({AssessmentService.class, Prefilter.class, JobQueryService.class, AssessmentServiceIT.ClockConfig.class})
+@Import({AssessmentService.class, Prefilter.class, EligibilityEvaluator.class, JobQueryService.class,
+        AssessmentServiceIT.ClockConfig.class})
 class AssessmentServiceIT {
 
     static final Instant NOW = Instant.parse("2026-10-17T12:00:00Z");
     static final Instant EARLIER = NOW.minusSeconds(3600);
-    static final String PROFILE = "hugh";
-    static final String SCORE_PROMPT = "score-v1";
+    static final Profile PROFILE = ProfileFixtures.example(); // id "hugh"
+    static final String SCORE_PROMPT = "score-v2";
     static final PrefilterDecision PASS = PrefilterDecision.of(List.of());
     static final PrefilterDecision TITLE_EXCLUDED = PrefilterDecision.of(List.of(PrefilterReason.TITLE_EXCLUDED));
+    static final String ATTRIBUTES = """
+            {"remoteType":"FULLY_REMOTE","allowedRegions":["EU"],"employmentTypes":["CONTRACT"],
+             "requiredSkills":["Java"],"roleSummary":"Backend role.","isAgencyOrReposting":false,
+             "isScamSignal":false,"confidence":"HIGH"}""";
+    static final String US_ONLY = ATTRIBUTES.replace("[\"EU\"]", "[\"US\"]");
 
     @Autowired
     AssessmentService service;
@@ -39,13 +47,16 @@ class AssessmentServiceIT {
     JobAssessmentRepository assessments;
 
     @Autowired
+    JobQueryService jobs;
+
+    @Autowired
     TestEntityManager em;
 
     @Test
     void recordPrefilterCreatesAPendingRowForTheCurrentScorePromptVersion() {
         long jobId = insertJob("fp-1", "Senior Java Developer");
 
-        service.recordPrefilter(jobId, PROFILE, "hash-1", PASS);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
         JobAssessment row = reload(jobId);
 
         assertThat(row.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
@@ -53,7 +64,7 @@ class AssessmentServiceIT {
         assertThat(row.getStatus()).isEqualTo(AssessmentStatus.PENDING);
         assertThat(row.getProfileHash()).isEqualTo("hash-1");
         assertThat(row.getScorePromptVersion()).isEqualTo(SCORE_PROMPT);
-        assertThat(row.getEligibility()).isNull();
+        assertThat(row.getEligibilityChecks()).as("not analyzed").isNull();
         assertThat(row.getAttempts()).isZero();
         assertThat(row.getCreatedAt()).isEqualTo(NOW);
         assertThat(row.getUpdatedAt()).isEqualTo(NOW);
@@ -63,7 +74,7 @@ class AssessmentServiceIT {
     void rejectedJobsAreDoneWithTheirReasons() {
         long jobId = insertJob("fp-2", "iOS Engineer");
 
-        service.recordPrefilter(jobId, PROFILE, "hash-1",
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1",
                 PrefilterDecision.of(List.of(PrefilterReason.TITLE_EXCLUDED, PrefilterReason.NOT_RELEVANT)));
         JobAssessment row = reload(jobId);
 
@@ -75,60 +86,97 @@ class AssessmentServiceIT {
     @Test
     void recordingAgainUpdatesTheSameRow() {
         long jobId = insertJob("fp-3", "Backend Developer");
-        service.recordPrefilter(jobId, PROFILE, "hash-1", PASS);
-        setEligibility(jobId, Eligibility.ELIGIBLE, AssessmentStatus.PENDING);
+        insertExtraction(jobId, ATTRIBUTES);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
+        assertThat(reload(jobId).getEligibilityChecks()).as("checks from the stored extraction").isNotNull();
 
-        service.recordPrefilter(jobId, PROFILE, "hash-1", TITLE_EXCLUDED);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", TITLE_EXCLUDED);
         JobAssessment rejected = reload(jobId);
-        service.recordPrefilter(jobId, PROFILE, "hash-1", PASS);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
         JobAssessment passedAgain = reload(jobId);
 
         assertThat(assessments.count()).isEqualTo(1);
         assertThat(rejected.getPrefilterReasons()).containsExactly("TITLE_EXCLUDED");
-        assertThat(rejected.getEligibility()).as("null if prefilter rejected").isNull();
-        assertThat(rejected.getEligibilityReasons()).isEmpty();
+        assertThat(rejected.getEligibilityChecks()).as("null if prefilter rejected").isNull();
         assertThat(rejected.getStatus()).isEqualTo(AssessmentStatus.DONE);
         assertThat(passedAgain.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
         assertThat(passedAgain.getPrefilterReasons()).isEmpty();
         assertThat(passedAgain.getStatus()).isEqualTo(AssessmentStatus.PENDING);
+        assertThat(passedAgain.getEligibilityChecks()).as("evaluated again, no LLM").isNotNull();
     }
 
     @Test
-    void samePassWithSameHashKeepsEligibilityAndStatus() {
-        long jobId = insertJob("fp-4", "Backend Developer");
-        service.recordPrefilter(jobId, PROFILE, "hash-1", PASS);
-        setEligibility(jobId, Eligibility.ELIGIBLE, AssessmentStatus.DONE);
+    void passAttachesChecksFromAnOkExtractionWithoutAVerdict() {
+        long jobId = insertJob("fp-x", "Backend Developer");
+        long extractionId = insertExtraction(jobId, US_ONLY);
 
-        service.recordPrefilter(jobId, PROFILE, "hash-1", PASS);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
+        AssessmentView view = service.find(jobId, PROFILE.id()).orElseThrow();
+
+        assertThat(view.analyzed()).isTrue();
+        assertThat(view.extractionId()).isEqualTo(extractionId);
+        assertThat(view.eligibilityChecks()).extracting(EligibilityCheck::code)
+                .containsExactly(EligibilityRule.values());
+        assertThat(view.eligibilityChecks()).filteredOn(c -> c.result() != CheckResult.OK)
+                .extracting(EligibilityCheck::code, EligibilityCheck::result, EligibilityCheck::value)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(EligibilityRule.REGION, CheckResult.FAIL, "US"));
+        assertThat(view.status()).as("a FAIL check decides nothing").isEqualTo(AssessmentStatus.PENDING);
+    }
+
+    @Test
+    void samePassWithSameHashKeepsChecksAndStatus() {
+        long jobId = insertJob("fp-4", "Backend Developer");
+        insertExtraction(jobId, ATTRIBUTES);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
+        setScore(jobId, 81);
+        var before = reload(jobId).getEligibilityChecks();
+
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
         JobAssessment row = reload(jobId);
 
-        assertThat(row.getEligibility()).isEqualTo(Eligibility.ELIGIBLE);
+        assertThat(row.getEligibilityChecks()).isEqualTo(before);
         assertThat(row.getStatus()).isEqualTo(AssessmentStatus.DONE);
     }
 
     @Test
-    void reassessPrefilterReEvaluatesRowsWithAnotherProfileHash() {
-        Profile profile = ProfileFixtures.example();
+    void recordChecksStoresTheListAndWaitsForScore() {
+        long jobId = insertJob("fp-5", "Backend Developer");
+        long extractionId = insertExtraction(jobId, ATTRIBUTES);
+        service.recordPrefilter(job(jobId), PROFILE, "hash-1", PASS);
+        List<EligibilityCheck> checks = List.of(new EligibilityCheck(EligibilityRule.REGION, true, CheckResult.UNKNOWN,
+                null, "Not stated"));
+
+        service.recordChecks(jobId, PROFILE.id(), "hash-2", extractionId, checks);
+
+        AssessmentView view = service.find(jobId, PROFILE.id()).orElseThrow();
+        assertThat(view.eligibilityChecks()).containsExactlyElementsOf(checks);
+        assertThat(view.profileHash()).isEqualTo("hash-2");
+        assertThat(view.status()).isEqualTo(AssessmentStatus.PENDING);
+        assertThat(service.countNotAnalyzed(List.of(jobId), PROFILE.id())).isZero();
+    }
+
+    @Test
+    void reassessPrefilterReEvaluatesPrefilterAndChecksAndKeepsScores() {
         long nowExcluded = insertJob("fp-a", "iOS Engineer");
         long nowPassing = insertJob("fp-b", "Senior Java Developer");
         long stillPassing = insertJob("fp-c", "Backend Engineer");
         long current = insertJob("fp-d", "iOS Developer");
-        service.recordPrefilter(nowExcluded, profile.id(), "old", PASS);
-        service.recordPrefilter(nowPassing, profile.id(), "old", TITLE_EXCLUDED);
-        service.recordPrefilter(stillPassing, profile.id(), "old", PASS);
-        service.recordPrefilter(current, profile.id(), "new", PASS);
-        setEligibility(nowExcluded, Eligibility.ELIGIBLE, AssessmentStatus.PENDING);
-        setEligibility(stillPassing, Eligibility.UNCERTAIN, AssessmentStatus.DONE);
+        insertExtraction(stillPassing, ATTRIBUTES);
+        service.recordPrefilter(job(nowExcluded), PROFILE, "old", PASS);
+        service.recordPrefilter(job(nowPassing), PROFILE, "old", TITLE_EXCLUDED);
+        service.recordPrefilter(job(stillPassing), PROFILE, "old", PASS);
+        service.recordPrefilter(job(current), PROFILE, "new", PASS);
+        setChecksJson(stillPassing, "[]");
         setScore(stillPassing, 77);
-        insertOtherPromptVersionRow(nowExcluded, profile.id());
+        insertOtherPromptVersionRow(nowExcluded, PROFILE.id());
 
-        int reassessed = service.reassessPrefilter(profile, "new");
+        int reassessed = service.reassessPrefilter(PROFILE, "new");
 
         assertThat(reassessed).isEqualTo(3);
         JobAssessment excluded = reload(nowExcluded);
         assertThat(excluded.getPrefilterResult()).isEqualTo(PrefilterResult.REJECT);
         assertThat(excluded.getPrefilterReasons()).containsExactly("TITLE_EXCLUDED", "NOT_RELEVANT");
-        assertThat(excluded.getEligibility()).isNull();
+        assertThat(excluded.getEligibilityChecks()).isNull();
         assertThat(excluded.getStatus()).isEqualTo(AssessmentStatus.DONE);
         assertThat(excluded.getProfileHash()).isEqualTo("new");
 
@@ -136,10 +184,11 @@ class AssessmentServiceIT {
         assertThat(passing.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
         assertThat(passing.getPrefilterReasons()).isEmpty();
         assertThat(passing.getStatus()).isEqualTo(AssessmentStatus.PENDING);
+        assertThat(passing.getEligibilityChecks()).as("no extraction: not analyzed").isNull();
 
         JobAssessment kept = reload(stillPassing);
         assertThat(kept.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
-        assertThat(kept.getEligibility()).as("re-evaluated later, no LLM").isNull();
+        assertThat(kept.getEligibilityChecks()).as("re-evaluated from the extraction, no LLM").hasSize(10);
         assertThat(kept.getStatus()).isEqualTo(AssessmentStatus.DONE);
         assertThat(kept.getScore()).as("re-scoring is manual").isEqualTo(77);
         assertThat(kept.getProfileHash()).isEqualTo("new");
@@ -148,10 +197,30 @@ class AssessmentServiceIT {
         assertThat(untouched.getPrefilterResult()).as("same hash: not re-evaluated").isEqualTo(PrefilterResult.PASS);
 
         JobAssessment otherVersion = assessments
-                .findByJobIdAndProfileIdAndScorePromptVersion(nowExcluded, profile.id(), "score-v0").orElseThrow();
+                .findByJobIdAndProfileIdAndScorePromptVersion(nowExcluded, PROFILE.id(), "score-v0").orElseThrow();
         assertThat(otherVersion.getProfileHash()).isEqualTo("old");
 
-        assertThat(service.reassessPrefilter(profile, "new")).as("idempotent").isZero();
+        assertThat(service.reassessPrefilter(PROFILE, "new")).as("idempotent").isZero();
+    }
+
+    @Test
+    void evaluateMissingChecksFillsAnalyzedJobsOnly() {
+        long analyzed = insertJob("fp-m1", "Backend Developer");
+        long notAnalyzed = insertJob("fp-m2", "Backend Developer");
+        service.recordPrefilter(job(analyzed), PROFILE, "hash-1", PASS);
+        service.recordPrefilter(job(notAnalyzed), PROFILE, "hash-1", PASS);
+        insertExtraction(analyzed, ATTRIBUTES); // stored after the prefilter, e.g. a row from before V8
+
+        int updated = service.evaluateMissingChecks(PROFILE, "hash-1");
+
+        assertThat(updated).isEqualTo(1);
+        assertThat(reload(analyzed).getEligibilityChecks()).hasSize(10);
+        assertThat(reload(notAnalyzed).getEligibilityChecks()).isNull();
+        assertThat(service.evaluateMissingChecks(PROFILE, "hash-1")).as("idempotent").isZero();
+    }
+
+    private JobView job(long jobId) {
+        return jobs.find(jobId).orElseThrow();
     }
 
     /** A detached snapshot of the stored row. */
@@ -159,22 +228,25 @@ class AssessmentServiceIT {
         em.flush();
         em.clear();
         JobAssessment row = assessments
-                .findByJobIdAndProfileIdAndScorePromptVersion(jobId, PROFILE, SCORE_PROMPT).orElseThrow();
+                .findByJobIdAndProfileIdAndScorePromptVersion(jobId, PROFILE.id(), SCORE_PROMPT).orElseThrow();
         em.detach(row);
         return row;
     }
 
-    private void setEligibility(long jobId, Eligibility eligibility, AssessmentStatus status) {
+    private void setChecksJson(long jobId, String json) {
         JobAssessment row = reload(jobId);
-        row.setEligibility(eligibility);
-        row.setEligibilityReasons(List.of("REGION:UNKNOWN"));
-        row.setStatus(status);
+        try {
+            row.setEligibilityChecks(new ObjectMapper().readTree(json));
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
         assessments.saveAndFlush(row);
     }
 
     private void setScore(long jobId, int score) {
         JobAssessment row = reload(jobId);
         row.setScore(score);
+        row.setStatus(AssessmentStatus.DONE);
         assessments.saveAndFlush(row);
     }
 
@@ -183,6 +255,20 @@ class AssessmentServiceIT {
         row.setPrefilterResult(PrefilterResult.PASS);
         row.setScorePromptVersion("score-v0");
         assessments.saveAndFlush(row);
+    }
+
+    /** An OK extraction for the current extract prompt version (extract-v1). */
+    private long insertExtraction(long jobId, String attributes) {
+        Object id = em.getEntityManager().createNativeQuery("""
+                        insert into job_extraction (job_id, prompt_version, model, attributes, status, attempts,
+                                                    created_at)
+                        values (:job, 'extract-v1', 'primary', cast(:attributes as jsonb), 'OK', 1, :t)
+                        returning id""")
+                .setParameter("job", jobId)
+                .setParameter("attributes", attributes)
+                .setParameter("t", EARLIER)
+                .getSingleResult();
+        return ((Number) id).longValue();
     }
 
     /** A remote job posted yesterday; inserted with SQL to respect module boundaries. */
@@ -207,7 +293,12 @@ class AssessmentServiceIT {
             return Clock.fixed(NOW, ZoneOffset.UTC);
         }
 
-        /** Score prompt version score-v1, as in application.yml. */
+        @Bean
+        ObjectMapper objectMapper() {
+            return new ObjectMapper().findAndRegisterModules();
+        }
+
+        /** Score prompt version score-v2 and extract-v1, as in application.yml. */
         @Bean
         LlmProperties llmProperties() {
             return LlmRouterTestConfig.properties(null, false);

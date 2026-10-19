@@ -94,8 +94,10 @@ class MetaControllerTest {
                 .andExpect(jsonPath("$.statuses.length()").value(8))
                 .andExpect(jsonPath("$.statuses[0]").value("NEW"))
                 .andExpect(jsonPath("$.employmentTypes[0]").value("FULL_TIME"))
-                .andExpect(jsonPath("$.eligibilities[0]").value("ELIGIBLE"))
-                .andExpect(jsonPath("$.eligibilities.length()").value(3))
+                .andExpect(jsonPath("$.decisions[2]").value("UNDECIDED"))
+                .andExpect(jsonPath("$.decisions.length()").value(3))
+                .andExpect(jsonPath("$.checkResults[0]").value("ALL_OK"))
+                .andExpect(jsonPath("$.checkResults.length()").value(4))
                 .andExpect(jsonPath("$.profileId").value("hugh"))
                 .andExpect(jsonPath("$.summaryLanguage").value("vi"));
     }

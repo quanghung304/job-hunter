@@ -67,7 +67,8 @@ class AnalysisServiceIT {
 
         assertThat(first).allSatisfy(r -> {
             assertThat(r.outcome()).isEqualTo(AnalysisResult.Outcome.ANALYZED);
-            assertThat(r.eligibility()).isEqualTo(Eligibility.ELIGIBLE);
+            assertThat(r.checks()).hasSize(EligibilityRule.values().length)
+                    .allSatisfy(c -> assertThat(c.result()).isEqualTo(CheckResult.OK));
             assertThat(r.llmCalled()).isTrue();
         });
         assertThat(again).allSatisfy(r -> {
@@ -77,21 +78,24 @@ class AnalysisServiceIT {
         assertThat(fake.requests()).hasSize(3);
         JobAssessment row = assessment(ids.get(0));
         assertThat(row.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
-        assertThat(row.getEligibility()).isEqualTo(Eligibility.ELIGIBLE);
+        assertThat(row.getEligibilityChecks()).hasSize(EligibilityRule.values().length);
         assertThat(row.getExtractionId()).isNotNull();
         assertThat(row.getStatus()).as("waits for the owner's Score").isEqualTo(AssessmentStatus.PENDING);
     }
 
     @Test
-    void ineligibleJobIsDone() {
+    void failedCheckDecidesNothingTheJobWaitsForTheOwner() {
         long id = job("us");
         fake.enqueue(Step.text(INELIGIBLE_ANSWER));
 
         AnalysisResult result = analysis.analyze(id);
 
-        assertThat(result.eligibility()).isEqualTo(Eligibility.INELIGIBLE);
-        assertThat(result.eligibilityReasons()).containsExactly("REGION:FAIL");
-        assertThat(assessment(id).getStatus()).isEqualTo(AssessmentStatus.DONE);
+        assertThat(result.outcome()).isEqualTo(AnalysisResult.Outcome.ANALYZED);
+        assertThat(result.checks()).filteredOn(c -> c.result() != CheckResult.OK)
+                .extracting(EligibilityCheck::code, EligibilityCheck::result)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(EligibilityRule.REGION, CheckResult.FAIL));
+        assertThat(assessment(id).getStatus()).as("ADR-0011: no verdict, still scorable")
+                .isEqualTo(AssessmentStatus.PENDING);
     }
 
     @Test
@@ -115,7 +119,7 @@ class AnalysisServiceIT {
 
         assertThat(result.outcome()).isEqualTo(AnalysisResult.Outcome.LLM_PAUSED);
         assertThat(extractions.findByJobId(id)).isEmpty();
-        assertThat(assessment(id).getEligibility()).isNull();
+        assertThat(assessment(id).getEligibilityChecks()).isNull();
     }
 
     @Test
@@ -202,6 +206,6 @@ class AnalysisServiceIT {
     private JobAssessment assessment(long jobId) {
         em.flush();
         em.clear();
-        return assessments.findByJobIdAndProfileIdAndScorePromptVersion(jobId, "hugh", "score-v1").orElseThrow();
+        return assessments.findByJobIdAndProfileIdAndScorePromptVersion(jobId, "hugh", "score-v2").orElseThrow();
     }
 }

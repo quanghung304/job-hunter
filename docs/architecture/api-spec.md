@@ -25,9 +25,8 @@ in the same commit.
 
 ## Jobs
 
-The eligibility model of ADR-0011 (checks + owner decision) is implemented in T-025; until then
-the shipped API returns the verdict field `eligibility` and the filter `eligibility` instead of
-`eligibilityDecision`, `checks`, `decision` and `eligibilityChecks`.
+The eligibility model of ADR-0011 (checks + owner decision) is implemented since T-025; the
+earlier verdict field and filter `eligibility` are gone.
 
 ### `GET /api/jobs`
 Query (all optional): `status` (repeatable), `decision` (repeatable: `ELIGIBLE`, `INELIGIBLE`,

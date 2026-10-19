@@ -125,7 +125,7 @@ decide. Record reason `FULL_TIME_ONLY_SOFT`.
 
 ## 5. Scoring (LLM, profile-dependent)
 
-Prompt: `docs/ai/prompts/score-v2.md` (from T-025; score-v1 took the verdict and reasons).
+Prompt: `docs/ai/prompts/score-v2.md` (since T-025; score-v1 took the verdict and reasons).
 Input: profile excerpt (headline, years, summary, skills by tier, domains, languages,
 preferences), job (title, company, extraction JSON, description truncated to 8 000 chars), the
 eligibility checks (one line per check: `CODE: RESULT — value (reason)`). Scoring runs only for an

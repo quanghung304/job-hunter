@@ -50,8 +50,8 @@ export function WhyItFits({ job, language }: { job: JobDetail; language: string 
         <p className="m-0 text-[13.5px] text-muted">
           {job.analysisStage === 'NOT_ANALYZED'
             ? 'Not analyzed yet. Analyze reads the posting (one LLM call), then Score rates the fit.'
-            : job.eligibility === 'INELIGIBLE'
-              ? 'Not eligible for your profile, so it is not scored.'
+            : job.eligibilityDecision === 'INELIGIBLE'
+              ? 'You marked it Not eligible, so it is not scored.'
               : 'Not scored yet. Score rates the fit with one LLM call.'}
         </p>
       </SectionCard>

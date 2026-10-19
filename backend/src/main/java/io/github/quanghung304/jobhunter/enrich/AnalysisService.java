@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * The owner's "Analyze" action (ADR-0010): prefilter check, extraction (at most one EXTRACT
- * call, cached per prompt version), then eligibility in Java. Called by the analyze endpoints
+ * call, cached per prompt version), then the eligibility checks in Java. Called by the analyze endpoints
  * only, never by the pipeline. Each action is one budget "run" ({@link BudgetGuard#beginRun()}),
  * so {@code app.llm.max-calls-per-run} caps a single bulk action.
  */
@@ -147,29 +147,29 @@ public class AnalysisService {
 
     private AnalysisResult analyze(JobView job) {
         if (job.status() == JobStatus.EXPIRED) {
-            return new AnalysisResult(job.id(), AnalysisResult.Outcome.JOB_EXPIRED, null, List.of(), false,
+            return new AnalysisResult(job.id(), AnalysisResult.Outcome.JOB_EXPIRED, List.of(), false,
                     "the job is no longer listed by any source");
         }
         Profile profile = profiles.current();
         String profileHash = profiles.profileHash();
         if (assessments.ensurePrefilter(job, profile, profileHash) != PrefilterResult.PASS) {
-            return new AnalysisResult(job.id(), AnalysisResult.Outcome.PREFILTER_REJECTED, null, List.of(), false,
+            return new AnalysisResult(job.id(), AnalysisResult.Outcome.PREFILTER_REJECTED, List.of(), false,
                     "the prefilter rejects this job for profile " + profile.id());
         }
         ExtractionResult extracted = extraction.extract(job.id());
         return switch (extracted.status()) {
             case OK -> {
-                EligibilityResult result = eligibility.evaluate(extracted.attributes(), job, profile);
-                assessments.recordEligibility(job.id(), profile.id(), profileHash, extracted.extractionId(), result);
-                yield new AnalysisResult(job.id(), AnalysisResult.Outcome.ANALYZED, result.eligibility(),
-                        result.reasons(), extracted.llmCalled(), null);
+                List<EligibilityCheck> checks = eligibility.evaluate(extracted.attributes(), job, profile);
+                assessments.recordChecks(job.id(), profile.id(), profileHash, extracted.extractionId(), checks);
+                yield new AnalysisResult(job.id(), AnalysisResult.Outcome.ANALYZED, checks, extracted.llmCalled(),
+                        null);
             }
-            case FAILED -> new AnalysisResult(job.id(), AnalysisResult.Outcome.FAILED, null, List.of(),
+            case FAILED -> new AnalysisResult(job.id(), AnalysisResult.Outcome.FAILED, List.of(),
                     extracted.llmCalled(), extracted.message());
-            case FAILED_PERMANENTLY -> new AnalysisResult(job.id(), AnalysisResult.Outcome.FAILED_PERMANENTLY, null,
+            case FAILED_PERMANENTLY -> new AnalysisResult(job.id(), AnalysisResult.Outcome.FAILED_PERMANENTLY,
                     List.of(), extracted.llmCalled(), extracted.message());
-            case UNAVAILABLE -> new AnalysisResult(job.id(), unavailableOutcome(extracted.unavailable()), null,
-                    List.of(), false, extracted.message());
+            case UNAVAILABLE -> new AnalysisResult(job.id(), unavailableOutcome(extracted.unavailable()), List.of(),
+                    false, extracted.message());
         };
     }
 

@@ -17,6 +17,7 @@ import io.github.quanghung304.jobhunter.llm.persistence.LlmAssignment;
 import io.github.quanghung304.jobhunter.llm.persistence.LlmAssignmentRepository;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.ProfileFixtures;
+import io.github.quanghung304.jobhunter.tracking.TrackingService;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 
 /** ADR-0009 for scoring: a PAID SCORE model without consent is never called. */
 @PostgresJpaTest
-@Import({EnrichTestConfig.class, ScoringService.class})
+@Import({EnrichTestConfig.class, ScoringService.class, TrackingService.class})
 @TestPropertySource(properties = "test.llm.allow-paid=false")
 class ScoringPaidConsentIT {
 

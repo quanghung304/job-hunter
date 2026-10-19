@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Dry run or result of the admin bulk "Score" (api-spec {@code POST /api/admin/jobs/score}).
  *
- * @param skipped          reason → count: {@code notAnalyzed}, {@code ineligible}, {@code alreadyScored},
+ * @param skipped          reason → count: {@code notAnalyzed}, {@code markedIneligible}, {@code alreadyScored},
  *                         {@code expired}, {@code failedPermanently}, {@code notFound}
  * @param model            the SCORE model that would be used; a PAID one must be named in the confirmation
  * @param estimatedCostUsd null when a PAID model has no cost history yet

@@ -360,14 +360,14 @@ class AdminControllerTest {
     void bulkScoreDryRunNamesTheModel() throws Exception {
         var paid = new ModelChoice("claude-haiku", "Claude Haiku 5.5", ModelTier.PAID, true);
         given(bulkActions.score(eq(List.of(1L, 2L, 3L)), any(), eq(true))).willReturn(new BulkScoreReport(true, 3, 1,
-                Map.of("notAnalyzed", 1, "ineligible", 1), 1, paid, null, 0, 0, null, List.of()));
+                Map.of("notAnalyzed", 1, "markedIneligible", 1), 1, paid, null, 0, 0, null, List.of()));
 
         mvc.perform(post("/api/admin/jobs/score").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"jobIds\":[1,2,3],\"dryRun\":true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.willScore").value(1))
                 .andExpect(jsonPath("$.skipped.notAnalyzed").value(1))
-                .andExpect(jsonPath("$.skipped.ineligible").value(1))
+                .andExpect(jsonPath("$.skipped.markedIneligible").value(1))
                 .andExpect(jsonPath("$.skipped.alreadyScored").value(0))
                 .andExpect(jsonPath("$.estimatedCostUsd").isEmpty())
                 .andExpect(jsonPath("$.model.label").value("Claude Haiku 5.5"))

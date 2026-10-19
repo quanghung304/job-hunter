@@ -3,7 +3,6 @@ package io.github.quanghung304.jobhunter.api;
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
 import io.github.quanghung304.jobhunter.enrich.AnalysisResult;
 import io.github.quanghung304.jobhunter.enrich.AnalysisService;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
 import io.github.quanghung304.jobhunter.ingest.JobNotFoundException;
 import io.github.quanghung304.jobhunter.llm.BudgetReachedException;
 import io.github.quanghung304.jobhunter.llm.LlmPausedException;
@@ -13,6 +12,8 @@ import io.github.quanghung304.jobhunter.profile.ProfileProvider;
 import io.github.quanghung304.jobhunter.scoring.ScoringResult;
 import io.github.quanghung304.jobhunter.scoring.ScoringService;
 import io.github.quanghung304.jobhunter.tracking.AnalysisStage;
+import io.github.quanghung304.jobhunter.tracking.ChecksFilter;
+import io.github.quanghung304.jobhunter.tracking.DecisionFilter;
 import io.github.quanghung304.jobhunter.tracking.JobBoardFilter;
 import io.github.quanghung304.jobhunter.tracking.JobBoardQuery;
 import io.github.quanghung304.jobhunter.tracking.JobDetailQuery;
@@ -72,13 +73,16 @@ public class JobController {
     }
 
     @Operation(summary = "The board of the current profile",
-            description = "With no filter the default view applies: status NEW or SHORTLISTED, prefilter PASS, "
-                    + "eligibility not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs "
+            description = "With no filter the default view applies: status not DISMISSED, prefilter PASS, "
+                    + "decision not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs "
                     + "stay hidden unless includeExpired=true.")
     @GetMapping
     public JobPageResponse list(
             @RequestParam(required = false) List<TrackingStatus> status,
-            @RequestParam(required = false) List<Eligibility> eligibility,
+            @Parameter(description = "The owner's eligibility decision (ADR-0011)")
+            @RequestParam(required = false) List<DecisionFilter> decision,
+            @Parameter(description = "Eligibility check results; values are OR-ed")
+            @RequestParam(required = false) List<ChecksFilter> checks,
             @RequestParam(required = false) @Min(0) @Max(100) Integer minScore,
             @RequestParam(required = false) @Min(0) @Max(100) Integer maxScore,
             @RequestParam(required = false) List<String> source,
@@ -92,7 +96,8 @@ public class JobController {
             @RequestParam(defaultValue = "score") @Pattern(regexp = "score|posted") String sort,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "" + DEFAULT_SIZE) @Min(1) @Max(MAX_SIZE) int size) {
-        JobBoardFilter filter = new JobBoardFilter(set(status), set(eligibility), minScore, maxScore, set(source),
+        JobBoardFilter filter = new JobBoardFilter(set(status), set(decision), set(checks), minScore, maxScore,
+                set(source),
                 set(employmentType), postedWithinDays, q, includeExpired, set(analysisStage));
         JobSort order = JobSort.valueOf(sort.toUpperCase(Locale.ROOT));
         return JobPageResponse.of(board.page(profileId(), filter, order, page, size));
@@ -109,6 +114,17 @@ public class JobController {
     public JobSummaryResponse changeStatus(@PathVariable long id, @Valid @RequestBody StatusChangeRequest request) {
         String profileId = profileId();
         tracking.changeStatus(id, profileId, request.to(), request.note());
+        return board.find(id, profileId).map(JobSummaryResponse::of).orElseThrow(() -> new JobNotFoundException(id));
+    }
+
+    @Operation(summary = "The owner's eligibility decision (ADR-0011)",
+            description = "ELIGIBLE, INELIGIBLE or null (undecided); allowed in every analysis stage. Setting the "
+                    + "current value again is a no-op (no history entry).")
+    @PutMapping(path = "/{id}/eligibility", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public JobSummaryResponse setEligibility(@PathVariable long id,
+            @Valid @RequestBody EligibilityDecisionRequest request) {
+        String profileId = profileId();
+        tracking.setEligibilityDecision(id, profileId, request.decision(), request.note());
         return board.find(id, profileId).map(JobSummaryResponse::of).orElseThrow(() -> new JobNotFoundException(id));
     }
 
@@ -133,7 +149,8 @@ public class JobController {
     }
 
     @Operation(summary = "Owner action Score (ADR-0010)",
-            description = "One SCORE call for an analyzed ELIGIBLE or UNCERTAIN job; none when already scored.")
+            description = "One SCORE call for an analyzed job the owner has not marked INELIGIBLE (ADR-0011); "
+                    + "none when already scored.")
     @PostMapping("/{id}/score")
     public JobDetailResponse score(@PathVariable long id) {
         Profile profile = profiles.current();
@@ -143,8 +160,8 @@ public class JobController {
                     "Job " + id + " has expired");
             case NOT_ANALYZED -> throw new ActionRefusedException(ActionRefusedException.JOB_NOT_ANALYZED,
                     "Job " + id + " is not analyzed yet; press Analyze first");
-            case NOT_ELIGIBLE -> throw new ActionRefusedException(ActionRefusedException.JOB_NOT_ELIGIBLE,
-                    "Job " + id + " is not eligible" + (result.message() == null ? "" : ": " + result.message()));
+            case MARKED_INELIGIBLE -> throw new ActionRefusedException(ActionRefusedException.JOB_MARKED_INELIGIBLE,
+                    "You marked job " + id + " Not eligible; change the decision to score it");
             case LLM_PAUSED -> throw new LlmPausedException(LlmPurpose.SCORE, result.message());
             case BUDGET_REACHED -> throw new BudgetReachedException(result.message());
             case SCORED, ALREADY_SCORED, FAILED, FAILED_PERMANENTLY -> {

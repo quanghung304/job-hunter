@@ -25,7 +25,7 @@ public record LlmProperties(
         @NotBlank @DefaultValue("../config/llm.yaml") String registryPath,
         String forceModel,
         @NotBlank @DefaultValue("extract-v1") String extractPrompt,
-        @NotBlank @DefaultValue("score-v1") String scorePrompt,
+        @NotBlank @DefaultValue("score-v2") String scorePrompt,
         @Positive @DefaultValue("150") int maxCallsPerRun,
         @NotNull @DecimalMin("0") @DefaultValue("5.00") BigDecimal monthlyBudgetUsd,
         @DefaultValue("false") boolean allowPaidCalls,

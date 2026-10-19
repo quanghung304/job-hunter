@@ -21,7 +21,8 @@ describe('parseFilters / toSearchParams', () => {
     const filters = {
       ...DEFAULT_FILTERS,
       status: ['NEW', 'APPLIED'] as const,
-      eligibility: ['UNCERTAIN'] as const,
+      decision: ['UNDECIDED'] as const,
+      checks: ['HAS_FAIL', 'HAS_UNKNOWN'] as const,
       analysisStage: ['ANALYZED'] as const,
       source: ['himalayas', 'jobicy'],
       employmentType: ['CONTRACT'] as const,
@@ -35,7 +36,8 @@ describe('parseFilters / toSearchParams', () => {
     const params = toSearchParams({
       ...filters,
       status: [...filters.status],
-      eligibility: [...filters.eligibility],
+      decision: [...filters.decision],
+      checks: [...filters.checks],
       analysisStage: [...filters.analysisStage],
       employmentType: [...filters.employmentType],
     })
@@ -44,7 +46,8 @@ describe('parseFilters / toSearchParams', () => {
     expect(parseFilters(params)).toEqual({
       ...filters,
       status: ['NEW', 'APPLIED'],
-      eligibility: ['UNCERTAIN'],
+      decision: ['UNDECIDED'],
+      checks: ['HAS_FAIL', 'HAS_UNKNOWN'],
       analysisStage: ['ANALYZED'],
       employmentType: ['CONTRACT'],
     })
@@ -70,7 +73,8 @@ describe('parseFilters / toSearchParams', () => {
   it('builds the API query with omitted values for "no filter"', () => {
     expect(toApiQuery(DEFAULT_FILTERS)).toEqual({
       status: undefined,
-      eligibility: undefined,
+      decision: undefined,
+      checks: undefined,
       analysisStage: undefined,
       source: undefined,
       employmentType: undefined,

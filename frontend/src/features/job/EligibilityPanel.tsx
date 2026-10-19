@@ -1,54 +1,24 @@
 import type { JobDetail } from '@/api/queries'
-import { EligibilityTag } from '@/components/EligibilityTag'
+import { ChecksTag } from '@/components/ChecksTag'
+import { DecisionTag } from '@/components/DecisionTag'
 import { RuleResultTag } from '@/components/RuleResultTag'
 import { SectionCard } from '@/components/SectionCard'
-import { hoursRange, timezoneRange } from '@/lib/format'
-import {
-  ELIGIBILITY_RULE_LABELS,
-  ELIGIBILITY_RULES,
-  EMPLOYMENT_LABELS,
-  type EligibilityRule,
-  eligibilityResults,
-  prefilterReasonLabel,
-  REMOTE_LABELS,
-  SENIORITY_LABELS,
-} from '@/lib/labels'
+import { checkReasonLabel, ELIGIBILITY_RULE_LABELS, prefilterReasonLabel } from '@/lib/labels'
 
-type Attributes = NonNullable<JobDetail['extraction']>
-
-/** What the posting says for each rule (from the extraction); "—" when it says nothing. */
-function ruleValue(rule: EligibilityRule, a: Attributes): string {
-  switch (rule) {
-    case 'WORK_MODE':
-      return REMOTE_LABELS[a.remoteType]
-    case 'REGION':
-      return a.allowedRegions?.length ? a.allowedRegions.join(', ') : '—'
-    case 'WORK_AUTH':
-      return a.workAuthorization ?? '—'
-    case 'TIMEZONE':
-      return a.timezoneRequirement ? timezoneRange(a.timezoneRequirement) : '—'
-    case 'EMPLOYMENT_TYPE':
-      return a.employmentTypes?.length ? a.employmentTypes.map((t) => EMPLOYMENT_LABELS[t]).join(', ') : '—'
-    case 'HOURS':
-      return (a.hoursPerWeek && hoursRange(a.hoursPerWeek)) ?? '—'
-    case 'SENIORITY':
-      return a.seniority ? (SENIORITY_LABELS[a.seniority] ?? a.seniority) : '—'
-    case 'LANGUAGE':
-      return a.requiredLanguages?.length
-        ? a.requiredLanguages.map((l) => `${l.code.toUpperCase()} ${l.level}`).join(', ')
-        : '—'
-    case 'SCAM':
-      return a.isScamSignal ? 'Scam signals' : 'No signals'
-  }
-}
-
-/** Card "Eligibility": one line per rule (label · value · result), notes, and prefilter reasons. */
+/**
+ * Card "Eligibility": one line per criterion (label · value · result) as checked by the app, and
+ * the owner's decision (ADR-0011: the app gives no overall verdict). The decision control comes
+ * with T-026.
+ */
 export function EligibilityPanel({ job }: { job: JobDetail }) {
-  const attributes = job.extraction
+  const checks = job.eligibilityChecks
+  const counts = job.checks
   return (
     <SectionCard
       label="Eligibility"
-      actions={job.eligibility ? <EligibilityTag eligibility={job.eligibility} /> : undefined}
+      actions={
+        job.eligibilityDecision ? <DecisionTag decision={job.eligibilityDecision} /> : <ChecksTag checks={counts} />
+      }
     >
       {job.prefilterReasons.length > 0 ? (
         <div className="mb-3">
@@ -60,42 +30,44 @@ export function EligibilityPanel({ job }: { job: JobDetail }) {
           </ul>
         </div>
       ) : null}
-      {job.eligibility === null || attributes === null ? (
+      {checks.length === 0 ? (
         job.prefilterReasons.length === 0 ? (
-          <p className="m-0 text-[13.5px] text-muted">Checked after Analyze.</p>
+          <p className="m-0 text-[13.5px] text-muted">Criteria appear after analysis.</p>
         ) : null
       ) : (
-        <EligibilityRules reasons={job.eligibilityReasons} attributes={attributes} />
+        <>
+          <p className="mt-0 mb-2 text-[13px] text-muted">
+            The app checks each criterion. The overall decision is yours.
+            {counts ? (
+              <span className="num">
+                {' '}
+                {counts.ok} OK · {counts.unknown} unclear · {counts.fail} fail
+              </span>
+            ) : null}
+          </p>
+          <dl className="m-0 flex flex-col">
+            {checks.map((check) => (
+              <div
+                key={check.code}
+                className="grid grid-cols-[104px_1fr_auto] items-center gap-3 border-b border-line-soft py-1.5 last:border-b-0"
+              >
+                <dt className="text-[13px] text-muted">{ELIGIBILITY_RULE_LABELS[check.code]}</dt>
+                <dd className="m-0 min-w-0 text-[13.5px] text-ink-2">
+                  <span className="block truncate" title={check.value}>
+                    {check.value}
+                  </span>
+                  {check.reason ? (
+                    <span className="block text-[12.5px] text-attention-fg">{checkReasonLabel(check.reason)}</span>
+                  ) : null}
+                </dd>
+                <dd className="m-0">
+                  <RuleResultTag result={check.result} />
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </>
       )}
     </SectionCard>
-  )
-}
-
-function EligibilityRules({ reasons, attributes }: { reasons: readonly string[]; attributes: Attributes }) {
-  const { rules, notes } = eligibilityResults(reasons)
-  return (
-    <>
-      <dl className="m-0 flex flex-col">
-        {ELIGIBILITY_RULES.map((rule) => (
-          <div
-            key={rule}
-            className="grid grid-cols-[104px_1fr_auto] items-center gap-3 border-b border-line-soft py-1.5 last:border-b-0"
-          >
-            <dt className="text-[13px] text-muted">{ELIGIBILITY_RULE_LABELS[rule]}</dt>
-            <dd className="m-0 truncate text-[13.5px] text-ink-2">{ruleValue(rule, attributes)}</dd>
-            <dd className="m-0">
-              <RuleResultTag result={rules[rule]} />
-            </dd>
-          </div>
-        ))}
-      </dl>
-      {notes.length > 0 ? (
-        <ul className="mt-3 mb-0 pl-5 text-[13px] text-attention-fg">
-          {notes.map((note) => (
-            <li key={note}>{note}</li>
-          ))}
-        </ul>
-      ) : null}
-    </>
   )
 }

@@ -60,7 +60,7 @@ app:
     registry-path: ../config/llm.yaml
     force-model:            # e.g. fake: every purpose uses this registry model
     extract-prompt: extract-v1
-    score-prompt: score-v1
+    score-prompt: score-v2
     max-calls-per-run: 150
     monthly-budget-usd: 5.00
     allow-paid-calls: ${LLM_ALLOW_PAID_CALLS:false}   # owner consent to PAID models (ADR-0009)

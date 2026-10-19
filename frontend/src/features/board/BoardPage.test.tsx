@@ -46,7 +46,7 @@ describe('BoardPage (desktop)', () => {
     api = mockJobsApi([
       summary(1, { score: 91, scoreBand: 'EXCELLENT' }),
       summary(2, { score: 72 }),
-      summary(3, { score: null, scoreBand: 'NONE', summary: null, eligibility: null, analysisStage: 'NOT_ANALYZED' }),
+      summary(3, { score: null, scoreBand: 'NONE', summary: null, checks: null, analysisStage: 'NOT_ANALYZED' }),
     ])
     vi.spyOn(window, 'open').mockImplementation(() => null)
   })

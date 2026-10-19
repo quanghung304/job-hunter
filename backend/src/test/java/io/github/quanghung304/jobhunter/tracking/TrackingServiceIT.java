@@ -49,8 +49,8 @@ class TrackingServiceIT {
         assertThat(tracking.history(jobId, HUGH))
                 .extracting(StatusChange::from, StatusChange::to, StatusChange::note)
                 .containsExactly(
-                        tuple(TrackingStatus.NEW, TrackingStatus.SHORTLISTED, "looks good"),
-                        tuple(TrackingStatus.SHORTLISTED, TrackingStatus.APPLIED, null));
+                        tuple("NEW", "SHORTLISTED", "looks good"),
+                        tuple("SHORTLISTED", "APPLIED", null));
         assertThat(tracking.history(jobId, HUGH)).allSatisfy(change -> assertThat(change.at()).isEqualTo(BoardFixtures.NOW));
     }
 
@@ -99,7 +99,43 @@ class TrackingServiceIT {
 
         assertThat(tracking.status(jobId, HUGH)).isEqualTo(TrackingStatus.NEW);
         tracking.changeStatus(jobId, HUGH, TrackingStatus.SHORTLISTED, null);
-        assertThat(tracking.history(jobId, HUGH)).hasSize(1);
-        assertThat(tracking.history(jobId, OTHER)).extracting(StatusChange::to).containsExactly(TrackingStatus.DISMISSED);
+        assertThat(tracking.history(jobId, HUGH)).hasSize(1)
+                .allSatisfy(change -> assertThat(change.kind()).isEqualTo(TrackingEventKind.STATUS));
+        assertThat(tracking.history(jobId, OTHER)).extracting(StatusChange::to).containsExactly("DISMISSED");
+    }
+
+    @Test
+    void eligibilityDecisionIsSetChangedAndClearedWithOneEventEach() {
+        assertThat(tracking.decision(jobId, HUGH)).isEmpty();
+
+        assertThat(tracking.setEligibilityDecision(jobId, HUGH, EligibilityDecision.ELIGIBLE, "fits")).isTrue();
+        assertThat(tracking.setEligibilityDecision(jobId, HUGH, EligibilityDecision.ELIGIBLE, null))
+                .as("same value: no-op").isFalse();
+        assertThat(tracking.decidedAt(jobId, HUGH)).contains(BoardFixtures.NOW);
+        tracking.setEligibilityDecision(jobId, HUGH, EligibilityDecision.INELIGIBLE, null);
+        tracking.setEligibilityDecision(jobId, HUGH, null, null);
+
+        assertThat(tracking.decision(jobId, HUGH)).isEmpty();
+        assertThat(tracking.decidedAt(jobId, HUGH)).isEmpty();
+        assertThat(tracking.history(jobId, HUGH))
+                .extracting(StatusChange::kind, StatusChange::from, StatusChange::to, StatusChange::note)
+                .containsExactly(
+                        tuple(TrackingEventKind.ELIGIBILITY, "UNDECIDED", "ELIGIBLE", "fits"),
+                        tuple(TrackingEventKind.ELIGIBILITY, "ELIGIBLE", "INELIGIBLE", null),
+                        tuple(TrackingEventKind.ELIGIBILITY, "INELIGIBLE", "UNDECIDED", null));
+        assertThat(tracking.status(jobId, HUGH)).as("independent of the status").isEqualTo(TrackingStatus.NEW);
+    }
+
+    @Test
+    void dismissingKeepsTheDecisionAndDecisionsArePerProfile() {
+        tracking.setEligibilityDecision(jobId, HUGH, EligibilityDecision.INELIGIBLE, null);
+        tracking.changeStatus(jobId, HUGH, TrackingStatus.DISMISSED, null);
+
+        assertThat(tracking.decision(jobId, HUGH)).contains(EligibilityDecision.INELIGIBLE);
+        assertThat(tracking.decision(jobId, OTHER)).isEmpty();
+        assertThat(tracking.decisions(java.util.List.of(jobId, 424_242L), HUGH))
+                .containsExactly(java.util.Map.entry(jobId, EligibilityDecision.INELIGIBLE));
+        assertThatThrownBy(() -> tracking.setEligibilityDecision(424_242L, HUGH, EligibilityDecision.ELIGIBLE, null))
+                .isInstanceOf(JobNotFoundException.class);
     }
 }

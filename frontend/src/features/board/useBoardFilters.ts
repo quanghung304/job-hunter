@@ -1,14 +1,15 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import type { JobsQuery } from '@/api/queries'
-import type { AnalysisStage, Eligibility, EmploymentType, TrackingStatus } from '@/lib/labels'
+import type { AnalysisStage, ChecksFilter, DecisionFilter, EmploymentType, TrackingStatus } from '@/lib/labels'
 
 export type Sort = 'score' | 'posted'
 
 /** Board filters (api-spec `GET /api/jobs`); they live in the URL so views can be bookmarked. */
 export interface BoardFilters {
   status: TrackingStatus[]
-  eligibility: Eligibility[]
+  decision: DecisionFilter[]
+  checks: ChecksFilter[]
   analysisStage: AnalysisStage[]
   source: string[]
   employmentType: EmploymentType[]
@@ -22,7 +23,8 @@ export interface BoardFilters {
 
 export const DEFAULT_FILTERS: BoardFilters = {
   status: [],
-  eligibility: [],
+  decision: [],
+  checks: [],
   analysisStage: [],
   source: [],
   employmentType: [],
@@ -44,7 +46,8 @@ const STATUSES = new Set([
   'REJECTED',
   'WITHDRAWN',
 ])
-const ELIGIBILITIES = new Set(['ELIGIBLE', 'UNCERTAIN', 'INELIGIBLE'])
+const DECISIONS = new Set(['ELIGIBLE', 'INELIGIBLE', 'UNDECIDED'])
+const CHECKS = new Set(['ALL_OK', 'HAS_UNKNOWN', 'HAS_FAIL', 'NOT_CHECKED'])
 const STAGES = new Set(['NOT_ANALYZED', 'ANALYZED', 'SCORED', 'FAILED'])
 const TYPES = new Set(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'FREELANCE', 'INTERNSHIP'])
 
@@ -64,7 +67,8 @@ function int(params: URLSearchParams, name: string, min: number, max: number): n
 export function parseFilters(params: URLSearchParams): BoardFilters {
   return {
     status: list<TrackingStatus>(params, 'status', STATUSES),
-    eligibility: list<Eligibility>(params, 'eligibility', ELIGIBILITIES),
+    decision: list<DecisionFilter>(params, 'decision', DECISIONS),
+    checks: list<ChecksFilter>(params, 'checks', CHECKS),
     analysisStage: list<AnalysisStage>(params, 'analysisStage', STAGES),
     source: list<string>(params, 'source'),
     employmentType: list<EmploymentType>(params, 'employmentType', TYPES),
@@ -80,7 +84,7 @@ export function parseFilters(params: URLSearchParams): BoardFilters {
 /** Writes filters as search params; defaults are left out so "/" is the default view. */
 export function toSearchParams(filters: BoardFilters): URLSearchParams {
   const params = new URLSearchParams()
-  const lists = ['status', 'eligibility', 'analysisStage', 'source', 'employmentType'] as const
+  const lists = ['status', 'decision', 'checks', 'analysisStage', 'source', 'employmentType'] as const
   for (const name of lists) {
     for (const value of filters[name]) params.append(name, value)
   }
@@ -97,7 +101,8 @@ export function toSearchParams(filters: BoardFilters): URLSearchParams {
 export function activeFilterCount(filters: BoardFilters): number {
   return (
     filters.status.length +
-    filters.eligibility.length +
+    filters.decision.length +
+    filters.checks.length +
     filters.analysisStage.length +
     filters.source.length +
     filters.employmentType.length +
@@ -112,7 +117,8 @@ export function activeFilterCount(filters: BoardFilters): number {
 export function toApiQuery(filters: BoardFilters): JobsQuery {
   return {
     status: filters.status.length ? filters.status : undefined,
-    eligibility: filters.eligibility.length ? filters.eligibility : undefined,
+    decision: filters.decision.length ? filters.decision : undefined,
+    checks: filters.checks.length ? filters.checks : undefined,
     analysisStage: filters.analysisStage.length ? filters.analysisStage : undefined,
     source: filters.source.length ? filters.source : undefined,
     employmentType: filters.employmentType.length ? filters.employmentType : undefined,

@@ -41,7 +41,7 @@ function FilterMenu({ label, value, children }: { label: string; value: string; 
   )
 }
 
-const LIST_FILTERS: ListFilter[] = ['status', 'eligibility', 'analysisStage']
+const LIST_FILTERS: ListFilter[] = ['status', 'analysisStage', 'decision', 'checks']
 const LATE_LIST_FILTERS: ListFilter[] = ['source', 'employmentType']
 
 /**

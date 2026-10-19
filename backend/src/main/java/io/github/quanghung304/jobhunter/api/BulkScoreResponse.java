@@ -22,7 +22,7 @@ public record BulkScoreResponse(
     @Schema(name = "BulkScoreSkipped")
     public record Skipped(
             @Schema(requiredMode = REQUIRED) int notAnalyzed,
-            @Schema(requiredMode = REQUIRED) int ineligible,
+            @Schema(requiredMode = REQUIRED) int markedIneligible,
             @Schema(requiredMode = REQUIRED) int alreadyScored,
             @Schema(requiredMode = REQUIRED) int expired,
             @Schema(requiredMode = REQUIRED) int failedPermanently,
@@ -32,7 +32,7 @@ public record BulkScoreResponse(
     static BulkScoreResponse of(BulkScoreReport report) {
         Map<String, Integer> s = report.skipped();
         return new BulkScoreResponse(report.selected(), report.willScore(),
-                new Skipped(count(s, "notAnalyzed"), count(s, "ineligible"), count(s, "alreadyScored"),
+                new Skipped(count(s, "notAnalyzed"), count(s, "markedIneligible"), count(s, "alreadyScored"),
                         count(s, "expired"), count(s, "failedPermanently"), count(s, "notFound")),
                 report.estimatedCalls(), report.estimatedCostUsd(), ModelChoiceResponse.of(report.model()));
     }

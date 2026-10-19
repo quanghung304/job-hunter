@@ -2,7 +2,8 @@ import { Star, X } from 'lucide-react'
 import { Link } from 'react-router'
 import { cn } from 'cn'
 import type { JobSummary } from '@/api/queries'
-import { EligibilityTag } from '@/components/EligibilityTag'
+import { ChecksTag } from '@/components/ChecksTag'
+import { DecisionTag } from '@/components/DecisionTag'
 import { FactChip } from '@/components/FactChip'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { StatusTag } from '@/components/StatusTag'
@@ -72,7 +73,11 @@ export function JobRow({
               <span className="line-clamp-2 text-[13px] text-ink-2 max-lg:hidden">{job.summary}</span>
             ) : null}
             <span className="mt-1 flex flex-wrap gap-1.5">
-              {job.eligibility ? <EligibilityTag eligibility={job.eligibility} rowMode /> : null}
+              {job.eligibilityDecision ? (
+                <DecisionTag decision={job.eligibilityDecision} />
+              ) : (
+                <ChecksTag checks={job.checks} />
+              )}
               <StatusTag status={job.status} hideNew />
               {job.analysisStage === 'FAILED' ? <Tag className="bg-strong text-white">Analysis failed</Tag> : null}
               {job.jobStatus === 'EXPIRED' ? <Tag className="bg-neutral-fill text-muted">Expired</Tag> : null}

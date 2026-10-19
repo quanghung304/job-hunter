@@ -89,12 +89,12 @@ class JobTrackingRepositoryIT {
         events.flush();
         em.clear();
 
-        var history = events.findByJobIdAndProfileIdOrderByCreatedAtAsc(jobId, "hugh");
+        var history = events.findByJobIdAndProfileIdOrderByCreatedAtAscIdAsc(jobId, "hugh");
 
-        assertThat(history).extracting(JobTrackingEvent::getToStatus)
-                .containsExactly(TrackingStatus.SHORTLISTED, TrackingStatus.APPLIED);
+        assertThat(history).extracting(JobTrackingEvent::getToValue).containsExactly("SHORTLISTED", "APPLIED");
         var applied = history.get(1);
-        assertThat(applied.getFromStatus()).isEqualTo(TrackingStatus.SHORTLISTED);
+        assertThat(applied.getKind()).isEqualTo(io.github.quanghung304.jobhunter.tracking.TrackingEventKind.STATUS);
+        assertThat(applied.getFromValue()).isEqualTo("SHORTLISTED");
         assertThat(applied.getNote()).isEqualTo("Sent CV");
         assertThat(applied.getCreatedAt()).isEqualTo(T0.plusSeconds(60));
         assertThat(history.get(0).getNote()).isNull();

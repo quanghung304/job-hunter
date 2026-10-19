@@ -34,7 +34,7 @@ class JobDetailMapper {
         boolean hasSalary = job.salaryMin() != null || job.salaryMax() != null;
         return new JobDetailResponse(
                 row.id(), row.title(), row.company(), row.locationText(), row.score(), row.scoreBand(), row.summary(),
-                row.eligibility(), row.remoteType(), row.allowedRegions(), row.employmentTypes(), row.postedAt(),
+                row.eligibilityDecision(), JobSummaryResponse.Checks.of(row.checks()), row.remoteType(), row.allowedRegions(), row.employmentTypes(), row.postedAt(),
                 row.firstSeenAt(), row.sourceCodes().stream().map(SourceSummaryResponse::of).toList(), row.status(),
                 row.jobStatus(), row.analysisStage(),
                 job.descriptionText(),
@@ -43,7 +43,12 @@ class JobDetailMapper {
                         job.salaryPeriod()) : null,
                 job.tags(),
                 view.attributes(),
-                assessment == null ? List.of() : assessment.eligibilityReasons(),
+                assessment == null || assessment.eligibilityChecks() == null ? List.of()
+                        : assessment.eligibilityChecks().stream()
+                                .map(c -> new JobDetailResponse.EligibilityCheckResponse(c.code(), c.critical(),
+                                        c.result(), c.value(), c.reason()))
+                                .toList(),
+                view.eligibilityDecidedAt(),
                 assessment == null ? List.of() : assessment.prefilterReasons(),
                 score == null ? null : breakdown(score.breakdown()),
                 score == null ? List.of() : score.strengths(),
@@ -56,7 +61,7 @@ class JobDetailMapper {
                         .toList(),
                 view.notes(),
                 view.history().stream()
-                        .map(h -> new JobDetailResponse.HistoryEntry(h.from(), h.to(), h.note(), h.at()))
+                        .map(h -> new JobDetailResponse.HistoryEntry(h.kind(), h.from(), h.to(), h.note(), h.at()))
                         .toList(),
                 view.allowedTransitions().stream().sorted().toList());
     }

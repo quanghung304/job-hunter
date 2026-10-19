@@ -11,7 +11,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 /**
  * Rows for board tests, inserted with SQL (other modules' tables). Prompt versions match
- * {@link LlmRouterTestConfig#properties}: {@code extract-v1} and {@code score-v1}.
+ * {@link LlmRouterTestConfig#properties}: {@code extract-v1} and {@code score-v2}.
  */
 final class BoardFixtures {
 
@@ -96,18 +96,49 @@ final class BoardFixtures {
         assessment(jobId, profileId, "REJECT", null, null, null, "DONE");
     }
 
-    /** Analyzed (OK extraction) with this eligibility, not scored. */
-    void analyzed(long jobId, String profileId, String eligibility) {
-        assessment(jobId, profileId, "PASS", eligibility, extractionOf(jobId), null,
-                "INELIGIBLE".equals(eligibility) ? "DONE" : "PENDING");
+    /**
+     * Analyzed (OK extraction), not scored. {@code checks}: {@code OK} (all OK), {@code UNKNOWN}
+     * (REGION unclear) or {@code FAIL} (REGION fails); the other checks are OK.
+     */
+    void analyzed(long jobId, String profileId, String checks) {
+        assessment(jobId, profileId, "PASS", checks, extractionOf(jobId), null, "PENDING");
     }
 
     void scored(long jobId, String profileId, int score) {
-        assessment(jobId, profileId, "PASS", "ELIGIBLE", extractionOf(jobId), score, "DONE");
+        assessment(jobId, profileId, "PASS", "OK", extractionOf(jobId), score, "DONE");
     }
 
     void scoreFailed(long jobId, String profileId) {
-        assessment(jobId, profileId, "PASS", "ELIGIBLE", extractionOf(jobId), null, "FAILED");
+        assessment(jobId, profileId, "PASS", "OK", extractionOf(jobId), null, "FAILED");
+    }
+
+    /** The owner's eligibility decision (ADR-0011); creates the tracking row if needed. */
+    void decide(long jobId, String profileId, String decision) {
+        jdbc.update("""
+                        insert into job_tracking (job_id, profile_id, status, eligibility_decision, eligibility_decided_at,
+                                                  updated_at)
+                        values (:job, :profile, 'NEW', :decision, :now, :now)
+                        on conflict (job_id, profile_id) do update
+                            set eligibility_decision = :decision, eligibility_decided_at = :now""",
+                new MapSqlParameterSource()
+                        .addValue("job", jobId)
+                        .addValue("profile", profileId)
+                        .addValue("decision", decision)
+                        .addValue("now", ts(NOW)));
+    }
+
+    /** All ten checks of scoring-spec §4, OK except REGION when {@code region} is UNKNOWN or FAIL. */
+    static String checksJson(String region) {
+        String[] codes = {"WORK_MODE", "REGION", "WORK_AUTH", "TIMEZONE", "EMPLOYMENT_TYPE", "HOURS", "SENIORITY",
+            "LANGUAGE", "SCAM", "EXTRACTION_CONFIDENCE"};
+        StringBuilder json = new StringBuilder("[");
+        for (int i = 0; i < codes.length; i++) {
+            String result = codes[i].equals("REGION") ? region : "OK";
+            json.append(i == 0 ? "" : ",").append("""
+                    {"code":"%s","critical":true,"result":"%s","reason":null,"value":"%s"}"""
+                    .formatted(codes[i], result, codes[i].equals("REGION") && !"OK".equals(region) ? "US" : "EU"));
+        }
+        return json.append("]").toString();
     }
 
     void tracking(long jobId, String profileId, String status) {
@@ -127,23 +158,22 @@ final class BoardFixtures {
         return ids.isEmpty() ? extraction(jobId) : ids.get(0);
     }
 
-    private void assessment(long jobId, String profileId, String prefilter, String eligibility, Long extractionId,
+    private void assessment(long jobId, String profileId, String prefilter, String checks, Long extractionId,
             Integer score, String status) {
         jdbc.update("""
                         insert into job_assessment (job_id, profile_id, profile_hash, prefilter_result,
-                                                    prefilter_reasons, eligibility, eligibility_reasons, extraction_id,
+                                                    prefilter_reasons, eligibility_checks, extraction_id,
                                                     score, score_breakdown, summary, score_prompt_version, score_model,
                                                     status, attempts, created_at, updated_at)
-                        values (:job, :profile, 'hash', :prefilter, cast(:reasons as text[]), :eligibility,
-                                cast(:eligibilityReasons as text[]), :extraction, :score, cast(:details as jsonb),
-                                :summary, 'score-v1', :model, :status, :attempts, :now, :now)""",
+                        values (:job, :profile, 'hash', :prefilter, cast(:reasons as text[]), cast(:checks as jsonb),
+                                :extraction, :score, cast(:details as jsonb),
+                                :summary, 'score-v2', :model, :status, :attempts, :now, :now)""",
                 new MapSqlParameterSource()
                         .addValue("job", jobId)
                         .addValue("profile", profileId)
                         .addValue("prefilter", prefilter)
                         .addValue("reasons", "REJECT".equals(prefilter) ? "{TITLE_EXCLUDED}" : "{}")
-                        .addValue("eligibility", eligibility, Types.VARCHAR)
-                        .addValue("eligibilityReasons", "UNCERTAIN".equals(eligibility) ? "{REGION:UNKNOWN}" : "{}")
+                        .addValue("checks", checks == null ? null : checksJson(checks), Types.VARCHAR)
                         .addValue("extraction", extractionId, Types.BIGINT)
                         .addValue("score", score, Types.INTEGER)
                         .addValue("details", score == null ? null : details(score), Types.VARCHAR)

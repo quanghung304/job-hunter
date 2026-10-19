@@ -5,7 +5,7 @@ import static io.github.quanghung304.jobhunter.tracking.BoardFixtures.OTHER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.quanghung304.jobhunter.PostgresJpaTest;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
+import io.github.quanghung304.jobhunter.enrich.CheckResult;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes.RemoteType;
 import io.github.quanghung304.jobhunter.ingest.PostingView;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,12 +54,14 @@ class JobDetailQueryIT {
         assertThat(view.job().tags()).containsExactly("java", "spring");
         assertThat(view.attributes().remoteType()).isEqualTo(RemoteType.REMOTE_RESTRICTED);
         assertThat(view.attributes().roleSummary()).isEqualTo("Backend role.");
-        assertThat(view.assessment().eligibility()).isEqualTo(Eligibility.ELIGIBLE);
+        assertThat(view.assessment().eligibilityChecks()).hasSize(10)
+                .allSatisfy(c -> assertThat(c.result()).isEqualTo(CheckResult.OK));
         assertThat(view.assessment().scoreDetails().path("strengths").get(0).asText()).isEqualTo("Java");
         assertThat(view.postings()).extracting(PostingView::sourceCode).containsExactly("himalayas", "jobicy");
         assertThat(view.postings().get(0).url()).isEqualTo("https://himalayas.example/jobs/" + id);
         assertThat(view.notes()).isEqualTo("Ask about the stack");
-        assertThat(view.history()).extracting(StatusChange::to).containsExactly(TrackingStatus.SHORTLISTED);
+        assertThat(view.history()).extracting(StatusChange::to).containsExactly("SHORTLISTED");
+        assertThat(view.eligibilityDecidedAt()).isNull();
         assertThat(view.allowedTransitions()).containsExactlyInAnyOrder(TrackingStatus.DISMISSED,
                 TrackingStatus.APPLIED, TrackingStatus.NEW);
     }
@@ -91,6 +93,26 @@ class JobDetailQueryIT {
 
         assertThat(view.attributes()).isNull();
         assertThat(view.summary().analysisStage()).isEqualTo(AnalysisStage.FAILED);
+    }
+
+    @Test
+    void decisionTimeAndHistoryAreShown() {
+        long id = db.job("Backend Engineer", "Beta", 1);
+        db.analyzed(id, HUGH, "FAIL");
+        tracking.setEligibilityDecision(id, HUGH, io.github.quanghung304.jobhunter.tracking.EligibilityDecision.ELIGIBLE,
+                "Region text is wrong");
+
+        JobDetailView view = details.find(id, HUGH).orElseThrow();
+
+        assertThat(view.summary().eligibilityDecision())
+                .isEqualTo(io.github.quanghung304.jobhunter.tracking.EligibilityDecision.ELIGIBLE);
+        assertThat(view.eligibilityDecidedAt()).isEqualTo(BoardFixtures.NOW);
+        assertThat(view.history()).singleElement().satisfies(change -> {
+            assertThat(change.kind()).isEqualTo(TrackingEventKind.ELIGIBILITY);
+            assertThat(change.to()).isEqualTo("ELIGIBLE");
+            assertThat(change.note()).isEqualTo("Region text is wrong");
+        });
+        assertThat(view.summary().analysisStage()).isEqualTo(AnalysisStage.ANALYZED);
     }
 
     @Test

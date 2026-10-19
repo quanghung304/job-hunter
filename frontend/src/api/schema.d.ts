@@ -177,7 +177,7 @@ export interface paths {
         };
         /**
          * The board of the current profile
-         * @description With no filter the default view applies: status NEW or SHORTLISTED, prefilter PASS, eligibility not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.
+         * @description With no filter the default view applies: status not DISMISSED, prefilter PASS, decision not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.
          */
         get: operations["list"];
         put?: never;
@@ -224,6 +224,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs/{id}/eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * The owner's eligibility decision (ADR-0011)
+         * @description ELIGIBLE, INELIGIBLE or null (undecided); allowed in every analysis stage. Setting the current value again is a no-op (no history entry).
+         */
+        put: operations["setEligibility"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/jobs/{id}/notes": {
         parameters: {
             query?: never;
@@ -251,7 +271,7 @@ export interface paths {
         put?: never;
         /**
          * Owner action Score (ADR-0010)
-         * @description One SCORE call for an analyzed ELIGIBLE or UNCERTAIN job; none when already scored.
+         * @description One SCORE call for an analyzed job the owner has not marked INELIGIBLE (ADR-0011); none when already scored.
          */
         post: operations["score"];
         delete?: never;
@@ -480,11 +500,19 @@ export interface components {
             /** Format: int32 */
             failedPermanently: number;
             /** Format: int32 */
-            ineligible: number;
+            markedIneligible: number;
             /** Format: int32 */
             notAnalyzed: number;
             /** Format: int32 */
             notFound: number;
+        };
+        CheckCounts: {
+            /** Format: int32 */
+            fail: number;
+            /** Format: int32 */
+            ok: number;
+            /** Format: int32 */
+            unknown: number;
         };
         CollectRunResponse: {
             /** @enum {string} */
@@ -525,6 +553,25 @@ export interface components {
         DryRunRequest: {
             dryRun: boolean;
         };
+        EligibilityCheck: {
+            /** @enum {string} */
+            code: "WORK_MODE" | "REGION" | "WORK_AUTH" | "TIMEZONE" | "EMPLOYMENT_TYPE" | "HOURS" | "SENIORITY" | "LANGUAGE" | "SCAM" | "EXTRACTION_CONFIDENCE";
+            critical: boolean;
+            /** @description Reason code, e.g. FULL_TIME_ONLY_SOFT */
+            reason: string | null;
+            /** @enum {string} */
+            result: "OK" | "UNKNOWN" | "FAIL";
+            /** @description Job-side value shown to the owner */
+            value: string;
+        };
+        EligibilityDecisionRequest: {
+            /**
+             * @description null = undecided
+             * @enum {string|null}
+             */
+            decision?: "ELIGIBLE" | "INELIGIBLE" | null;
+            note?: string | null;
+        };
         HoursPerWeek: {
             /** Format: int32 */
             max?: number;
@@ -562,11 +609,19 @@ export interface components {
             analysisStage: "NOT_ANALYZED" | "ANALYZED" | "SCORED" | "FAILED";
             applyAdvice: string | null;
             applyUrl: string | null;
+            /** @description Eligibility check results; null until analyzed */
+            checks: components["schemas"]["CheckCounts"] | null;
             company: string;
             description: string;
-            /** @enum {string|null} */
-            eligibility: "ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE" | null;
-            eligibilityReasons: string[];
+            /** @description One check per criterion (scoring-spec §4); empty until analyzed */
+            eligibilityChecks: components["schemas"]["EligibilityCheck"][];
+            /** Format: date-time */
+            eligibilityDecidedAt: string | null;
+            /**
+             * @description The owner's decision; null = undecided
+             * @enum {string|null}
+             */
+            eligibilityDecision: "ELIGIBLE" | "INELIGIBLE" | null;
             employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
             /** @description LLM-extracted attributes (scoring-spec §3); null until analyzed */
             extraction: components["schemas"]["JobAttributes"] | null;
@@ -632,9 +687,14 @@ export interface components {
             allowedRegions: string[];
             /** @enum {string} */
             analysisStage: "NOT_ANALYZED" | "ANALYZED" | "SCORED" | "FAILED";
+            /** @description Eligibility check results; null until analyzed */
+            checks: components["schemas"]["CheckCounts"] | null;
             company: string;
-            /** @enum {string|null} */
-            eligibility: "ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE" | null;
+            /**
+             * @description The owner's decision; null = undecided
+             * @enum {string|null}
+             */
+            eligibilityDecision: "ELIGIBLE" | "INELIGIBLE" | null;
             employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
             /** Format: date-time */
             firstSeenAt: string;
@@ -680,7 +740,10 @@ export interface components {
             tier: "FREE" | "PAID" | "LOCAL";
         };
         MetaResponse: {
-            eligibilities: ("ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE")[];
+            /** @description Values of the checks filter */
+            checkResults: ("ALL_OK" | "HAS_UNKNOWN" | "HAS_FAIL" | "NOT_CHECKED")[];
+            /** @description Values of the decision filter */
+            decisions: ("ELIGIBLE" | "INELIGIBLE" | "UNDECIDED")[];
             employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
             profileId: string;
             /** @description Registered sources, by code */
@@ -801,11 +864,11 @@ export interface components {
         StatusHistoryEntry: {
             /** Format: date-time */
             at: string;
+            from: string;
             /** @enum {string} */
-            from: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+            kind: "STATUS" | "ELIGIBILITY";
             note: string | null;
-            /** @enum {string} */
-            to: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+            to: string;
         };
         StatusLastRun: {
             /** Format: int32 */
@@ -1071,7 +1134,10 @@ export interface operations {
         parameters: {
             query?: {
                 status?: ("NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN")[];
-                eligibility?: ("ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE")[];
+                /** @description The owner's eligibility decision (ADR-0011) */
+                decision?: ("ELIGIBLE" | "INELIGIBLE" | "UNDECIDED")[];
+                /** @description Eligibility check results; values are OR-ed */
+                checks?: ("ALL_OK" | "HAS_UNKNOWN" | "HAS_FAIL" | "NOT_CHECKED")[];
                 minScore?: number;
                 maxScore?: number;
                 source?: string[];
@@ -1142,6 +1208,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobDetailResponse"];
+                };
+            };
+        };
+    };
+    setEligibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EligibilityDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobSummaryResponse"];
                 };
             };
         };

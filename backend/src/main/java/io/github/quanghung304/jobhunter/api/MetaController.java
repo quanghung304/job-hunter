@@ -1,9 +1,10 @@
 package io.github.quanghung304.jobhunter.api;
 
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
 import io.github.quanghung304.jobhunter.profile.ProfileProvider;
 import io.github.quanghung304.jobhunter.source.CollectorRegistry;
+import io.github.quanghung304.jobhunter.tracking.ChecksFilter;
+import io.github.quanghung304.jobhunter.tracking.DecisionFilter;
 import io.github.quanghung304.jobhunter.tracking.TrackingStatus;
 import java.util.List;
 import org.springframework.http.MediaType;
@@ -36,7 +37,8 @@ public class MetaController {
                 collectors.allCodes().stream().map(SourceSummaryResponse::of).toList(),
                 List.of(TrackingStatus.values()),
                 List.of(EmploymentType.values()),
-                List.of(Eligibility.values()),
+                List.of(DecisionFilter.values()),
+                List.of(ChecksFilter.values()),
                 profile.id(), profile.summaryLanguage().code());
     }
 

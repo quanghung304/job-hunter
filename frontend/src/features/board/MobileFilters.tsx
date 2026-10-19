@@ -9,7 +9,7 @@ import { LIST_FILTER_LABELS, type ListFilter, postedValueText, scoreValueText, u
 import { SearchField } from './SearchField'
 import type { BoardFilters } from './useBoardFilters'
 
-const LISTS: ListFilter[] = ['status', 'eligibility', 'analysisStage', 'source', 'employmentType']
+const LISTS: ListFilter[] = ['status', 'analysisStage', 'decision', 'checks', 'source', 'employmentType']
 
 /**
  * Mobile filter row: "Filters · N" pill (bottom sheet with every filter), pills of the active

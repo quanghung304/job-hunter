@@ -166,7 +166,7 @@ public class ExtractionService {
 
     /**
      * A changed description invalidates the extractions of the job (all prompt versions) and
-     * the eligibility and score that were based on them; runs inside the ingest transaction.
+     * the eligibility checks and score that were based on them; runs inside the ingest transaction.
      */
     @EventListener
     public void onDescriptionChanged(JobDescriptionChanged event) {
@@ -176,8 +176,7 @@ public class ExtractionService {
         }
         for (JobAssessment assessment : assessments.findByJobId(event.jobId())) {
             assessment.setExtractionId(null);
-            assessment.setEligibility(null);
-            assessment.setEligibilityReasons(List.of());
+            assessment.setEligibilityChecks(null);
             assessment.setScore(null);
             assessment.setScoreBreakdown(null);
             assessment.setSummary(null);

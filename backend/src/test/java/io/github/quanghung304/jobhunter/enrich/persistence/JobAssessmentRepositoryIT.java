@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.quanghung304.jobhunter.PostgresJpaTest;
 import io.github.quanghung304.jobhunter.enrich.AssessmentStatus;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
 import io.github.quanghung304.jobhunter.enrich.ExtractionStatus;
 import io.github.quanghung304.jobhunter.enrich.PrefilterResult;
 import java.util.List;
@@ -41,8 +40,10 @@ class JobAssessmentRepositoryIT {
         var assessment = new JobAssessment(jobId, "hugh", "sha-1", AssessmentStatus.DONE, T0, T0.plusSeconds(5));
         assessment.setPrefilterResult(PrefilterResult.PASS);
         assessment.setPrefilterReasons(List.of());
-        assessment.setEligibility(Eligibility.UNCERTAIN);
-        assessment.setEligibilityReasons(List.of("REGION:UNKNOWN", "FULL_TIME_ONLY_SOFT"));
+        JsonNode checks = JSON.readTree("""
+                [{"code": "EMPLOYMENT_TYPE", "critical": true, "result": "UNKNOWN", "reason": "FULL_TIME_ONLY_SOFT",
+                  "value": "Full-time"}]""");
+        assessment.setEligibilityChecks(checks);
         assessment.setExtractionId(extractionId);
         assessment.setScore(75);
         assessment.setScoreBreakdown(breakdown);
@@ -60,8 +61,7 @@ class JobAssessmentRepositoryIT {
         assertThat(loaded.getProfileHash()).isEqualTo("sha-1");
         assertThat(loaded.getPrefilterResult()).isEqualTo(PrefilterResult.PASS);
         assertThat(loaded.getPrefilterReasons()).isEmpty();
-        assertThat(loaded.getEligibility()).isEqualTo(Eligibility.UNCERTAIN);
-        assertThat(loaded.getEligibilityReasons()).containsExactly("REGION:UNKNOWN", "FULL_TIME_ONLY_SOFT");
+        assertThat(loaded.getEligibilityChecks()).isEqualTo(checks);
         assertThat(loaded.getExtractionId()).isEqualTo(extractionId);
         assertThat(loaded.getScore()).isEqualTo(75);
         assertThat(loaded.getScoreBreakdown()).isEqualTo(breakdown);
@@ -87,7 +87,7 @@ class JobAssessmentRepositoryIT {
         var loaded = assessments.findById(id).orElseThrow();
 
         assertThat(loaded.getPrefilterReasons()).containsExactly("TITLE_EXCLUDED", "TOO_OLD");
-        assertThat(loaded.getEligibility()).isNull();
+        assertThat(loaded.getEligibilityChecks()).isNull();
         assertThat(loaded.getScore()).isNull();
         assertThat(loaded.getScoreBreakdown()).isNull();
         // Spring Data turns a null argument into "is null": unscored rows are found this way.

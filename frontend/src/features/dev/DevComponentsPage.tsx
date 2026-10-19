@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { Star, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiError } from '@/api/client'
-import { EligibilityTag } from '@/components/EligibilityTag'
+import { ChecksTag } from '@/components/ChecksTag'
+import { DecisionTag } from '@/components/DecisionTag'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { FactChip } from '@/components/FactChip'
@@ -12,7 +13,7 @@ import { RuleResultTag } from '@/components/RuleResultTag'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { SectionCard } from '@/components/SectionCard'
 import { StatusTag } from '@/components/StatusTag'
-import type { Eligibility, TrackingStatus } from '@/lib/labels'
+import type { Decision, TrackingStatus } from '@/lib/labels'
 import { Button } from '@/components/ui/button'
 
 const STATUSES: TrackingStatus[] = [
@@ -25,7 +26,7 @@ const STATUSES: TrackingStatus[] = [
   'WITHDRAWN',
   'DISMISSED',
 ]
-const ELIGIBILITIES: Eligibility[] = ['ELIGIBLE', 'UNCERTAIN', 'INELIGIBLE']
+const DECISIONS: Decision[] = ['ELIGIBLE', 'INELIGIBLE']
 const SCORES = [92, 85, 84, 70, 69, 50, 49, null]
 
 /**
@@ -56,10 +57,12 @@ export default function DevComponentsPage() {
             <StatusTag key={s} status={s} />
           ))}
         </Row>
-        <Row title="Eligibility">
-          {ELIGIBILITIES.map((e) => (
-            <EligibilityTag key={e} eligibility={e} />
+        <Row title="Eligibility decision">
+          {DECISIONS.map((d) => (
+            <DecisionTag key={d} decision={d} />
           ))}
+          <ChecksTag checks={{ unknown: 1, fail: 0 }} />
+          <ChecksTag checks={{ unknown: 1, fail: 2 }} />
         </Row>
         <Row title="Rule result">
           <RuleResultTag result="OK" />

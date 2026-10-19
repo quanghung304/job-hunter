@@ -5,9 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.quanghung304.jobhunter.common.ProgressListener;
 import io.github.quanghung304.jobhunter.enrich.AssessmentService;
 import io.github.quanghung304.jobhunter.enrich.AssessmentView;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
+import io.github.quanghung304.jobhunter.enrich.EligibilityCheck;
 import io.github.quanghung304.jobhunter.enrich.EligibilityEvaluator;
-import io.github.quanghung304.jobhunter.enrich.EligibilityResult;
 import io.github.quanghung304.jobhunter.enrich.ExtractionResult;
 import io.github.quanghung304.jobhunter.enrich.ExtractionService;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes;
@@ -27,6 +26,8 @@ import io.github.quanghung304.jobhunter.llm.LlmUnavailable;
 import io.github.quanghung304.jobhunter.llm.ModelChoice;
 import io.github.quanghung304.jobhunter.llm.PaidCallsDisabledException;
 import io.github.quanghung304.jobhunter.profile.Profile;
+import io.github.quanghung304.jobhunter.tracking.EligibilityDecision;
+import io.github.quanghung304.jobhunter.tracking.TrackingService;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * LLM scoring (scoring-spec.md §5) of analyzed jobs whose eligibility is ELIGIBLE or UNCERTAIN,
+ * LLM scoring (scoring-spec.md §5) of analyzed jobs the owner has not marked Not eligible (ADR-0011),
  * only on an owner action (ADR-0010): the "Score" button, the admin bulk Score and "Re-score
  * active jobs". At most one SCORE call per job and action, cached per job, profile and score
  * prompt version; max {@value #MAX_ATTEMPTS} failed attempts. Each action is one budget run.
@@ -62,11 +63,12 @@ public class ScoringService {
     private final JobQueryService jobs;
     private final BudgetGuard budget;
     private final ObjectMapper json;
+    private final TrackingService tracking;
     private final String promptVersion;
 
     public ScoringService(LlmRouter router, AssessmentService assessments, ExtractionService extraction,
             EligibilityEvaluator eligibility, JobQueryService jobs, BudgetGuard budget, ObjectMapper json,
-            LlmProperties llmProperties) {
+            TrackingService tracking, LlmProperties llmProperties) {
         this.router = router;
         this.assessments = assessments;
         this.extraction = extraction;
@@ -74,6 +76,7 @@ public class ScoringService {
         this.jobs = jobs;
         this.budget = budget;
         this.json = json;
+        this.tracking = tracking;
         this.promptVersion = llmProperties.scorePrompt();
     }
 
@@ -85,11 +88,11 @@ public class ScoringService {
     }
 
     /** One SCORE call, no DB writes except the router's {@code llm_call} log (eval, T-016). */
-    public ScoreComputation computeScore(JobView job, JobAttributes attributes, EligibilityResult eligibilityResult,
+    public ScoreComputation computeScore(JobView job, JobAttributes attributes, List<EligibilityCheck> checks,
             Profile profile) {
         Long logJobId = job.id() > 0 ? job.id() : null;
         LlmOutcome<ScoreResult> outcome = router.call(LlmPurpose.SCORE, promptVersion,
-                variables(job, attributes, eligibilityResult, profile), logJobId, ScoreResult.class);
+                variables(job, attributes, checks, profile), logJobId, ScoreResult.class);
         return switch (outcome) {
             case LlmResult<ScoreResult> result -> {
                 ScoreResult value = result.value();
@@ -109,7 +112,7 @@ public class ScoringService {
 
     /**
      * Bulk scoring of selected jobs (admin, max {@value #MAX_BULK}): skips jobs that are not
-     * analyzed, ineligible, already scored, expired or failed for good. The dry run names the
+     * analyzed, marked Not eligible, already scored, expired or failed for good. The dry run names the
      * model and the estimated cost; the real run stops at the first pause or budget stop.
      */
     public BulkScoreReport scoreSelected(List<Long> jobIds, Profile profile, boolean dryRun) {
@@ -125,10 +128,11 @@ public class ScoringService {
         }
         Map<Long, JobView> found = jobs.findAll(ids).stream().collect(Collectors.toMap(JobView::id, Function.identity()));
         Map<Long, AssessmentView> rows = assessments.findAll(ids, profile.id());
+        Map<Long, EligibilityDecision> decisions = tracking.decisions(ids, profile.id());
         Map<String, Integer> skipped = new LinkedHashMap<>();
         List<JobView> toScore = new ArrayList<>();
         for (Long id : ids) {
-            String skip = skipReason(found.get(id), rows.get(id));
+            String skip = skipReason(found.get(id), rows.get(id), decisions.get(id));
             if (skip != null) {
                 skipped.merge(skip, 1, Integer::sum);
             } else {
@@ -164,9 +168,10 @@ public class ScoringService {
     public RescorePlan rescoreActive(Profile profile, boolean dryRun, ProgressListener progress) {
         List<Long> scored = assessments.scoredJobIds(profile.id());
         Map<Long, AssessmentView> rows = assessments.findAll(scored, profile.id());
+        Map<Long, EligibilityDecision> decisions = tracking.decisions(scored, profile.id());
         List<JobView> active = jobs.findAll(scored).stream()
                 .filter(job -> job.status() == JobStatus.ACTIVE)
-                .filter(job -> isScorable(rows.get(job.id())))
+                .filter(job -> isScorable(rows.get(job.id()), decisions.get(job.id())))
                 .toList();
         ModelChoice model = router.resolve(LlmPurpose.SCORE);
         BigDecimal cost = budget.estimateCostUsd(model, LlmPurpose.SCORE, active.size()).orElse(null);
@@ -192,7 +197,7 @@ public class ScoringService {
             switch (result.outcome()) {
                 case SCORED, ALREADY_SCORED -> run.scored++;
                 case FAILED, FAILED_PERMANENTLY -> run.failed++;
-                case NOT_ANALYZED, NOT_ELIGIBLE, JOB_EXPIRED -> {
+                case NOT_ANALYZED, MARKED_INELIGIBLE, JOB_EXPIRED -> {
                     // checked before the run; a concurrent change makes no call
                 }
                 case LLM_PAUSED, BUDGET_REACHED -> {
@@ -213,8 +218,11 @@ public class ScoringService {
         Optional<AssessmentView> row = assessments.find(job.id(), profile.id());
         Optional<ExtractionResult> extracted = extraction.current(job.id())
                 .filter(r -> r.status() == ExtractionResult.Status.OK);
-        if (row.isEmpty() || row.get().eligibility() == null || extracted.isEmpty()) {
+        if (row.isEmpty() || !row.get().analyzed() || extracted.isEmpty()) {
             return refused(job, ScoringResult.Outcome.NOT_ANALYZED, "press Analyze first");
+        }
+        if (tracking.decision(job.id(), profile.id()).orElse(null) == EligibilityDecision.INELIGIBLE) {
+            return refused(job, ScoringResult.Outcome.MARKED_INELIGIBLE, "you marked this job Not eligible");
         }
         AssessmentView assessment = row.get();
         if (assessment.scored() && !rescore) {
@@ -225,11 +233,8 @@ public class ScoringService {
             return refused(job, ScoringResult.Outcome.FAILED_PERMANENTLY,
                     "failed " + assessment.attempts() + " times for " + promptVersion);
         }
-        // eligibility is cheap and deterministic: check it again with the current profile
-        EligibilityResult current = eligibility.evaluate(extracted.get().attributes(), job, profile);
-        if (assessment.eligibility() == Eligibility.INELIGIBLE || current.eligibility() == Eligibility.INELIGIBLE) {
-            return refused(job, ScoringResult.Outcome.NOT_ELIGIBLE, String.join(", ", current.reasons()));
-        }
+        // the checks are cheap and deterministic: evaluate them again with the current profile
+        List<EligibilityCheck> current = eligibility.evaluate(extracted.get().attributes(), job, profile);
         ScoreComputation computation = computeScore(job, extracted.get().attributes(), current, profile);
         return switch (computation.status()) {
             case OK -> {
@@ -251,18 +256,18 @@ public class ScoringService {
     }
 
     /** Skip reason for bulk scoring, null if the job can be scored. */
-    private static String skipReason(JobView job, AssessmentView row) {
+    private static String skipReason(JobView job, AssessmentView row, EligibilityDecision decision) {
         if (job == null) {
             return "notFound";
         }
         if (job.status() == JobStatus.EXPIRED) {
             return "expired";
         }
-        if (row == null || row.eligibility() == null || row.extractionId() == null) {
+        if (row == null || !row.analyzed()) {
             return "notAnalyzed";
         }
-        if (row.eligibility() == Eligibility.INELIGIBLE) {
-            return "ineligible";
+        if (decision == EligibilityDecision.INELIGIBLE) {
+            return "markedIneligible";
         }
         if (row.scored()) {
             return "alreadyScored";
@@ -273,9 +278,8 @@ public class ScoringService {
         return null;
     }
 
-    private static boolean isScorable(AssessmentView row) {
-        return row != null && row.extractionId() != null
-                && (row.eligibility() == Eligibility.ELIGIBLE || row.eligibility() == Eligibility.UNCERTAIN);
+    private static boolean isScorable(AssessmentView row, EligibilityDecision decision) {
+        return row != null && row.analyzed() && decision != EligibilityDecision.INELIGIBLE;
     }
 
     static ScoringResult.Outcome unavailableOutcome(LlmUnavailable.Reason reason) {
@@ -289,18 +293,17 @@ public class ScoringService {
         return new ScoringResult(job.id(), outcome, null, null, false, message);
     }
 
-    /** Variables of score-v1 (docs/ai/prompts/score-v1.md). */
-    Map<String, String> variables(JobView job, JobAttributes attributes, EligibilityResult eligibilityResult,
+    /** Variables of score-v2 (docs/ai/prompts/score-v2.md): the checks, one line each (ADR-0011). */
+    Map<String, String> variables(JobView job, JobAttributes attributes, List<EligibilityCheck> checks,
             Profile profile) {
-        List<String> reasons = eligibilityResult.reasons();
         return Map.of(
                 "summaryLanguage", profile.summaryLanguage().code(),
                 "candidateBlock", profile.candidateBlock(),
                 "title", text(job.title()),
                 "company", text(job.companyName()),
                 "extractionJson", prettyJson(attributes),
-                "eligibility", eligibilityResult.eligibility().name(),
-                "eligibilityReasons", reasons.isEmpty() ? "none" : String.join("\n", reasons),
+                "eligibilityChecks", checks.stream().map(EligibilityCheck::promptLine)
+                        .collect(Collectors.joining("\n")),
                 "description", truncate(text(job.descriptionText())));
     }
 

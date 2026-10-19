@@ -26,7 +26,7 @@ describe('JobDetailPage', () => {
   })
 
   it('shows every panel in order, with the summary in the profile language', async () => {
-    mockJobsApi([summary(1, { score: 80, eligibility: 'UNCERTAIN' })])
+    mockJobsApi([summary(1, { score: 80, checks: { ok: 9, unknown: 1, fail: 0 } })])
     renderPage(1)
 
     expect(await screen.findByRole('heading', { name: 'Java Developer 1', level: 1 })).toBeInTheDocument()
@@ -49,7 +49,10 @@ describe('JobDetailPage', () => {
     expect(eligibility.getByText('Time zone').closest('div')).toHaveTextContent('Unclear')
     expect(eligibility.getByText('Work mode').closest('div')).toHaveTextContent('OK')
     expect(screen.getByText('Backend role.')).toBeInTheDocument()
-    expect(screen.getAllByText('Needs check').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Check 1 criterion').length).toBeGreaterThan(0)
+    expect(
+      eligibility.getByText('The app checks each criterion. The overall decision is yours.', { exact: false }),
+    ).toBeInTheDocument()
   })
 
   it('links to the original posting in a new tab', async () => {

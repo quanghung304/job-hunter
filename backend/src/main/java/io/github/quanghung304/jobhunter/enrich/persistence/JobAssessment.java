@@ -2,7 +2,6 @@ package io.github.quanghung304.jobhunter.enrich.persistence;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.quanghung304.jobhunter.enrich.AssessmentStatus;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
 import io.github.quanghung304.jobhunter.enrich.PrefilterResult;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +18,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * Prefilter, eligibility and score of one job for one profile. Score fields are written by
+ * Prefilter, eligibility checks and score of one job for one profile. Score fields are written by
  * {@code scoring} only through {@code enrich}'s {@code AssessmentService}.
  */
 @Entity
@@ -47,13 +46,10 @@ public class JobAssessment {
     @Column(name = "prefilter_reasons", nullable = false)
     private List<String> prefilterReasons = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "eligibility")
-    private Eligibility eligibility;
-
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "eligibility_reasons", nullable = false)
-    private List<String> eligibilityReasons = new ArrayList<>();
+    /** One object per criterion (scoring-spec §4); null until analyzed. No verdict (ADR-0011). */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "eligibility_checks")
+    private JsonNode eligibilityChecks;
 
     @Column(name = "extraction_id")
     private Long extractionId;
@@ -143,21 +139,12 @@ public class JobAssessment {
         this.prefilterReasons = new ArrayList<>(prefilterReasons);
     }
 
-    public Eligibility getEligibility() {
-        return eligibility;
+    public JsonNode getEligibilityChecks() {
+        return eligibilityChecks;
     }
 
-    public void setEligibility(Eligibility eligibility) {
-        this.eligibility = eligibility;
-    }
-
-    /** Unmodifiable. */
-    public List<String> getEligibilityReasons() {
-        return List.copyOf(eligibilityReasons);
-    }
-
-    public void setEligibilityReasons(List<String> eligibilityReasons) {
-        this.eligibilityReasons = new ArrayList<>(eligibilityReasons);
+    public void setEligibilityChecks(JsonNode eligibilityChecks) {
+        this.eligibilityChecks = eligibilityChecks;
     }
 
     public Long getExtractionId() {

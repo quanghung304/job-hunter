@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface JobTrackingEventRepository extends JpaRepository<JobTrackingEvent, Long> {
 
-    List<JobTrackingEvent> findByJobIdAndProfileIdOrderByCreatedAtAsc(Long jobId, String profileId);
+    List<JobTrackingEvent> findByJobIdAndProfileIdOrderByCreatedAtAscIdAsc(Long jobId, String profileId);
 }

@@ -6,7 +6,8 @@ import java.util.List;
 /**
  * Read-only view of a {@code job_assessment} row for other modules (scoring, tracking).
  *
- * @param scoreDetails the full score object of scoring-spec §5 ({@code score_breakdown} column)
+ * @param eligibilityChecks one check per criterion (scoring-spec §4); null until analyzed
+ * @param scoreDetails      the full score object of scoring-spec §5 ({@code score_breakdown} column)
  */
 public record AssessmentView(
         long jobId,
@@ -14,8 +15,7 @@ public record AssessmentView(
         String profileHash,
         PrefilterResult prefilterResult,
         List<String> prefilterReasons,
-        Eligibility eligibility,
-        List<String> eligibilityReasons,
+        List<EligibilityCheck> eligibilityChecks,
         Long extractionId,
         Integer score,
         JsonNode scoreDetails,
@@ -27,10 +27,15 @@ public record AssessmentView(
 
     public AssessmentView {
         prefilterReasons = List.copyOf(prefilterReasons);
-        eligibilityReasons = List.copyOf(eligibilityReasons);
+        eligibilityChecks = eligibilityChecks == null ? null : List.copyOf(eligibilityChecks);
     }
 
     public boolean scored() {
         return score != null;
+    }
+
+    /** Extraction and eligibility checks done for this profile. */
+    public boolean analyzed() {
+        return eligibilityChecks != null && extractionId != null;
     }
 }

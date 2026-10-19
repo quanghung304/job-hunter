@@ -91,16 +91,19 @@ Eligibility checks + score for one job and one profile. Owned by the `enrich` mo
 | unique | (job_id, profile_id, score_prompt_version) | `nulls not distinct`: at most one unscored row (null version) per job and profile |
 
 V3 created `eligibility` (ELIGIBLE, UNCERTAIN, INELIGIBLE) and `eligibility_reasons`, and T-011
-shipped them. T-025 adds a migration that replaces them with `eligibility_checks` (ADR-0011).
+shipped them. V8 (T-025) replaced them with `eligibility_checks` (ADR-0011).
 
 Rows are written for the configured score prompt version (`app.llm.score-prompt`) by
 `AssessmentService.recordPrefilter`: prefilter REJECT → `eligibility_checks` null, `status` DONE
 (no LLM work); PASS on a new row or after a REJECT → `status` PENDING.
 
 Analyze (ADR-0010, `AnalysisService`) records the prefilter if needed, then `extraction_id` and
-`eligibility_checks` (all criteria of scoring-spec §4; from T-025); the row stays PENDING until the
-owner scores it (or marks the job Not eligible, which is stored in `job_tracking`). Until T-025 the
-shipped code stores the verdict in `eligibility` (INELIGIBLE → `status` DONE). Score (`ScoringService`) stores score, details, summary and `score_model`
+`eligibility_checks` (all criteria of scoring-spec §4); the row stays PENDING until the owner scores
+it (or marks the job Not eligible, which is stored in `job_tracking`). A failing check decides nothing.
+A PASS row whose job already has an OK extraction for the current extract prompt gets its checks from
+it without a call (prefilter step, and once on startup: `EligibilityChecksStartup` also prefilters
+ACTIVE jobs, so a new score prompt version does not leave the board empty until the next pipeline
+run), e.g. rows created for a new score prompt version or rows from before V8. Score (`ScoringService`) stores score, details, summary and `score_model`
 (`status` DONE); each SCORE attempt adds 1 to `attempts`, a failure without a score sets `status`
 FAILED, and 3 attempts end retries for that prompt version. A paused model or budget stop changes
 nothing (the row stays PENDING). A changed job description deletes the job's extractions and clears
@@ -122,13 +125,14 @@ owner's eligibility decisions are kept. Re-scoring after a profile change stays 
 | notes | text | |
 | updated_at | timestamptz | |
 
-Created lazily: a job without a row is `NEW` and undecided. T-025 adds a migration for the two
-decision columns.
+Created lazily: a job without a row is `NEW` and undecided. V8 (T-025) added the two decision
+columns.
 
 ### `job_tracking_event`
 | id | job_id | profile_id | kind | from_status | to_status | note | created_at |
 
-`kind` is `STATUS` (default) or `ELIGIBILITY` (T-025). For `ELIGIBILITY` events
+`kind` is `STATUS` (default) or `ELIGIBILITY` (V8).
+ For `ELIGIBILITY` events
 `from_status`/`to_status` hold `ELIGIBLE`, `INELIGIBLE` or `UNDECIDED`; the check constraint
 depends on `kind`.
 
@@ -258,7 +262,7 @@ Independent of the tracking status and of `job.status`. Values: `ELIGIBLE`, `INE
 undecided (null). Any value may change to any other at any time, also before analysis.
 Setting the current value again is a no-op (no event). Dismissing a job does not change its
 decision. The default board view hides `INELIGIBLE` jobs; scoring is refused for them.
-Implemented in T-025.
+Implemented in T-025 (`TrackingService.setEligibilityDecision`, `PUT /api/jobs/{id}/eligibility`).
 
 ## 3. `NormalizedPosting` (collector output, not a table)
 
@@ -328,7 +332,7 @@ Implemented in T-005 (`common.text.TextNormalizer`, `ingest.Fingerprint`, `inges
 
 - `job(status, last_seen_at)`, `job(company_key)`
 - `job_assessment(profile_id, score desc)`, `job_assessment(status)`
-- `job_tracking(profile_id, eligibility_decision)` (T-025)
+- `job_tracking(profile_id, eligibility_decision)` (V8)
 - `raw_posting(job_id)`, `llm_call(created_at)`
 - Also created: `collector_run(source_code, started_at desc)`, `job_assessment(extraction_id)`,
   `job_tracking_event(job_id, profile_id, created_at)`, `notification` GIN on `job_ids` and

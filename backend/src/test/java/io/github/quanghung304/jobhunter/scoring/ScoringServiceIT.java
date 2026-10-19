@@ -22,6 +22,8 @@ import io.github.quanghung304.jobhunter.llm.persistence.LlmCall;
 import io.github.quanghung304.jobhunter.llm.persistence.LlmCallRepository;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.ProfileFixtures;
+import io.github.quanghung304.jobhunter.tracking.EligibilityDecision;
+import io.github.quanghung304.jobhunter.tracking.TrackingService;
 import java.util.List;
 import java.util.stream.LongStream;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +34,7 @@ import org.springframework.context.annotation.Import;
 
 /** The owner's Score action (ADR-0010) against Postgres and the fake LLM (SCORE model {@code primary}). */
 @PostgresJpaTest
-@Import({EnrichTestConfig.class, ScoringService.class})
+@Import({EnrichTestConfig.class, ScoringService.class, TrackingService.class})
 class ScoringServiceIT {
 
     static final Profile PROFILE = ProfileFixtures.example();
@@ -53,6 +55,9 @@ class ScoringServiceIT {
 
     @Autowired
     AssessmentService assessments;
+
+    @Autowired
+    TrackingService tracking;
 
     @Autowired
     LlmAssignmentRepository assignments;
@@ -162,16 +167,29 @@ class ScoringServiceIT {
     }
 
     @Test
-    void ineligibleJobIsNeverSent() {
-        long id = job("inel");
+    void jobMarkedNotEligibleIsNeverSent() {
+        long id = analyzedJob("inel");
+        tracking.setEligibilityDecision(id, PROFILE.id(), EligibilityDecision.INELIGIBLE, null);
+        fake.reset();
+
+        ScoringResult result = scoring.score(id, PROFILE);
+
+        assertThat(result.outcome()).isEqualTo(ScoringResult.Outcome.MARKED_INELIGIBLE);
+        assertThat(fake.requests()).isEmpty();
+    }
+
+    @Test
+    void failedCheckWithoutADecisionCanBeScoredAndThePromptListsTheChecks() {
+        long id = job("fail-check");
         fake.enqueue(Step.text(INELIGIBLE_EXTRACTION));
         analysis.analyze(id);
         fake.reset();
 
         ScoringResult result = scoring.score(id, PROFILE);
 
-        assertThat(result.outcome()).isEqualTo(ScoringResult.Outcome.NOT_ELIGIBLE);
-        assertThat(fake.requests()).isEmpty();
+        assertThat(result.outcome()).as("ADR-0011: the owner decides").isEqualTo(ScoringResult.Outcome.SCORED);
+        assertThat(fake.requests()).singleElement().satisfies(request -> assertThat(request.messages().getLast()
+                .content()).contains("<eligibility_checks>", "REGION: FAIL — US", "SCAM: OK — No signals"));
     }
 
     @Test
@@ -192,9 +210,8 @@ class ScoringServiceIT {
         long scored = analyzedJob("r2");
         scoring.score(scored, PROFILE);
         long fresh = job("r3");
-        long ineligible = job("r4");
-        fake.enqueue(Step.text(INELIGIBLE_EXTRACTION));
-        analysis.analyze(ineligible);
+        long ineligible = analyzedJob("r4");
+        tracking.setEligibilityDecision(ineligible, PROFILE.id(), EligibilityDecision.INELIGIBLE, null);
         fake.reset();
 
         BulkScoreReport report = scoring.scoreSelected(List.of(ready, scored, fresh, ineligible, 999_999L), PROFILE,
@@ -203,7 +220,7 @@ class ScoringServiceIT {
         assertThat(report.willScore()).isEqualTo(1);
         assertThat(report.estimatedCalls()).isEqualTo(1);
         assertThat(report.skipped()).containsEntry("alreadyScored", 1).containsEntry("notAnalyzed", 1)
-                .containsEntry("ineligible", 1).containsEntry("notFound", 1);
+                .containsEntry("markedIneligible", 1).containsEntry("notFound", 1);
         assertThat(report.model().modelId()).isEqualTo("primary");
         assertThat(report.model().tier()).isEqualTo(ModelTier.FREE);
         assertThat(report.estimatedCostUsd()).isEqualByComparingTo("0");

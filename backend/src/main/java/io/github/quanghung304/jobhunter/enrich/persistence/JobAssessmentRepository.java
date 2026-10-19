@@ -36,6 +36,15 @@ public interface JobAssessmentRepository extends JpaRepository<JobAssessment, Lo
     long countByProfileIdAndScorePromptVersionAndScoreIsNotNullAndUpdatedAtGreaterThanEqual(
             String profileId, String scorePromptVersion, Instant since);
 
+    /** Rows with this prefilter result whose eligibility checks are missing (startup after V8). */
+    @Query("""
+            select a from JobAssessment a
+            where a.profileId = :profileId and a.scorePromptVersion = :version
+              and a.prefilterResult = :prefilter and a.eligibilityChecks is null
+            order by a.jobId""")
+    List<JobAssessment> findMissingChecks(@Param("profileId") String profileId, @Param("version") String version,
+            @Param("prefilter") PrefilterResult prefilter);
+
     /** Rows of a profile and score prompt version evaluated with another profile file. */
     List<JobAssessment> findByProfileIdAndScorePromptVersionAndProfileHashNotOrderById(
             String profileId, String scorePromptVersion, String profileHash);

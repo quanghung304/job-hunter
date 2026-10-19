@@ -37,12 +37,31 @@ export function statusChangedText(from: TrackingStatus, to: TrackingStatus): str
   return `Marked ${STATUS_LABELS[to].toLowerCase()}`
 }
 
-export type Eligibility = 'ELIGIBLE' | 'UNCERTAIN' | 'INELIGIBLE'
+/** The owner's eligibility decision (ADR-0011); null = undecided. */
+export type Decision = 'ELIGIBLE' | 'INELIGIBLE'
 
-export const ELIGIBILITY_LABELS: Record<Eligibility, string> = {
+export const DECISION_LABELS: Record<Decision, string> = {
   ELIGIBLE: 'Eligible',
-  UNCERTAIN: 'Needs check',
-  INELIGIBLE: 'Ineligible',
+  INELIGIBLE: 'Not eligible',
+}
+
+/** Values of the board's decision filter. */
+export type DecisionFilter = Decision | 'UNDECIDED'
+
+export const DECISION_FILTER_LABELS: Record<DecisionFilter, string> = {
+  ELIGIBLE: 'Eligible',
+  INELIGIBLE: 'Not eligible',
+  UNDECIDED: 'Undecided',
+}
+
+/** Values of the board's checks filter (OR-ed). */
+export type ChecksFilter = 'ALL_OK' | 'HAS_UNKNOWN' | 'HAS_FAIL' | 'NOT_CHECKED'
+
+export const CHECKS_FILTER_LABELS: Record<ChecksFilter, string> = {
+  ALL_OK: 'All criteria OK',
+  HAS_UNKNOWN: 'Some unclear',
+  HAS_FAIL: 'Some fail',
+  NOT_CHECKED: 'Not checked',
 }
 
 export type RuleResult = 'OK' | 'UNKNOWN' | 'FAIL'
@@ -90,21 +109,18 @@ export const CONFIDENCE_LABELS: Record<string, string> = { HIGH: 'High', MEDIUM:
 
 export const SALARY_PERIOD_LABELS: Record<string, string> = { HOUR: 'hour', MONTH: 'month', YEAR: 'year' }
 
-/** Eligibility rules (scoring-spec.md §4), in rule order. */
+/** Eligibility criteria (scoring-spec.md §4), in table order. */
 export type EligibilityRule =
-  'WORK_MODE' | 'REGION' | 'WORK_AUTH' | 'TIMEZONE' | 'EMPLOYMENT_TYPE' | 'HOURS' | 'SENIORITY' | 'LANGUAGE' | 'SCAM'
-
-export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
-  'WORK_MODE',
-  'REGION',
-  'WORK_AUTH',
-  'TIMEZONE',
-  'EMPLOYMENT_TYPE',
-  'HOURS',
-  'SENIORITY',
-  'LANGUAGE',
-  'SCAM',
-]
+  | 'WORK_MODE'
+  | 'REGION'
+  | 'WORK_AUTH'
+  | 'TIMEZONE'
+  | 'EMPLOYMENT_TYPE'
+  | 'HOURS'
+  | 'SENIORITY'
+  | 'LANGUAGE'
+  | 'SCAM'
+  | 'EXTRACTION_CONFIDENCE'
 
 export const ELIGIBILITY_RULE_LABELS: Record<EligibilityRule, string> = {
   WORK_MODE: 'Work mode',
@@ -116,33 +132,21 @@ export const ELIGIBILITY_RULE_LABELS: Record<EligibilityRule, string> = {
   SENIORITY: 'Seniority',
   LANGUAGE: 'Language',
   SCAM: 'Scam check',
+  EXTRACTION_CONFIDENCE: 'Extraction',
 }
 
-/** Eligibility reason codes that are not `RULE:VERDICT` pairs. */
-const ELIGIBILITY_NOTES: Record<string, string> = {
-  FULL_TIME_ONLY_SOFT: 'Full-time only: you accept it as a fallback',
-  'CONFIDENCE:LOW': 'The extraction is not confident; check the posting',
+/** Reason codes on a check (scoring-spec §4). */
+const CHECK_REASON_LABELS: Record<string, string> = {
+  FULL_TIME_ONLY_SOFT: 'Says full-time only; contract roles often use this template',
 }
 
-/**
- * Rule results from the stored reasons (`RULE:UNKNOWN`, `RULE:FAIL`; rules not listed are OK)
- * plus the notes that are not rule results.
- */
-export function eligibilityResults(reasons: readonly string[]): {
-  rules: Record<EligibilityRule, RuleResult>
-  notes: string[]
-} {
-  const rules = Object.fromEntries(ELIGIBILITY_RULES.map((rule) => [rule, 'OK'])) as Record<EligibilityRule, RuleResult>
-  const notes: string[] = []
-  for (const reason of reasons) {
-    const [rule, verdict] = reason.split(':')
-    if (ELIGIBILITY_RULES.includes(rule as EligibilityRule) && (verdict === 'UNKNOWN' || verdict === 'FAIL')) {
-      rules[rule as EligibilityRule] = verdict
-    } else {
-      notes.push(ELIGIBILITY_NOTES[reason] ?? reason)
-    }
-  }
-  return { rules, notes }
+export function checkReasonLabel(code: string): string {
+  return CHECK_REASON_LABELS[code] ?? code
+}
+
+/** History text of a decision value (`ELIGIBLE`, `INELIGIBLE`, `UNDECIDED`). */
+export function decisionHistoryLabel(value: string): string {
+  return value in DECISION_FILTER_LABELS ? DECISION_FILTER_LABELS[value as DecisionFilter] : value
 }
 
 /** Prefilter reject reasons (scoring-spec.md §2). */

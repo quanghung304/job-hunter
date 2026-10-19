@@ -34,5 +34,5 @@ temperature: 0
 | Id | Status | Notes |
 |---|---|---|
 | extract-v1 | released (T-011) | referenced by `app.llm.extract-prompt`; never edit, create extract-v2 |
-| score-v1 | released (T-012) | referenced by `app.llm.score-prompt` until T-025; never edit |
-| score-v2 | draft (T-025) | eligibility checks instead of a verdict (ADR-0011): variable `eligibilityChecks` replaces `eligibility` and `eligibilityReasons`; becomes the default in T-025, after the eval run |
+| score-v1 | released (T-012) | was the default until T-025; stored `prompt_version` values keep it released; never edit |
+| score-v2 | released (T-025) | referenced by `app.llm.score-prompt`; eligibility checks instead of a verdict (ADR-0011): variable `eligibilityChecks` replaces `eligibility` and `eligibilityReasons`; eval pending (T-016) |

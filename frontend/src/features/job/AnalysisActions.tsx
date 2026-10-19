@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 import { cn } from 'cn'
 import { useAnalysisAction, usePausedPurpose } from '@/api/queries'
 import { Button } from '@/components/ui/button'
-import type { AnalysisStage, Eligibility } from '@/lib/labels'
+import type { AnalysisStage, Decision } from '@/lib/labels'
 import { type Action, analysisAction } from './jobActions'
 import { errorText } from './useStatusChanger'
 
@@ -22,7 +22,7 @@ export function AnalysisActions({
   job,
   variant = 'button',
 }: {
-  job: { id: number; analysisStage: AnalysisStage; eligibility: Eligibility | null }
+  job: { id: number; analysisStage: AnalysisStage; eligibilityDecision: Decision | null }
   variant?: 'icon' | 'button' | 'bar'
 }) {
   const action = analysisAction(job)

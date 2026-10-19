@@ -4,12 +4,15 @@ import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
 
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
 import io.github.quanghung304.jobhunter.common.model.SalaryPeriod;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
+import io.github.quanghung304.jobhunter.enrich.CheckResult;
+import io.github.quanghung304.jobhunter.enrich.EligibilityRule;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes.RemoteType;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
 import io.github.quanghung304.jobhunter.tracking.AnalysisStage;
+import io.github.quanghung304.jobhunter.tracking.EligibilityDecision;
 import io.github.quanghung304.jobhunter.tracking.ScoreBand;
+import io.github.quanghung304.jobhunter.tracking.TrackingEventKind;
 import io.github.quanghung304.jobhunter.tracking.TrackingStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
@@ -28,7 +31,10 @@ public record JobDetailResponse(
         @Schema(requiredMode = REQUIRED, nullable = true, minimum = "0", maximum = "100") Integer score,
         @Schema(requiredMode = REQUIRED) ScoreBand scoreBand,
         @Schema(requiredMode = REQUIRED, nullable = true) String summary,
-        @Schema(requiredMode = REQUIRED, nullable = true) Eligibility eligibility,
+        @Schema(requiredMode = REQUIRED, nullable = true, description = "The owner's decision; null = undecided")
+        EligibilityDecision eligibilityDecision,
+        @Schema(requiredMode = REQUIRED, nullable = true, description = "Eligibility check results; null until analyzed")
+        JobSummaryResponse.Checks checks,
         @Schema(requiredMode = REQUIRED, nullable = true) RemoteType remoteType,
         @Schema(requiredMode = REQUIRED) List<String> allowedRegions,
         @Schema(requiredMode = REQUIRED) List<EmploymentType> employmentTypes,
@@ -44,7 +50,9 @@ public record JobDetailResponse(
         @Schema(requiredMode = REQUIRED) List<String> tags,
         @Schema(requiredMode = REQUIRED, nullable = true,
                 description = "LLM-extracted attributes (scoring-spec §3); null until analyzed") JobAttributes extraction,
-        @Schema(requiredMode = REQUIRED) List<String> eligibilityReasons,
+        @Schema(requiredMode = REQUIRED, description = "One check per criterion (scoring-spec §4); empty until analyzed")
+        List<EligibilityCheckResponse> eligibilityChecks,
+        @Schema(requiredMode = REQUIRED, nullable = true) Instant eligibilityDecidedAt,
         @Schema(requiredMode = REQUIRED) List<String> prefilterReasons,
         @Schema(requiredMode = REQUIRED, nullable = true) ScoreBreakdown scoreBreakdown,
         @Schema(requiredMode = REQUIRED) List<String> strengths,
@@ -62,7 +70,7 @@ public record JobDetailResponse(
         employmentTypes = List.copyOf(employmentTypes);
         sources = List.copyOf(sources);
         tags = List.copyOf(tags);
-        eligibilityReasons = List.copyOf(eligibilityReasons);
+        eligibilityChecks = List.copyOf(eligibilityChecks);
         prefilterReasons = List.copyOf(prefilterReasons);
         strengths = List.copyOf(strengths);
         gaps = List.copyOf(gaps);
@@ -100,11 +108,26 @@ public record JobDetailResponse(
             @Schema(requiredMode = REQUIRED) Instant lastSeenAt) {
     }
 
-    /** One tracking status change. */
+    /** One eligibility criterion; no overall verdict (ADR-0011). */
+    @Schema(name = "EligibilityCheck")
+    public record EligibilityCheckResponse(
+            @Schema(requiredMode = REQUIRED) EligibilityRule code,
+            @Schema(requiredMode = REQUIRED) boolean critical,
+            @Schema(requiredMode = REQUIRED) CheckResult result,
+            @Schema(requiredMode = REQUIRED, description = "Job-side value shown to the owner") String value,
+            @Schema(requiredMode = REQUIRED, nullable = true, description = "Reason code, e.g. FULL_TIME_ONLY_SOFT")
+            String reason) {
+    }
+
+    /**
+     * One history entry: a status change ({@code from}/{@code to} are tracking statuses) or an
+     * eligibility decision ({@code ELIGIBLE}, {@code INELIGIBLE} or {@code UNDECIDED}).
+     */
     @Schema(name = "StatusHistoryEntry")
     public record HistoryEntry(
-            @Schema(requiredMode = REQUIRED) TrackingStatus from,
-            @Schema(requiredMode = REQUIRED) TrackingStatus to,
+            @Schema(requiredMode = REQUIRED) TrackingEventKind kind,
+            @Schema(requiredMode = REQUIRED) String from,
+            @Schema(requiredMode = REQUIRED) String to,
             @Schema(requiredMode = REQUIRED, nullable = true) String note,
             @Schema(requiredMode = REQUIRED) Instant at) {
     }

@@ -1,7 +1,6 @@
 package io.github.quanghung304.jobhunter.tracking;
 
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
 import java.util.Set;
 
 /**
@@ -13,7 +12,8 @@ import java.util.Set;
  */
 public record JobBoardFilter(
         Set<TrackingStatus> statuses,
-        Set<Eligibility> eligibilities,
+        Set<DecisionFilter> decisions,
+        Set<ChecksFilter> checks,
         Integer minScore,
         Integer maxScore,
         Set<String> sources,
@@ -23,12 +23,13 @@ public record JobBoardFilter(
         boolean includeExpired,
         Set<AnalysisStage> analysisStages) {
 
-    public static final JobBoardFilter NONE = new JobBoardFilter(Set.of(), Set.of(), null, null, Set.of(), Set.of(),
-            null, null, false, Set.of());
+    public static final JobBoardFilter NONE = new JobBoardFilter(Set.of(), Set.of(), Set.of(), null, null, Set.of(),
+            Set.of(), null, null, false, Set.of());
 
     public JobBoardFilter {
         statuses = copy(statuses);
-        eligibilities = copy(eligibilities);
+        decisions = copy(decisions);
+        checks = copy(checks);
         sources = copy(sources);
         employmentTypes = copy(employmentTypes);
         analysisStages = copy(analysisStages);
@@ -37,7 +38,7 @@ public record JobBoardFilter(
 
     /** True when no filter is set: the board shows its default view. */
     public boolean isEmpty() {
-        return statuses.isEmpty() && eligibilities.isEmpty() && minScore == null && maxScore == null
+        return statuses.isEmpty() && decisions.isEmpty() && checks.isEmpty() && minScore == null && maxScore == null
                 && sources.isEmpty() && employmentTypes.isEmpty() && postedWithinDays == null && q == null
                 && !includeExpired && analysisStages.isEmpty();
     }

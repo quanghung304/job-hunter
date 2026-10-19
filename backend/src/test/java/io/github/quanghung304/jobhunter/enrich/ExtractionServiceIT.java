@@ -172,11 +172,11 @@ class ExtractionServiceIT {
         ExtractionResult extracted = extraction.extract(jobId);
         JobAssessment assessment = new JobAssessment(jobId, "hugh", "hash", AssessmentStatus.DONE,
                 LlmRouterTestConfig.NOW, LlmRouterTestConfig.NOW);
-        assessment.setScorePromptVersion("score-v1");
+        assessment.setScorePromptVersion("score-v2");
         assessment.setPrefilterResult(PrefilterResult.PASS);
         assessment.setExtractionId(extracted.extractionId());
-        assessment.setEligibility(Eligibility.ELIGIBLE);
-        assessment.setEligibilityReasons(List.of("REGION:UNKNOWN"));
+        assessment.setEligibilityChecks(new com.fasterxml.jackson.databind.ObjectMapper().createArrayNode()
+                .add(new com.fasterxml.jackson.databind.ObjectMapper().createObjectNode().put("code", "REGION")));
         assessment.setScore(80);
         assessment.setSummary("old");
         assessments.saveAndFlush(assessment);
@@ -188,8 +188,7 @@ class ExtractionServiceIT {
         assertThat(extractions.findByJobId(jobId)).isEmpty();
         JobAssessment reset = assessments.findByJobId(jobId).get(0);
         assertThat(reset.getExtractionId()).isNull();
-        assertThat(reset.getEligibility()).isNull();
-        assertThat(reset.getEligibilityReasons()).isEmpty();
+        assertThat(reset.getEligibilityChecks()).isNull();
         assertThat(reset.getScore()).isNull();
         assertThat(reset.getSummary()).isNull();
         assertThat(reset.getStatus()).isEqualTo(AssessmentStatus.PENDING);

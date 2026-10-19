@@ -1,5 +1,6 @@
 package io.github.quanghung304.jobhunter.tracking.persistence;
 
+import io.github.quanghung304.jobhunter.tracking.EligibilityDecision;
 import io.github.quanghung304.jobhunter.tracking.TrackingStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -10,7 +11,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 /**
- * The owner's tracking status and notes for one job and profile. Created lazily: a job
+ * The owner's tracking status, eligibility decision and notes for one job and profile. Created lazily: a job
  * without a row is {@link TrackingStatus#NEW}.
  */
 @Entity
@@ -23,6 +24,13 @@ public class JobTracking {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private TrackingStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "eligibility_decision")
+    private EligibilityDecision eligibilityDecision;
+
+    @Column(name = "eligibility_decided_at")
+    private Instant eligibilityDecidedAt;
 
     @Column(name = "notes")
     private String notes;
@@ -50,6 +58,20 @@ public class JobTracking {
 
     public void setStatus(TrackingStatus status) {
         this.status = status;
+    }
+
+    public EligibilityDecision getEligibilityDecision() {
+        return eligibilityDecision;
+    }
+
+    public Instant getEligibilityDecidedAt() {
+        return eligibilityDecidedAt;
+    }
+
+    /** The owner's decision (null = undecided) and when it was set. */
+    public void setEligibilityDecision(EligibilityDecision decision, Instant decidedAt) {
+        this.eligibilityDecision = decision;
+        this.eligibilityDecidedAt = decision == null ? null : decidedAt;
     }
 
     public String getNotes() {

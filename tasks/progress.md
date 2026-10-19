@@ -10,6 +10,33 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-19 — T-025 Eligibility checks and owner decision — backend — DONE
+- V8: `job_assessment.eligibility_checks jsonb` replaces `eligibility`/`eligibility_reasons`;
+  `job_tracking.eligibility_decision` + `eligibility_decided_at`; `job_tracking_event.kind` with a
+  kind-dependent check; index `(profile_id, eligibility_decision)`.
+- enrich: `EligibilityEvaluator` returns `List<EligibilityCheck>` (code, critical, result, reason,
+  value) incl. `EXTRACTION_CONFIDENCE`; no verdict (`Eligibility`, `EligibilityResult` removed);
+  `CheckResult`, `CheckCounts`; `AssessmentService.recordChecks`, checks re-evaluated on profile
+  change and attached from a stored OK extraction; `EligibilityChecksStartup` prefilters ACTIVE jobs
+  and fills missing checks on startup (no LLM).
+- tracking: `EligibilityDecision`, `TrackingService.setEligibilityDecision/decision/decisions`,
+  history with `kind`; `JobBoardQuery` filters `decision` and `checks`, new default view (status ≠
+  DISMISSED, decision ≠ INELIGIBLE), `checks` counts. scoring: refused only when marked INELIGIBLE
+  (`JOB_MARKED_INELIGIBLE`), bulk skip `markedIneligible`, prompt `score-v2` (now the default).
+- api: `PUT /api/jobs/{id}/eligibility`, `JobSummary.eligibilityDecision/checks`,
+  `JobDetail.eligibilityChecks/eligibilityDecidedAt`, history `kind`, meta `decisions`/`checkResults`;
+  openapi.json + schema.d.ts regenerated. Frontend kept working with minimal changes: `DecisionTag` +
+  `ChecksTag` replace `EligibilityTag`, Eligibility panel lists the checks, filters Decision/Checks;
+  the decision control and board grid are T-026.
+- Note: switching to score-v2 hides score-v1 assessments (rows are per score prompt version); scores
+  made with score-v1 must be redone with "Re-score" or Score. Eval for score-v2 pending (T-016),
+  recorded in `docs/ai/eval/results.md`.
+- Tests: `EligibilityEvaluatorTest` (54), `AssessmentServiceIT` (8), `TrackingServiceIT` decision
+  cases, `JobBoardQueryIT` decision/checks/default view, `JobDetailQueryIT`, `ScoringServiceIT`
+  (marked ineligible, failing check still scorable, prompt lists checks), controller tests.
+  Backend 767 unit + 182 IT green; frontend 153 tests green.
+- Next: T-026 (board grid, split view, decision UI).
+
 ## 2026-10-19 — Board grid, owner eligibility decision, Profile page (docs) — DONE
 - Mockups updated in the canvas: board as a 12-card grid with pagination and a Grid/List toggle;
   split view with independent list and detail scroll (Load more keeps the position); colored

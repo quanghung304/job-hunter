@@ -44,6 +44,7 @@ public class JobDetailQuery {
                 assessments.find(jobId, profileId).orElse(null),
                 jobs.postings(jobId),
                 tracking.notes(jobId, profileId).orElse(null),
+                tracking.decidedAt(jobId, profileId).orElse(null),
                 tracking.history(jobId, profileId),
                 TrackingStatusMachine.allowedTargets(summary.get().status())));
     }

@@ -1,6 +1,9 @@
 package io.github.quanghung304.jobhunter.enrich;
 
-/** Rules of scoring-spec.md §4; {@code critical} rules turn UNKNOWN into UNCERTAIN. */
+/**
+ * Criteria of scoring-spec.md §4, in table order. {@code critical} orders and highlights checks
+ * in the UI and is used by the eval-only rollup (§7); the app itself has no verdict (ADR-0011).
+ */
 public enum EligibilityRule {
     WORK_MODE(true),
     REGION(true),
@@ -10,7 +13,8 @@ public enum EligibilityRule {
     HOURS(false),
     SENIORITY(false),
     LANGUAGE(true),
-    SCAM(true);
+    SCAM(true),
+    EXTRACTION_CONFIDENCE(true);
 
     private final boolean critical;
 
@@ -20,12 +24,5 @@ public enum EligibilityRule {
 
     public boolean critical() {
         return critical;
-    }
-
-    /** Outcome of one rule. */
-    public enum Verdict {
-        OK,
-        UNKNOWN,
-        FAIL
     }
 }

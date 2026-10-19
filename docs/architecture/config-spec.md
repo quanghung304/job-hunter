@@ -85,7 +85,7 @@ UNKNOWN when `allowedRegions` is empty/unknown, and OK if it contains
 | `app.llm.registry-path` | `../config/llm.yaml` | Model registry, see §5 |
 | `app.llm.force-model` | — | If set (e.g. `fake`), overrides every assignment; used by tests and `make e2e` |
 | `app.llm.extract-prompt` | `extract-v1` | File name in `docs/ai/prompts/` |
-| `app.llm.score-prompt` | `score-v1` | `score-v2` from T-025 (eligibility checks instead of a verdict, ADR-0011) |
+| `app.llm.score-prompt` | `score-v2` | Eligibility checks instead of a verdict (ADR-0011); score-v1 until T-025 |
 | `app.llm.max-calls-per-run` | `150` | Budget guard (all models): HTTP attempts per owner action; a bulk action is one action (ADR-0010) |
 | `app.llm.monthly-budget-usd` | `5.00` | Hard stop for **PAID** models when estimated month cost reaches it |
 | `app.llm.allow-paid-calls` | `false` (env `LLM_ALLOW_PAID_CALLS`) | Owner's consent to PAID models (ADR-0009). While false, no request is ever sent to a PAID model (assignment, fallback, eval, "Test"); the router answers `PAID_NOT_ALLOWED` |

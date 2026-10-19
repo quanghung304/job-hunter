@@ -1,34 +1,35 @@
 package io.github.quanghung304.jobhunter.enrich;
 
-import static io.github.quanghung304.jobhunter.enrich.EligibilityRule.Verdict.FAIL;
-import static io.github.quanghung304.jobhunter.enrich.EligibilityRule.Verdict.OK;
-import static io.github.quanghung304.jobhunter.enrich.EligibilityRule.Verdict.UNKNOWN;
+import static io.github.quanghung304.jobhunter.enrich.CheckResult.FAIL;
+import static io.github.quanghung304.jobhunter.enrich.CheckResult.OK;
+import static io.github.quanghung304.jobhunter.enrich.CheckResult.UNKNOWN;
 
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
-import io.github.quanghung304.jobhunter.enrich.EligibilityRule.Verdict;
 import io.github.quanghung304.jobhunter.ingest.JobView;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.RegionMatcher;
 import io.github.quanghung304.jobhunter.profile.RegionVerdict;
 import java.time.Clock;
 import java.time.ZoneOffset;
-import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 /**
- * The deterministic eligibility check of scoring-spec.md §4: every rule yields OK, UNKNOWN or
- * FAIL; any FAIL → INELIGIBLE, else any UNKNOWN on a critical rule → UNCERTAIN, else ELIGIBLE;
- * extraction confidence LOW caps the result at UNCERTAIN. No I/O; the clock only fixes the
- * date for the DST-aware residence offset.
+ * The deterministic eligibility checks of scoring-spec.md §4: one check per criterion (OK,
+ * UNKNOWN or FAIL, with the job-side value and an optional reason code) in table order. There is
+ * no overall verdict: the owner decides (ADR-0011). No I/O; the clock only fixes the date for the
+ * DST-aware residence offset.
  */
 @Component
 public class EligibilityEvaluator {
+
+    static final String NOT_STATED = "Not stated";
 
     /** Text that makes a FULL_TIME-only posting a real employment (scoring-spec §4 note). */
     private static final Pattern EMPLOYMENT_WORDS =
@@ -66,64 +67,66 @@ public class EligibilityEvaluator {
         this.clock = clock;
     }
 
-    public EligibilityResult evaluate(JobAttributes attributes, JobView job, Profile profile) {
-        Map<EligibilityRule, Verdict> verdicts = new EnumMap<>(EligibilityRule.class);
-        verdicts.put(EligibilityRule.WORK_MODE, workMode(attributes, job, profile));
-        verdicts.put(EligibilityRule.REGION, region(attributes, profile));
-        verdicts.put(EligibilityRule.WORK_AUTH, workAuthorization(attributes, profile));
-        verdicts.put(EligibilityRule.TIMEZONE, timezone(attributes, profile));
-        EmploymentCheck employment = employmentType(attributes, job, profile);
-        verdicts.put(EligibilityRule.EMPLOYMENT_TYPE, employment.verdict());
-        verdicts.put(EligibilityRule.HOURS, hours(attributes, profile));
-        verdicts.put(EligibilityRule.SENIORITY, seniority(attributes, profile));
-        verdicts.put(EligibilityRule.LANGUAGE, language(attributes, profile));
-        verdicts.put(EligibilityRule.SCAM, Boolean.TRUE.equals(attributes.isScamSignal()) ? FAIL : OK);
-
-        Eligibility eligibility;
-        if (verdicts.containsValue(FAIL)) {
-            eligibility = Eligibility.INELIGIBLE;
-        } else if (verdicts.entrySet().stream().anyMatch(e -> e.getKey().critical() && e.getValue() == UNKNOWN)) {
-            eligibility = Eligibility.UNCERTAIN;
-        } else {
-            eligibility = Eligibility.ELIGIBLE;
-        }
-        boolean lowConfidence = attributes.confidence() == JobAttributes.Confidence.LOW;
-        if (lowConfidence && eligibility == Eligibility.ELIGIBLE) {
-            eligibility = Eligibility.UNCERTAIN;
-        }
-        return new EligibilityResult(eligibility, verdicts, employment.fullTimeOnlySoft(), lowConfidence);
+    /** All checks in §4 table order (one per {@link EligibilityRule}). */
+    public List<EligibilityCheck> evaluate(JobAttributes attributes, JobView job, Profile profile) {
+        return List.of(
+                workMode(attributes, job, profile),
+                region(attributes, profile),
+                workAuthorization(attributes, profile),
+                timezone(attributes, profile),
+                employmentType(attributes, job, profile),
+                hours(attributes, profile),
+                seniority(attributes, profile),
+                language(attributes, profile),
+                scam(attributes),
+                confidence(attributes));
     }
 
-    private static Verdict workMode(JobAttributes attributes, JobView job, Profile profile) {
-        return switch (attributes.remoteType()) {
+    private static EligibilityCheck workMode(JobAttributes attributes, JobView job, Profile profile) {
+        String value = remoteText(attributes.remoteType())
+                + (job.locationText() == null || job.locationText().isBlank() ? "" : " · " + job.locationText());
+        CheckResult result = switch (attributes.remoteType()) {
             case FULLY_REMOTE, REMOTE_RESTRICTED -> OK;
             case UNKNOWN -> UNKNOWN;
             case HYBRID, ONSITE -> CityNames.mentions(job.locationText(), profile.candidate().city()) ? OK : FAIL;
         };
+        return EligibilityCheck.of(EligibilityRule.WORK_MODE, result, value);
     }
 
-    private static Verdict region(JobAttributes attributes, Profile profile) {
+    private static String remoteText(JobAttributes.RemoteType type) {
+        return switch (type) {
+            case FULLY_REMOTE -> "Remote anywhere";
+            case REMOTE_RESTRICTED -> "Remote (restricted)";
+            case HYBRID -> "Hybrid";
+            case ONSITE -> "On-site";
+            case UNKNOWN -> NOT_STATED;
+        };
+    }
+
+    private static EligibilityCheck region(JobAttributes attributes, Profile profile) {
         RegionVerdict verdict = RegionMatcher.of(profile).isAccepted(attributes.allowedRegions());
-        return switch (verdict) {
+        CheckResult result = switch (verdict) {
             case OK -> OK;
             case UNKNOWN -> UNKNOWN;
             case FAIL -> FAIL;
         };
+        String value = attributes.allowedRegions().isEmpty() ? NOT_STATED : String.join(", ", attributes.allowedRegions());
+        return EligibilityCheck.of(EligibilityRule.REGION, result, value);
     }
 
     /** FAIL only when the sentence names countries/regions and none of them is acceptable. */
-    static Verdict workAuthorization(JobAttributes attributes, Profile profile) {
+    static EligibilityCheck workAuthorization(JobAttributes attributes, Profile profile) {
         String text = attributes.workAuthorization();
         if (text == null || text.isBlank()) {
-            return OK;
+            return EligibilityCheck.of(EligibilityRule.WORK_AUTH, OK, NOT_STATED);
         }
         Set<String> regions = mentionedRegions(text);
         if (regions.isEmpty()) {
-            return OK;
+            return EligibilityCheck.of(EligibilityRule.WORK_AUTH, OK, text);
         }
         RegionMatcher matcher = RegionMatcher.of(profile);
         boolean anyAccepted = regions.stream().anyMatch(r -> matcher.isAccepted(List.of(r)) == RegionVerdict.OK);
-        return anyAccepted ? OK : FAIL;
+        return EligibilityCheck.of(EligibilityRule.WORK_AUTH, anyAccepted ? OK : FAIL, text);
     }
 
     static Set<String> mentionedRegions(String text) {
@@ -148,25 +151,38 @@ public class EligibilityEvaluator {
      * OK if {@code minUtcOffset − d ≤ residence offset ≤ maxUtcOffset + d}, with the residence
      * offset of today in the candidate's time zone (DST-aware).
      */
-    private Verdict timezone(JobAttributes attributes, Profile profile) {
+    private EligibilityCheck timezone(JobAttributes attributes, Profile profile) {
         JobAttributes.TimezoneRequirement requirement = attributes.timezoneRequirement();
         if (requirement == null) {
-            return OK;
+            return EligibilityCheck.of(EligibilityRule.TIMEZONE, OK, NOT_STATED);
         }
         ZoneOffset offset = profile.candidate().timezone().getRules().getOffset(clock.instant());
         double hours = offset.getTotalSeconds() / 3600.0;
         int d = profile.preferences().timezone().maxOffsetDiffHours();
-        return requirement.minUtcOffset() - d <= hours && hours <= requirement.maxUtcOffset() + d ? OK : FAIL;
+        boolean ok = requirement.minUtcOffset() - d <= hours && hours <= requirement.maxUtcOffset() + d;
+        return EligibilityCheck.of(EligibilityRule.TIMEZONE, ok ? OK : FAIL, timezoneText(requirement));
     }
 
-    private static EmploymentCheck employmentType(JobAttributes attributes, JobView job, Profile profile) {
+    static String timezoneText(JobAttributes.TimezoneRequirement requirement) {
+        String range = requirement.minUtcOffset().equals(requirement.maxUtcOffset())
+                ? utc(requirement.minUtcOffset())
+                : utc(requirement.minUtcOffset()) + " to " + utc(requirement.maxUtcOffset());
+        return requirement.overlapHours() == null ? range : range + ", " + requirement.overlapHours() + "h overlap";
+    }
+
+    private static String utc(int offset) {
+        return offset == 0 ? "UTC" : offset > 0 ? "UTC+" + offset : "UTC" + offset;
+    }
+
+    private static EligibilityCheck employmentType(JobAttributes attributes, JobView job, Profile profile) {
         List<EmploymentType> offered = attributes.employmentTypes();
         if (offered.isEmpty()) {
-            return new EmploymentCheck(UNKNOWN, false);
+            return EligibilityCheck.of(EligibilityRule.EMPLOYMENT_TYPE, UNKNOWN, NOT_STATED);
         }
+        String value = offered.stream().map(EligibilityEvaluator::employmentText).collect(Collectors.joining(", "));
         List<EmploymentType> accepted = profile.preferences().employmentTypes();
         if (offered.stream().anyMatch(accepted::contains)) {
-            return new EmploymentCheck(OK, false);
+            return EligibilityCheck.of(EligibilityRule.EMPLOYMENT_TYPE, OK, value);
         }
         boolean fullTimeOnly = offered.stream().allMatch(t -> t == EmploymentType.FULL_TIME);
         if (fullTimeOnly) {
@@ -174,37 +190,79 @@ public class EligibilityEvaluator {
             JobAttributes.HoursPerWeek hours = attributes.hoursPerWeek();
             boolean clearlyEmployment = (hours != null && hours.min() != null && hours.min() >= FULL_TIME_MIN_HOURS)
                     || (job.descriptionText() != null && EMPLOYMENT_WORDS.matcher(job.descriptionText()).find());
-            return clearlyEmployment ? new EmploymentCheck(FAIL, false) : new EmploymentCheck(UNKNOWN, true);
+            return clearlyEmployment
+                    ? EligibilityCheck.of(EligibilityRule.EMPLOYMENT_TYPE, FAIL, value)
+                    : EligibilityCheck.of(EligibilityRule.EMPLOYMENT_TYPE, UNKNOWN, value)
+                            .withReason(EligibilityCheck.FULL_TIME_ONLY_SOFT);
         }
-        return new EmploymentCheck(FAIL, false);
+        return EligibilityCheck.of(EligibilityRule.EMPLOYMENT_TYPE, FAIL, value);
     }
 
-    private static Verdict hours(JobAttributes attributes, Profile profile) {
+    private static String employmentText(EmploymentType type) {
+        String name = type.name().replace('_', '-').toLowerCase(Locale.ROOT);
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    private static EligibilityCheck hours(JobAttributes attributes, Profile profile) {
         Integer maxHours = profile.preferences().maxHoursPerWeek();
         JobAttributes.HoursPerWeek hours = attributes.hoursPerWeek();
+        String value = hoursText(hours);
         if (maxHours == null || hours == null || hours.min() == null) {
-            return OK;
+            return EligibilityCheck.of(EligibilityRule.HOURS, OK, value);
         }
-        return hours.min() <= maxHours ? OK : FAIL;
+        return EligibilityCheck.of(EligibilityRule.HOURS, hours.min() <= maxHours ? OK : FAIL, value);
     }
 
-    private static Verdict seniority(JobAttributes attributes, Profile profile) {
-        return attributes.seniority() == null || profile.preferences().seniority().contains(attributes.seniority())
-                ? OK : FAIL;
+    private static String hoursText(JobAttributes.HoursPerWeek hours) {
+        if (hours == null || (hours.min() == null && hours.max() == null)) {
+            return NOT_STATED;
+        }
+        if (hours.min() != null && hours.max() != null) {
+            return hours.min().equals(hours.max()) ? hours.min() + " h/week" : hours.min() + "–" + hours.max() + " h/week";
+        }
+        return hours.min() != null ? "≥ " + hours.min() + " h/week" : "≤ " + hours.max() + " h/week";
     }
 
-    private static Verdict language(JobAttributes attributes, Profile profile) {
-        for (JobAttributes.RequiredLanguage required : attributes.requiredLanguages()) {
+    private static EligibilityCheck seniority(JobAttributes attributes, Profile profile) {
+        if (attributes.seniority() == null) {
+            return EligibilityCheck.of(EligibilityRule.SENIORITY, OK, NOT_STATED);
+        }
+        boolean ok = profile.preferences().seniority().contains(attributes.seniority());
+        String name = attributes.seniority().name().toLowerCase(Locale.ROOT);
+        return EligibilityCheck.of(EligibilityRule.SENIORITY, ok ? OK : FAIL,
+                Character.toUpperCase(name.charAt(0)) + name.substring(1));
+    }
+
+    private static EligibilityCheck language(JobAttributes attributes, Profile profile) {
+        List<JobAttributes.RequiredLanguage> required = attributes.requiredLanguages();
+        if (required.isEmpty()) {
+            return EligibilityCheck.of(EligibilityRule.LANGUAGE, OK, "None required");
+        }
+        String value = required.stream()
+                .map(l -> l.code().toUpperCase(Locale.ROOT) + " " + l.level())
+                .collect(Collectors.joining(", "));
+        for (JobAttributes.RequiredLanguage language : required) {
             boolean met = profile.candidate().languages().stream()
-                    .anyMatch(spoken -> spoken.code().equalsIgnoreCase(required.code())
-                            && spoken.level().isAtLeast(required.level()));
+                    .anyMatch(spoken -> spoken.code().equalsIgnoreCase(language.code())
+                            && spoken.level().isAtLeast(language.level()));
             if (!met) {
-                return FAIL;
+                return EligibilityCheck.of(EligibilityRule.LANGUAGE, FAIL, value);
             }
         }
-        return OK;
+        return EligibilityCheck.of(EligibilityRule.LANGUAGE, OK, value);
     }
 
-    private record EmploymentCheck(Verdict verdict, boolean fullTimeOnlySoft) {
+    private static EligibilityCheck scam(JobAttributes attributes) {
+        return Boolean.TRUE.equals(attributes.isScamSignal())
+                ? EligibilityCheck.of(EligibilityRule.SCAM, FAIL, "Scam signals")
+                : EligibilityCheck.of(EligibilityRule.SCAM, OK, "No signals");
+    }
+
+    private static EligibilityCheck confidence(JobAttributes attributes) {
+        return switch (attributes.confidence()) {
+            case HIGH -> EligibilityCheck.of(EligibilityRule.EXTRACTION_CONFIDENCE, OK, "High");
+            case MEDIUM -> EligibilityCheck.of(EligibilityRule.EXTRACTION_CONFIDENCE, OK, "Medium");
+            case LOW -> EligibilityCheck.of(EligibilityRule.EXTRACTION_CONFIDENCE, UNKNOWN, "Low");
+        };
     }
 }

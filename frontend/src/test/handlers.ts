@@ -14,7 +14,8 @@ export const metaFixture: Meta = {
   ],
   statuses: ['NEW', 'SHORTLISTED', 'DISMISSED', 'APPLIED', 'INTERVIEWING', 'OFFER', 'REJECTED', 'WITHDRAWN'],
   employmentTypes: ['FULL_TIME', 'PART_TIME', 'CONTRACT', 'FREELANCE', 'INTERNSHIP'],
-  eligibilities: ['ELIGIBLE', 'UNCERTAIN', 'INELIGIBLE'],
+  decisions: ['ELIGIBLE', 'INELIGIBLE', 'UNDECIDED'],
+  checkResults: ['ALL_OK', 'HAS_UNKNOWN', 'HAS_FAIL', 'NOT_CHECKED'],
 }
 
 export const statusFixture: Status = {

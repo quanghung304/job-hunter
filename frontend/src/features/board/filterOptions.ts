@@ -2,8 +2,10 @@ import { useMeta } from '@/api/queries'
 import {
   ANALYSIS_STAGE_LABELS,
   type AnalysisStage,
-  ELIGIBILITY_LABELS,
-  type Eligibility,
+  CHECKS_FILTER_LABELS,
+  type ChecksFilter,
+  DECISION_FILTER_LABELS,
+  type DecisionFilter,
   EMPLOYMENT_LABELS,
   type EmploymentType,
   STATUS_LABELS,
@@ -35,9 +37,13 @@ export function useFilterOptions() {
   ) as EmploymentType[]
   return {
     status: statuses.map((value) => ({ value, label: STATUS_LABELS[value] })),
-    eligibility: (['ELIGIBLE', 'UNCERTAIN', 'INELIGIBLE'] as Eligibility[]).map((value) => ({
+    decision: (Object.keys(DECISION_FILTER_LABELS) as DecisionFilter[]).map((value) => ({
       value,
-      label: ELIGIBILITY_LABELS[value],
+      label: DECISION_FILTER_LABELS[value],
+    })),
+    checks: (Object.keys(CHECKS_FILTER_LABELS) as ChecksFilter[]).map((value) => ({
+      value,
+      label: CHECKS_FILTER_LABELS[value],
     })),
     analysisStage: (Object.keys(ANALYSIS_STAGE_LABELS) as AnalysisStage[]).map((value) => ({
       value,
@@ -48,11 +54,12 @@ export function useFilterOptions() {
   }
 }
 
-export type ListFilter = 'status' | 'eligibility' | 'analysisStage' | 'source' | 'employmentType'
+export type ListFilter = 'status' | 'decision' | 'checks' | 'analysisStage' | 'source' | 'employmentType'
 
 export const LIST_FILTER_LABELS: Record<ListFilter, string> = {
   status: 'Status',
-  eligibility: 'Eligibility',
+  decision: 'Decision',
+  checks: 'Checks',
   analysisStage: 'Analysis',
   source: 'Source',
   employmentType: 'Type',

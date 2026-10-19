@@ -69,7 +69,7 @@ class ArchitectureTest {
                 .whereLayer("ingest").mayOnlyAccessLayers("common", "source")
                 .whereLayer("llm").mayOnlyAccessLayers("common")
                 .whereLayer("enrich").mayOnlyAccessLayers("common", "profile", "llm", "ingest")
-                .whereLayer("scoring").mayOnlyAccessLayers("common", "profile", "ingest", "llm", "enrich")
+                .whereLayer("scoring").mayOnlyAccessLayers("common", "profile", "ingest", "llm", "enrich", "tracking")
                 .whereLayer("tracking").mayOnlyAccessLayers("common", "profile", "ingest", "enrich")
                 .whereLayer("notify").mayOnlyAccessLayers("common", "profile", "tracking")
                 .whereLayer("pipeline").mayOnlyAccessLayers(

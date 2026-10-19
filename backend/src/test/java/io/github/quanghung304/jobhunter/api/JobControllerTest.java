@@ -24,7 +24,10 @@ import io.github.quanghung304.jobhunter.enrich.AnalysisResult;
 import io.github.quanghung304.jobhunter.enrich.AnalysisService;
 import io.github.quanghung304.jobhunter.enrich.AssessmentStatus;
 import io.github.quanghung304.jobhunter.enrich.AssessmentView;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
+import io.github.quanghung304.jobhunter.enrich.CheckCounts;
+import io.github.quanghung304.jobhunter.enrich.CheckResult;
+import io.github.quanghung304.jobhunter.enrich.EligibilityCheck;
+import io.github.quanghung304.jobhunter.enrich.EligibilityRule;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes.RemoteType;
 import io.github.quanghung304.jobhunter.enrich.PrefilterResult;
 import io.github.quanghung304.jobhunter.ingest.JobNotFoundException;
@@ -36,6 +39,10 @@ import io.github.quanghung304.jobhunter.profile.ProfileProvider;
 import io.github.quanghung304.jobhunter.scoring.ScoringResult;
 import io.github.quanghung304.jobhunter.scoring.ScoringService;
 import io.github.quanghung304.jobhunter.tracking.AnalysisStage;
+import io.github.quanghung304.jobhunter.tracking.ChecksFilter;
+import io.github.quanghung304.jobhunter.tracking.DecisionFilter;
+import io.github.quanghung304.jobhunter.tracking.EligibilityDecision;
+import io.github.quanghung304.jobhunter.tracking.TrackingEventKind;
 import io.github.quanghung304.jobhunter.tracking.IllegalStatusTransitionException;
 import io.github.quanghung304.jobhunter.tracking.JobBoardFilter;
 import io.github.quanghung304.jobhunter.tracking.JobBoardPage;
@@ -101,7 +108,8 @@ class JobControllerTest {
 
     static JobBoardRow row(Integer score, TrackingStatus status, AnalysisStage stage) {
         return new JobBoardRow(ID, "Java Developer", "Acme", "Remote (EU)", score, score == null ? null : "Good match",
-                Eligibility.ELIGIBLE, RemoteType.REMOTE_RESTRICTED, List.of("EU"), List.of(EmploymentType.CONTRACT),
+                null, new CheckCounts(9, 1, 0), RemoteType.REMOTE_RESTRICTED, List.of("EU"),
+                List.of(EmploymentType.CONTRACT),
                 POSTED, SEEN, List.of("himalayas", "weworkremotely"), status, JobStatus.ACTIVE, stage);
     }
 
@@ -112,12 +120,15 @@ class JobControllerTest {
         var details = score == null ? null : json.readTree("""
                 {"breakdown":{"skills":30,"experience":15,"arrangement":15,"domain":8,"other":4},"score":72,
                  "strengths":["Java 17"],"gaps":["Kafka"],"redFlags":[],"summary":"Good match","applyAdvice":"Go"}""");
-        var assessment = new AssessmentView(ID, "hugh", "hash", PrefilterResult.PASS, List.of(), Eligibility.ELIGIBLE,
-                List.of("TIMEZONE:UNKNOWN"), 7L, score, details, score == null ? null : "Good match", "score-v1",
-                "primary", AssessmentStatus.DONE, 1);
+        var checks = List.of(
+                new EligibilityCheck(EligibilityRule.WORK_MODE, true, CheckResult.OK, null, "Remote anywhere"),
+                new EligibilityCheck(EligibilityRule.TIMEZONE, false, CheckResult.UNKNOWN, null, "Not stated"));
+        var assessment = new AssessmentView(ID, "hugh", "hash", PrefilterResult.PASS, List.of(), checks, 7L, score,
+                details, score == null ? null : "Good match", "score-v2", "primary", AssessmentStatus.DONE, 1);
         return new JobDetailView(row(score, TrackingStatus.SHORTLISTED, stage), job, null, assessment,
                 List.of(new PostingView("himalayas", "https://himalayas.app/jobs/42", SEEN, SEEN)), "Ask about stack",
-                List.of(new StatusChange(TrackingStatus.NEW, TrackingStatus.SHORTLISTED, "nice", SEEN)),
+                null,
+                List.of(new StatusChange(TrackingEventKind.STATUS, "NEW", "SHORTLISTED", "nice", SEEN)),
                 Set.of(TrackingStatus.NEW, TrackingStatus.DISMISSED, TrackingStatus.APPLIED));
     }
 
@@ -140,7 +151,10 @@ class JobControllerTest {
                 .andExpect(jsonPath("$.items[0].score").value(82))
                 .andExpect(jsonPath("$.items[0].scoreBand").value("GOOD"))
                 .andExpect(jsonPath("$.items[0].summary").value("Good match"))
-                .andExpect(jsonPath("$.items[0].eligibility").value("ELIGIBLE"))
+                .andExpect(jsonPath("$.items[0].eligibilityDecision").isEmpty())
+                .andExpect(jsonPath("$.items[0].checks.ok").value(9))
+                .andExpect(jsonPath("$.items[0].checks.unknown").value(1))
+                .andExpect(jsonPath("$.items[0].checks.fail").value(0))
                 .andExpect(jsonPath("$.items[0].remoteType").value("REMOTE_RESTRICTED"))
                 .andExpect(jsonPath("$.items[0].allowedRegions[0]").value("EU"))
                 .andExpect(jsonPath("$.items[0].employmentTypes[0]").value("CONTRACT"))
@@ -161,7 +175,8 @@ class JobControllerTest {
 
         mvc.perform(get("/api/jobs")
                         .param("status", "NEW", "APPLIED")
-                        .param("eligibility", "UNCERTAIN")
+                        .param("decision", "UNDECIDED")
+                        .param("checks", "HAS_FAIL", "HAS_UNKNOWN")
                         .param("minScore", "50").param("maxScore", "90")
                         .param("source", "jobicy")
                         .param("employmentType", "CONTRACT")
@@ -178,8 +193,8 @@ class JobControllerTest {
         ArgumentCaptor<JobBoardFilter> filter = ArgumentCaptor.forClass(JobBoardFilter.class);
         verify(board).page(eq("hugh"), filter.capture(), eq(JobSort.POSTED), eq(2), eq(10));
         assertThat(filter.getValue()).isEqualTo(new JobBoardFilter(Set.of(TrackingStatus.NEW, TrackingStatus.APPLIED),
-                Set.of(Eligibility.UNCERTAIN), 50, 90, Set.of("jobicy"), Set.of(EmploymentType.CONTRACT), 7, "java",
-                true, Set.of(AnalysisStage.ANALYZED)));
+                Set.of(DecisionFilter.UNDECIDED), Set.of(ChecksFilter.HAS_FAIL, ChecksFilter.HAS_UNKNOWN), 50, 90,
+                Set.of("jobicy"), Set.of(EmploymentType.CONTRACT), 7, "java", true, Set.of(AnalysisStage.ANALYZED)));
     }
 
     @Test
@@ -216,7 +231,13 @@ class JobControllerTest {
                 .andExpect(jsonPath("$.salary.period").value("YEAR"))
                 .andExpect(jsonPath("$.tags[0]").value("java"))
                 .andExpect(jsonPath("$.extraction").isEmpty())
-                .andExpect(jsonPath("$.eligibilityReasons[0]").value("TIMEZONE:UNKNOWN"))
+                .andExpect(jsonPath("$.eligibilityChecks[1].code").value("TIMEZONE"))
+                .andExpect(jsonPath("$.eligibilityChecks[1].critical").value(false))
+                .andExpect(jsonPath("$.eligibilityChecks[1].result").value("UNKNOWN"))
+                .andExpect(jsonPath("$.eligibilityChecks[1].value").value("Not stated"))
+                .andExpect(jsonPath("$.eligibilityChecks[1].reason").isEmpty())
+                .andExpect(jsonPath("$.eligibilityDecidedAt").isEmpty())
+                .andExpect(jsonPath("$.history[0].kind").value("STATUS"))
                 .andExpect(jsonPath("$.prefilterReasons").isEmpty())
                 .andExpect(jsonPath("$.scoreBreakdown.skills").value(30))
                 .andExpect(jsonPath("$.scoreBreakdown.other").value(4))
@@ -296,8 +317,8 @@ class JobControllerTest {
     @Test
     void analyzeAnswersTheDetailAlsoForAFailedAttempt() throws Exception {
         given(details.find(ID, "hugh")).willReturn(Optional.of(detail(null, AnalysisStage.FAILED)));
-        given(analysis.analyze(ID)).willReturn(new AnalysisResult(ID, AnalysisResult.Outcome.FAILED, null, List.of(),
-                true, "INVALID_OUTPUT: bad json"));
+        given(analysis.analyze(ID)).willReturn(new AnalysisResult(ID, AnalysisResult.Outcome.FAILED, List.of(), true,
+                "INVALID_OUTPUT: bad json"));
 
         mvc.perform(post("/api/jobs/42/analyze"))
                 .andExpect(status().isOk())
@@ -320,11 +341,35 @@ class JobControllerTest {
 
     private org.springframework.test.web.servlet.ResultActions expectAnalyzeError(AnalysisResult.Outcome outcome,
             int status, String code) throws Exception {
-        given(analysis.analyze(ID)).willReturn(new AnalysisResult(ID, outcome, null, List.of(), false, "detail"));
+        given(analysis.analyze(ID)).willReturn(new AnalysisResult(ID, outcome, List.of(), false, "detail"));
         return mvc.perform(post("/api/jobs/42/analyze"))
                 .andExpect(status().is(status))
                 .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.code").value(code));
+    }
+
+    @Test
+    void eligibilityDecisionIsSetAndAnswersTheSummary() throws Exception {
+        given(board.find(ID, "hugh")).willReturn(Optional.of(row(null, TrackingStatus.NEW, AnalysisStage.ANALYZED)));
+
+        mvc.perform(put("/api/jobs/42/eligibility").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"decision\":\"INELIGIBLE\",\"note\":\"US only\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.checks.unknown").value(1));
+        verify(tracking).setEligibilityDecision(ID, "hugh", EligibilityDecision.INELIGIBLE, "US only");
+
+        mvc.perform(put("/api/jobs/42/eligibility").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"decision\":null}"))
+                .andExpect(status().isOk());
+        verify(tracking).setEligibilityDecision(ID, "hugh", null, null);
+
+        willThrow(new JobNotFoundException(7)).given(tracking).setEligibilityDecision(7, "hugh",
+                EligibilityDecision.ELIGIBLE, null);
+        mvc.perform(put("/api/jobs/7/eligibility").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"decision\":\"ELIGIBLE\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("JOB_NOT_FOUND"));
     }
 
     @Test
@@ -345,7 +390,7 @@ class JobControllerTest {
     void scoreRefusalsHaveTheirCodes() throws Exception {
         expectScoreError(ScoringResult.Outcome.JOB_EXPIRED, "JOB_EXPIRED");
         expectScoreError(ScoringResult.Outcome.NOT_ANALYZED, "JOB_NOT_ANALYZED");
-        expectScoreError(ScoringResult.Outcome.NOT_ELIGIBLE, "JOB_NOT_ELIGIBLE");
+        expectScoreError(ScoringResult.Outcome.MARKED_INELIGIBLE, "JOB_MARKED_INELIGIBLE");
         expectScoreError(ScoringResult.Outcome.LLM_PAUSED, "LLM_PAUSED");
         expectScoreError(ScoringResult.Outcome.BUDGET_REACHED, "BUDGET_REACHED");
     }

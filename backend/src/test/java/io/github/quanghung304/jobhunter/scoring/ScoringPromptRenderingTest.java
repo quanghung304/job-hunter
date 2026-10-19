@@ -8,7 +8,7 @@ import io.github.quanghung304.jobhunter.common.model.LanguageLevel;
 import io.github.quanghung304.jobhunter.common.model.RemoteHint;
 import io.github.quanghung304.jobhunter.common.model.Seniority;
 import io.github.quanghung304.jobhunter.enrich.EligibilityEvaluator;
-import io.github.quanghung304.jobhunter.enrich.EligibilityResult;
+import io.github.quanghung304.jobhunter.enrich.EligibilityCheck;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
 import io.github.quanghung304.jobhunter.ingest.JobView;
@@ -23,12 +23,12 @@ import java.time.ZoneOffset;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-/** score-v1 rendered with the variables ScoringService builds. */
+/** score-v2 rendered with the variables ScoringService builds (eligibility checks, ADR-0011). */
 class ScoringPromptRenderingTest {
 
     static final Instant NOW = Instant.parse("2026-10-18T10:00:00Z");
 
-    final ScoringService scoring = new ScoringService(null, null, null, null, null, null, new ObjectMapper(),
+    final ScoringService scoring = new ScoringService(null, null, null, null, null, null, new ObjectMapper(), null,
             LlmRouterTestConfig.properties(null, false));
 
     @Test
@@ -43,7 +43,9 @@ class ScoringPromptRenderingTest {
                 .contains("Headline: Backend Software Engineer")
                 .contains("<title>Java Developer</title>", "<company>Acme</company>")
                 .contains("\"remoteType\" : \"REMOTE_RESTRICTED\"")
-                .contains("<eligibility result=\"UNCERTAIN\">", "EMPLOYMENT_TYPE:UNKNOWN", "FULL_TIME_ONLY_SOFT")
+                .contains("<eligibility_checks>", "EMPLOYMENT_TYPE: UNKNOWN — Full-time (FULL_TIME_ONLY_SOFT)",
+                        "REGION: OK — EU")
+                .doesNotContain("UNCERTAIN", "INELIGIBLE")
                 .contains("Build payment APIs with Java.");
     }
 
@@ -65,21 +67,22 @@ class ScoringPromptRenderingTest {
     }
 
     @Test
-    void noEligibilityReasonsRenderAsNone() {
+    void everyCheckIsOneLine() {
         Profile profile = ProfileFixtures.example();
         JobAttributes attributes = attributes(List.of(EmploymentType.CONTRACT));
-        EligibilityResult eligible = new EligibilityEvaluator(Clock.fixed(NOW, ZoneOffset.UTC))
+        List<EligibilityCheck> checks = new EligibilityEvaluator(Clock.fixed(NOW, ZoneOffset.UTC))
                 .evaluate(attributes, job("x"), profile);
 
-        assertThat(scoring.variables(job("x"), attributes, eligible, profile)).containsEntry("eligibilityReasons", "none");
+        assertThat(scoring.variables(job("x"), attributes, checks, profile).get("eligibilityChecks").lines())
+                .hasSize(checks.size()).allSatisfy(line -> assertThat(line).contains(": OK — "));
     }
 
     private RenderedPrompt render(Profile profile, String description) {
         JobAttributes attributes = attributes(List.of(EmploymentType.FULL_TIME));
-        EligibilityResult eligibility = new EligibilityEvaluator(Clock.fixed(NOW, ZoneOffset.UTC))
+        List<EligibilityCheck> checks = new EligibilityEvaluator(Clock.fixed(NOW, ZoneOffset.UTC))
                 .evaluate(attributes, job(description), profile);
-        return new PromptRepository().get("score-v1").render(scoring.variables(job(description), attributes,
-                eligibility, profile));
+        return new PromptRepository().get("score-v2").render(scoring.variables(job(description), attributes,
+                checks, profile));
     }
 
     private static JobAttributes attributes(List<EmploymentType> types) {

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.quanghung304.jobhunter.common.model.EmploymentType;
 import io.github.quanghung304.jobhunter.enrich.AssessmentService;
-import io.github.quanghung304.jobhunter.enrich.Eligibility;
+import io.github.quanghung304.jobhunter.enrich.CheckCounts;
 import io.github.quanghung304.jobhunter.enrich.ExtractionService;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes.RemoteType;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
@@ -31,8 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
  * {@code job_assessment} for the current score prompt version, {@code job_extraction} for the
  * current extract prompt version and {@code job_tracking}. Every join is limited to one profile.
  *
- * <p>Default view (no filter): tracking status NEW or SHORTLISTED, prefilter PASS, eligibility
- * not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden
+ * <p>Default view (no filter): tracking status not DISMISSED, prefilter PASS, owner decision not
+ * INELIGIBLE (ADR-0011), job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden
  * unless {@code includeExpired}.
  */
 @Service
@@ -43,14 +43,21 @@ public class JobBoardQuery {
             with board as (
               select j.id, j.title, j.company_name, j.location_text, j.posted_at, j.first_seen_at,
                      j.status as job_status, coalesce(j.posted_at, j.first_seen_at) as posted_sort,
-                     a.score, a.summary, a.eligibility, a.prefilter_result,
+                     a.score, a.summary, a.prefilter_result, t.eligibility_decision,
+                     (a.eligibility_checks is not null) as checked,
+                     (select count(*) from jsonb_array_elements(a.eligibility_checks) c
+                       where c ->> 'result' = 'OK') as checks_ok,
+                     (select count(*) from jsonb_array_elements(a.eligibility_checks) c
+                       where c ->> 'result' = 'UNKNOWN') as checks_unknown,
+                     (select count(*) from jsonb_array_elements(a.eligibility_checks) c
+                       where c ->> 'result' = 'FAIL') as checks_fail,
                      e.attributes ->> 'remoteType' as remote_type,
                      e.attributes -> 'allowedRegions' as allowed_regions,
                      e.attributes -> 'employmentTypes' as employment_types,
                      coalesce(t.status, 'NEW') as tracking_status,
                      case when a.score is not null then 'SCORED'
                           when a.status = 'FAILED' then 'FAILED'
-                          when a.eligibility is not null then 'ANALYZED'
+                          when a.eligibility_checks is not null then 'ANALYZED'
                           when e.status = 'FAILED' then 'FAILED'
                           else 'NOT_ANALYZED' end as analysis_stage
               from job j
@@ -121,9 +128,9 @@ public class JobBoardQuery {
     private String where(JobBoardFilter filter, MapSqlParameterSource params) {
         List<String> conditions = new ArrayList<>();
         if (filter.isEmpty()) {
-            conditions.add("b.tracking_status in ('NEW', 'SHORTLISTED')");
+            conditions.add("b.tracking_status <> 'DISMISSED'");
             conditions.add("b.prefilter_result = 'PASS'");
-            conditions.add("(b.eligibility is null or b.eligibility <> 'INELIGIBLE')");
+            conditions.add("(b.eligibility_decision is null or b.eligibility_decision <> 'INELIGIBLE')");
             conditions.add("b.job_status = 'ACTIVE'");
             return " where " + String.join(" and ", conditions);
         }
@@ -131,7 +138,8 @@ public class JobBoardQuery {
             conditions.add("b.job_status = 'ACTIVE'");
         }
         in(conditions, params, "b.tracking_status", "statuses", filter.statuses());
-        in(conditions, params, "b.eligibility", "eligibilities", filter.eligibilities());
+        decisions(conditions, params, filter.decisions());
+        checks(conditions, filter.checks());
         in(conditions, params, "b.analysis_stage", "stages", filter.analysisStages());
         if (filter.minScore() != null) {
             conditions.add("b.score >= :minScore");
@@ -161,6 +169,37 @@ public class JobBoardQuery {
             params.addValue("q", "%" + escapeLike(filter.q()) + "%");
         }
         return conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions);
+    }
+
+    private static void decisions(List<String> conditions, MapSqlParameterSource params,
+            Collection<DecisionFilter> decisions) {
+        if (decisions.isEmpty()) {
+            return;
+        }
+        List<String> any = new ArrayList<>();
+        List<String> decided = decisions.stream().filter(d -> d != DecisionFilter.UNDECIDED).map(Enum::name).sorted()
+                .toList();
+        if (!decided.isEmpty()) {
+            any.add("b.eligibility_decision in (:decisions)");
+            params.addValue("decisions", decided);
+        }
+        if (decisions.contains(DecisionFilter.UNDECIDED)) {
+            any.add("b.eligibility_decision is null");
+        }
+        conditions.add("(" + String.join(" or ", any) + ")");
+    }
+
+    private static void checks(List<String> conditions, Collection<ChecksFilter> checks) {
+        if (checks.isEmpty()) {
+            return;
+        }
+        List<String> any = checks.stream().sorted().map(check -> switch (check) {
+            case ALL_OK -> "(b.checked and b.checks_unknown = 0 and b.checks_fail = 0)";
+            case HAS_UNKNOWN -> "b.checks_unknown > 0";
+            case HAS_FAIL -> "b.checks_fail > 0";
+            case NOT_CHECKED -> "not b.checked";
+        }).toList();
+        conditions.add("(" + String.join(" or ", any) + ")");
     }
 
     private static void in(List<String> conditions, MapSqlParameterSource params, String column, String name,
@@ -195,7 +234,9 @@ public class JobBoardQuery {
                 rs.getString("location_text"),
                 rs.getObject("score", Integer.class),
                 rs.getString("summary"),
-                enumOrNull(Eligibility.class, rs.getString("eligibility")),
+                enumOrNull(EligibilityDecision.class, rs.getString("eligibility_decision")),
+                rs.getBoolean("checked") ? new CheckCounts(rs.getInt("checks_ok"), rs.getInt("checks_unknown"),
+                        rs.getInt("checks_fail")) : null,
                 enumOrNull(RemoteType.class, rs.getString("remote_type")),
                 strings(rs.getString("allowed_regions")),
                 strings(rs.getString("employment_types")).stream()

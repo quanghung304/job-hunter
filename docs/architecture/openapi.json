@@ -389,7 +389,7 @@
             "format" : "int32",
             "type" : "integer"
           },
-          "ineligible" : {
+          "markedIneligible" : {
             "format" : "int32",
             "type" : "integer"
           },
@@ -402,7 +402,25 @@
             "type" : "integer"
           }
         },
-        "required" : [ "alreadyScored", "expired", "failedPermanently", "ineligible", "notAnalyzed", "notFound" ],
+        "required" : [ "alreadyScored", "expired", "failedPermanently", "markedIneligible", "notAnalyzed", "notFound" ],
+        "type" : "object"
+      },
+      "CheckCounts" : {
+        "properties" : {
+          "fail" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "ok" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "unknown" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "fail", "ok", "unknown" ],
         "type" : "object"
       },
       "CollectRunResponse" : {
@@ -491,6 +509,46 @@
           }
         },
         "required" : [ "dryRun" ],
+        "type" : "object"
+      },
+      "EligibilityCheck" : {
+        "properties" : {
+          "code" : {
+            "enum" : [ "WORK_MODE", "REGION", "WORK_AUTH", "TIMEZONE", "EMPLOYMENT_TYPE", "HOURS", "SENIORITY", "LANGUAGE", "SCAM", "EXTRACTION_CONFIDENCE" ],
+            "type" : "string"
+          },
+          "critical" : {
+            "type" : "boolean"
+          },
+          "reason" : {
+            "description" : "Reason code, e.g. FULL_TIME_ONLY_SOFT",
+            "type" : [ "string", "null" ]
+          },
+          "result" : {
+            "enum" : [ "OK", "UNKNOWN", "FAIL" ],
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "Job-side value shown to the owner",
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "critical", "reason", "result", "value" ],
+        "type" : "object"
+      },
+      "EligibilityDecisionRequest" : {
+        "properties" : {
+          "decision" : {
+            "description" : "null = undecided",
+            "enum" : [ "ELIGIBLE", "INELIGIBLE" ],
+            "type" : [ "string", "null" ]
+          },
+          "note" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : [ "string", "null" ]
+          }
+        },
         "type" : "object"
       },
       "HoursPerWeek" : {
@@ -623,21 +681,35 @@
           "applyUrl" : {
             "type" : [ "string", "null" ]
           },
+          "checks" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/CheckCounts"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Eligibility check results; null until analyzed"
+          },
           "company" : {
             "type" : "string"
           },
           "description" : {
             "type" : "string"
           },
-          "eligibility" : {
-            "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
-            "type" : [ "string", "null" ]
-          },
-          "eligibilityReasons" : {
+          "eligibilityChecks" : {
+            "description" : "One check per criterion (scoring-spec §4); empty until analyzed",
             "items" : {
-              "type" : "string"
+              "$ref" : "#/components/schemas/EligibilityCheck"
             },
             "type" : "array"
+          },
+          "eligibilityDecidedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "eligibilityDecision" : {
+            "description" : "The owner's decision; null = undecided",
+            "enum" : [ "ELIGIBLE", "INELIGIBLE" ],
+            "type" : [ "string", "null" ]
           },
           "employmentTypes" : {
             "items" : {
@@ -763,7 +835,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowedRegions", "allowedTransitions", "analysisStage", "applyAdvice", "applyUrl", "company", "description", "eligibility", "eligibilityReasons", "employmentTypes", "extraction", "firstSeenAt", "gaps", "history", "id", "jobStatus", "locationText", "notes", "postedAt", "postings", "prefilterReasons", "redFlags", "remoteType", "salary", "score", "scoreBand", "scoreBreakdown", "sources", "status", "strengths", "summary", "tags", "title" ],
+        "required" : [ "allowedRegions", "allowedTransitions", "analysisStage", "applyAdvice", "applyUrl", "checks", "company", "description", "eligibilityChecks", "eligibilityDecidedAt", "eligibilityDecision", "employmentTypes", "extraction", "firstSeenAt", "gaps", "history", "id", "jobStatus", "locationText", "notes", "postedAt", "postings", "prefilterReasons", "redFlags", "remoteType", "salary", "score", "scoreBand", "scoreBreakdown", "sources", "status", "strengths", "summary", "tags", "title" ],
         "type" : "object"
       },
       "JobPageResponse" : {
@@ -848,11 +920,20 @@
             "enum" : [ "NOT_ANALYZED", "ANALYZED", "SCORED", "FAILED" ],
             "type" : "string"
           },
+          "checks" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/CheckCounts"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Eligibility check results; null until analyzed"
+          },
           "company" : {
             "type" : "string"
           },
-          "eligibility" : {
-            "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+          "eligibilityDecision" : {
+            "description" : "The owner's decision; null = undecided",
+            "enum" : [ "ELIGIBLE", "INELIGIBLE" ],
             "type" : [ "string", "null" ]
           },
           "employmentTypes" : {
@@ -912,7 +993,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowedRegions", "analysisStage", "company", "eligibility", "employmentTypes", "firstSeenAt", "id", "jobStatus", "locationText", "postedAt", "remoteType", "score", "scoreBand", "sources", "status", "summary", "title" ],
+        "required" : [ "allowedRegions", "analysisStage", "checks", "company", "eligibilityDecision", "employmentTypes", "firstSeenAt", "id", "jobStatus", "locationText", "postedAt", "remoteType", "score", "scoreBand", "sources", "status", "summary", "title" ],
         "type" : "object"
       },
       "LlmAlertResponse" : {
@@ -974,9 +1055,18 @@
       },
       "MetaResponse" : {
         "properties" : {
-          "eligibilities" : {
+          "checkResults" : {
+            "description" : "Values of the checks filter",
             "items" : {
-              "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+              "enum" : [ "ALL_OK", "HAS_UNKNOWN", "HAS_FAIL", "NOT_CHECKED" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "decisions" : {
+            "description" : "Values of the decision filter",
+            "items" : {
+              "enum" : [ "ELIGIBLE", "INELIGIBLE", "UNDECIDED" ],
               "type" : "string"
             },
             "type" : "array"
@@ -1010,7 +1100,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "eligibilities", "employmentTypes", "profileId", "sources", "statuses", "summaryLanguage" ],
+        "required" : [ "checkResults", "decisions", "employmentTypes", "profileId", "sources", "statuses", "summaryLanguage" ],
         "type" : "object"
       },
       "ModelChoiceResponse" : {
@@ -1280,18 +1370,20 @@
             "type" : "string"
           },
           "from" : {
-            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          },
+          "kind" : {
+            "enum" : [ "STATUS", "ELIGIBILITY" ],
             "type" : "string"
           },
           "note" : {
             "type" : [ "string", "null" ]
           },
           "to" : {
-            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
             "type" : "string"
           }
         },
-        "required" : [ "at", "from", "note", "to" ],
+        "required" : [ "at", "from", "kind", "note", "to" ],
         "type" : "object"
       },
       "StatusLastRun" : {
@@ -1632,7 +1724,7 @@
     },
     "/api/jobs" : {
       "get" : {
-        "description" : "With no filter the default view applies: status NEW or SHORTLISTED, prefilter PASS, eligibility not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.",
+        "description" : "With no filter the default view applies: status not DISMISSED, prefilter PASS, decision not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.",
         "operationId" : "list",
         "parameters" : [ {
           "in" : "query",
@@ -1646,12 +1738,25 @@
             "type" : "array"
           }
         }, {
+          "description" : "The owner's eligibility decision (ADR-0011)",
           "in" : "query",
-          "name" : "eligibility",
+          "name" : "decision",
           "required" : false,
           "schema" : {
             "items" : {
-              "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+              "enum" : [ "ELIGIBLE", "INELIGIBLE", "UNDECIDED" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "description" : "Eligibility check results; values are OR-ed",
+          "in" : "query",
+          "name" : "checks",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "enum" : [ "ALL_OK", "HAS_UNKNOWN", "HAS_FAIL", "NOT_CHECKED" ],
               "type" : "string"
             },
             "type" : "array"
@@ -1839,6 +1944,45 @@
         "tags" : [ "job-controller" ]
       }
     },
+    "/api/jobs/{id}/eligibility" : {
+      "put" : {
+        "description" : "ELIGIBLE, INELIGIBLE or null (undecided); allowed in every analysis stage. Setting the current value again is a no-op (no history entry).",
+        "operationId" : "setEligibility",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EligibilityDecisionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobSummaryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The owner's eligibility decision (ADR-0011)",
+        "tags" : [ "job-controller" ]
+      }
+    },
     "/api/jobs/{id}/notes" : {
       "put" : {
         "operationId" : "updateNotes",
@@ -1871,7 +2015,7 @@
     },
     "/api/jobs/{id}/score" : {
       "post" : {
-        "description" : "One SCORE call for an analyzed ELIGIBLE or UNCERTAIN job; none when already scored.",
+        "description" : "One SCORE call for an analyzed job the owner has not marked INELIGIBLE (ADR-0011); none when already scored.",
         "operationId" : "score",
         "parameters" : [ {
           "in" : "path",

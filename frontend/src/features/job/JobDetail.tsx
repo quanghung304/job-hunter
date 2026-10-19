@@ -1,7 +1,8 @@
 import { ExternalLink } from 'lucide-react'
 import type { Ref } from 'react'
 import { type JobDetail as JobDetailData, useMeta } from '@/api/queries'
-import { EligibilityTag } from '@/components/EligibilityTag'
+import { ChecksTag } from '@/components/ChecksTag'
+import { DecisionTag } from '@/components/DecisionTag'
 import { FactChip } from '@/components/FactChip'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { StatusActions } from '@/components/StatusActions'
@@ -58,7 +59,11 @@ export function JobDetail({
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <StatusTag status={job.status} />
-            {job.eligibility ? <EligibilityTag eligibility={job.eligibility} /> : null}
+            {job.eligibilityDecision ? (
+              <DecisionTag decision={job.eligibilityDecision} />
+            ) : (
+              <ChecksTag checks={job.checks} />
+            )}
             {job.jobStatus === 'EXPIRED' ? <Tag className="bg-neutral-fill text-muted">Expired</Tag> : null}
             {job.analysisStage === 'FAILED' ? <Tag className="bg-strong text-white">Analysis failed</Tag> : null}
             {job.remoteType ? <FactChip emphasis>{REMOTE_LABELS[job.remoteType]}</FactChip> : null}

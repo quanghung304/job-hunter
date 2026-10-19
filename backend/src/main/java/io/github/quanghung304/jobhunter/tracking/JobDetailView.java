@@ -4,6 +4,7 @@ import io.github.quanghung304.jobhunter.enrich.AssessmentView;
 import io.github.quanghung304.jobhunter.enrich.JobAttributes;
 import io.github.quanghung304.jobhunter.ingest.JobView;
 import io.github.quanghung304.jobhunter.ingest.PostingView;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import java.util.Set;
  * @param attributes         the OK extraction for the current prompt version, null if none
  * @param assessment         the profile's assessment row, null if the job was never prefiltered
  * @param notes              null when empty
+ * @param eligibilityDecidedAt when the owner's current decision was set; null when undecided
  * @param allowedTransitions statuses reachable from {@code summary.status()}
  */
 public record JobDetailView(
@@ -22,6 +24,7 @@ public record JobDetailView(
         AssessmentView assessment,
         List<PostingView> postings,
         String notes,
+        Instant eligibilityDecidedAt,
         List<StatusChange> history,
         Set<TrackingStatus> allowedTransitions) {
 

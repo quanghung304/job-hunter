@@ -16,8 +16,8 @@ public record ScoringResult(long jobId, Outcome outcome, Integer score, String s
         JOB_EXPIRED,
         /** No OK extraction or eligibility yet (api {@code JOB_NOT_ANALYZED}). */
         NOT_ANALYZED,
-        /** Eligibility is INELIGIBLE (api {@code JOB_NOT_ELIGIBLE}). */
-        NOT_ELIGIBLE,
+        /** The owner marked the job Not eligible (api {@code JOB_MARKED_INELIGIBLE}, ADR-0011). */
+        MARKED_INELIGIBLE,
         /** No model may serve SCORE now, incl. a PAID model without consent (api {@code LLM_PAUSED}). */
         LLM_PAUSED,
         /** Budget guard (api {@code BUDGET_REACHED}). */

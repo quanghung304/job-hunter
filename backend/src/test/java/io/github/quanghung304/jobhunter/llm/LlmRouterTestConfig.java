@@ -69,7 +69,7 @@ public class LlmRouterTestConfig {
     }
 
     public static LlmProperties properties(String forceModel, boolean allowPaidCalls) {
-        return new LlmProperties("unused", forceModel, "extract-v1", "score-v1", MAX_CALLS_PER_RUN, MONTHLY_BUDGET,
+        return new LlmProperties("unused", forceModel, "extract-v1", "score-v2", MAX_CALLS_PER_RUN, MONTHLY_BUDGET,
                 allowPaidCalls, Duration.ofSeconds(60), Duration.ofSeconds(180), new LlmProperties.Fake(null));
     }
 
