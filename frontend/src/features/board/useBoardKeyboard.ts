@@ -3,12 +3,16 @@ import { useEffect, useLayoutEffect, useRef } from 'react'
 export interface BoardKeyHandlers {
   next: () => void
   previous: () => void
-  open: () => void
+  open?: () => void
   shortlist: () => void
   dismiss: () => void
   applied: () => void
+  eligible: () => void
+  notEligible: () => void
   posting: () => void
   focusSearch: () => void
+  /** Esc outside a field: back to the grid (split view only). */
+  back?: () => void
 }
 
 function typing(target: EventTarget | null): boolean {
@@ -21,9 +25,9 @@ function dialogOpen(): boolean {
 }
 
 /**
- * Board shortcuts (frontend.md "Behavior › Board"): j/k, Enter, s, d, a, o, /. Ignored while
- * typing in a field, with a modifier key, or while a dialog is open. `Esc` in the search field
- * is handled by the field itself.
+ * Board shortcuts (frontend.md "Behavior › Board"): j/k, Enter, s, d, a, e, n, o, /, Esc. Ignored
+ * while typing in a field, with a modifier key, or while a dialog is open. `Esc` in the search
+ * field is handled by the field itself (it blurs).
  */
 export function useBoardKeyboard(handlers: BoardKeyHandlers, enabled = true) {
   const ref = useRef(handlers)
@@ -37,15 +41,18 @@ export function useBoardKeyboard(handlers: BoardKeyHandlers, enabled = true) {
       if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return
       if (typing(event.target) || dialogOpen()) return
       const h = ref.current
-      const actions: Record<string, () => void> = {
+      const actions: Record<string, (() => void) | undefined> = {
         j: h.next,
         k: h.previous,
         Enter: h.open,
         s: h.shortlist,
         d: h.dismiss,
         a: h.applied,
+        e: h.eligible,
+        n: h.notEligible,
         o: h.posting,
         '/': h.focusSearch,
+        Escape: h.back,
       }
       const action = actions[event.key]
       if (!action) return

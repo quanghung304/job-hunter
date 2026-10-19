@@ -2,6 +2,8 @@ import { ChevronDown } from 'lucide-react'
 import { Popover } from 'radix-ui'
 import type { ReactNode, Ref } from 'react'
 import { Button } from '@/components/ui/button'
+import type { BoardLayout } from './boardLayout'
+import { LayoutToggle } from './LayoutToggle'
 import { ExpiredToggle, MultiCheck, PostedOptions, ScoreRange } from './FilterControls'
 import {
   LIST_FILTER_LABELS,
@@ -14,11 +16,18 @@ import {
 import { SearchField } from './SearchField'
 import type { BoardFilters } from './useBoardFilters'
 
-export type Density = 'comfortable' | 'compact'
-
 /** A filter dropdown button: "Label **value**". */
-function FilterMenu({ label, value, children }: { label: string; value: string; children: ReactNode }) {
-  const active = value !== 'Any' && value !== 'Any time'
+function FilterMenu({
+  label,
+  value,
+  active = value !== 'Any' && value !== 'Any time',
+  children,
+}: {
+  label: string
+  value: string
+  active?: boolean
+  children: ReactNode
+}) {
   return (
     <Popover.Root>
       <Popover.Trigger asChild>
@@ -45,31 +54,37 @@ const LIST_FILTERS: ListFilter[] = ['status', 'analysisStage', 'decision', 'chec
 const LATE_LIST_FILTERS: ListFilter[] = ['source', 'employmentType']
 
 /**
- * Desktop filter bar: search, one dropdown per filter, Reset; right: job count, sort and
- * density (frontend.md "Board").
+ * Desktop filter bar: search, one dropdown per filter (Status, Analysis, Decision, Checks, Score,
+ * Source, Type, Posted), Reset; right: Grid/List toggle and sort (frontend.md "Board grid").
  */
 export function FilterBar({
   filters,
   update,
   reset,
   activeCount,
-  total,
-  density,
-  onDensityChange,
+  layout,
+  onLayoutChange,
   searchRef,
 }: {
   filters: BoardFilters
   update: (patch: Partial<BoardFilters>) => void
   reset: () => void
   activeCount: number
-  total: number | undefined
-  density: Density
-  onDensityChange: (density: Density) => void
+  layout: BoardLayout
+  onLayoutChange: (layout: BoardLayout) => void
   searchRef: Ref<HTMLInputElement>
 }) {
   const options = useFilterOptions()
+  // With no filter at all the default view applies (api-spec `GET /api/jobs`).
+  const defaults: Partial<Record<ListFilter, string>> =
+    activeCount === 0 ? { status: 'All but dismissed', decision: 'Not marked ineligible' } : {}
   const listMenu = (name: ListFilter) => (
-    <FilterMenu key={name} label={LIST_FILTER_LABELS[name]} value={listValueText(filters[name], options[name])}>
+    <FilterMenu
+      key={name}
+      label={LIST_FILTER_LABELS[name]}
+      value={defaults[name] ?? listValueText(filters[name], options[name])}
+      active={filters[name].length > 0}
+    >
       <MultiCheck
         legend={LIST_FILTER_LABELS[name]}
         options={options[name]}
@@ -103,22 +118,13 @@ export function FilterBar({
         </Button>
       ) : null}
       <div className="ml-auto flex items-center gap-2">
-        <span className="num text-[12.5px] text-muted" aria-live="polite">
-          {total === undefined ? '' : `${total} ${total === 1 ? 'job' : 'jobs'}`}
-        </span>
+        <LayoutToggle value={layout} onChange={onLayoutChange} />
         <Button
           variant="secondary"
           onClick={() => update({ sort: filters.sort === 'score' ? 'posted' : 'score' })}
           aria-label={`Sort by ${filters.sort === 'score' ? 'score' : 'posting date'}; change`}
         >
           <span className="text-muted">Sort:</span> {filters.sort === 'score' ? 'Score' : 'Posted'}
-        </Button>
-        <Button
-          variant="quiet"
-          onClick={() => onDensityChange(density === 'comfortable' ? 'compact' : 'comfortable')}
-          aria-pressed={density === 'compact'}
-        >
-          {density === 'comfortable' ? 'Comfortable' : 'Compact'}
         </Button>
       </div>
     </div>

@@ -10,6 +10,33 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-19 — T-026 Frontend: board grid, split view and eligibility decision — DONE (visual check by owner pending)
+- `api/queries.ts`: `PAGE_SIZE` 12; `useJobs(query, page)` (one grid page, keeps the previous page while
+  loading), `useInfiniteJobs(query, seedPages)` (list panel, tops up a shorter cached list to pages 1…page),
+  `useSetDecision()` (optimistic, rollback; no removal, lists only marked stale), `cachedPosition`;
+  `patchLists` handles grid pages and the infinite list; grid pages refetch after a status change (refill),
+  the list panel never refetches on its own. Default view check is now status ≠ DISMISSED.
+- Board: `BoardGrid` (`/`, desktop grid/list + mobile list, `Pagination`, `StatusLegend`, `LayoutToggle` in
+  `localStorage` `board.layout`, keys act on the focused card), `JobCard`, `JobListCard`, `useCardActions`
+  (fade-out then leave), `useBoardFilters` gains 1-based `page`. Density toggle, `JobRow`, `JobList`,
+  `JobDetailPane` removed. Split view: `JobSplitView`, `JobListPanel` (own scroll, Load more appends, selected
+  card scrolled into view once), `JobDetailPanel` (own scroll, sticky header, reset on job change).
+- Job: `JobDetail` in the new order with "Not analyzed yet" card, `EligibilityPanel` (rows not OK on
+  `--attention-row`, decision row + hint), `EligibilityDecision`, `useDecisionChanger` (toast + Undo);
+  `AnalysisActions` only in the detail action row / mobile bar (shared busy state via mutation key).
+- Tags: `StatusTag`, `AnalysisTag` (new), `DecisionTag`, `ChecksTag` with token colors + icons; new tokens in
+  `tokens.css` and the Tailwind theme (+ radii job/panel, card shadows). Keys `e`, `n`, `Esc` added.
+- Deviations (frontend.md updated): card title is a stretched link, not a `<button>`; a dismissed grid card
+  fades (no height collapse); mobile `/` uses the same numbered pages; `o` on the grid needs the job's
+  detail cached; the URL `page` follows the selected job in the split view.
+- Tests: `JobCard`, `Pagination` (+ `pageItems`), `JobListPanel` (append keeps `scrollTop`, no remount),
+  `EligibilityDecision`, tag colors/icons, `BoardPage` (grid 10 + split view 9), `JobDetailPage` (9),
+  `useBoardFilters` incl. page; Vitest `testTimeout` 15 s (page tests run 5–7 s in parallel here).
+  Frontend 196 tests green, lint/typecheck/build clean. Playwright `e2e/board.spec.ts` flows 1, 2, 4
+  written, not run (need a running stack with jobs).
+- Open: owner to compare with the mockups at 1440 and 390 px; bundle 522 kB (lazy-load admin later).
+- Next: T-021 (admin page).
+
 ## 2026-10-19 — T-025 Eligibility checks and owner decision — backend — DONE
 - V8: `job_assessment.eligibility_checks jsonb` replaces `eligibility`/`eligibility_reasons`;
   `job_tracking.eligibility_decision` + `eligibility_decided_at`; `job_tracking_event.kind` with a

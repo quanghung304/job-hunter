@@ -33,8 +33,8 @@ describe('JobDetailPage', () => {
     const labels = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
     expect(labels).toEqual([
       'Why it fits',
-      'Score breakdown',
       'Eligibility',
+      'Score breakdown',
       'Extracted facts',
       'Description',
       'Notes',
@@ -47,12 +47,41 @@ describe('JobDetailPage', () => {
     expect(screen.getByLabelText('Skills 32 of 40')).toHaveTextContent('32/40')
     const eligibility = within(screen.getByRole('heading', { name: 'Eligibility' }).closest('section') as HTMLElement)
     expect(eligibility.getByText('Time zone').closest('div')).toHaveTextContent('Unclear')
+    expect(eligibility.getByText('Time zone').closest('div')).toHaveClass('bg-attention-row')
     expect(eligibility.getByText('Work mode').closest('div')).toHaveTextContent('OK')
+    expect(eligibility.getByText('Work mode').closest('div')).not.toHaveClass('bg-attention-row')
+    expect(eligibility.getByText('9 OK · 1 unclear · 0 fail', { exact: false })).toBeInTheDocument()
+    expect(eligibility.getByText('Review the highlighted criteria, then decide.')).toBeInTheDocument()
     expect(screen.getByText('Backend role.')).toBeInTheDocument()
     expect(screen.getAllByText('Check 1 criterion').length).toBeGreaterThan(0)
     expect(
       eligibility.getByText('The app checks each criterion. The overall decision is yours.', { exact: false }),
     ).toBeInTheDocument()
+  })
+
+  it('before analysis: no score cards, a "Not analyzed yet" card, and the decision can be set already', async () => {
+    const user = userEvent.setup()
+    const api = mockJobsApi([
+      summary(1, { score: null, scoreBand: 'NONE', summary: null, checks: null, analysisStage: 'NOT_ANALYZED' }),
+    ])
+    renderPage(1)
+    await screen.findByRole('heading', { name: 'Java Developer 1', level: 1 })
+
+    const labels = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    expect(labels).toEqual(['Eligibility', 'Description', 'Notes', 'History'])
+    expect(screen.getByText('Not analyzed yet')).toBeInTheDocument()
+    expect(within(screen.getByRole('article')).getByText('Not analyzed')).toBeInTheDocument()
+    expect(
+      screen.getByText('Criteria appear after analysis. You can still decide now from the description.'),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /^Eligible/ }))
+
+    await waitFor(() => expect(api.jobs[0].eligibilityDecision).toBe('ELIGIBLE'))
+    expect(screen.getByRole('button', { name: /^Eligible/ })).toHaveAttribute('aria-pressed', 'true')
+    expect(await screen.findByText(/^Set by you/)).toBeInTheDocument()
+    expect(within(screen.getByRole('article')).getAllByText('Eligible').length).toBeGreaterThan(0)
+    expect(llmRequests(api)).toEqual([])
   })
 
   it('links to the original posting in a new tab', async () => {

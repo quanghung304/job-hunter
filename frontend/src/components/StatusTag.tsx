@@ -1,21 +1,27 @@
+import { CircleDot, EyeOff, MessageSquare, Send, Star, Trophy, Undo2, X, type LucideIcon } from 'lucide-react'
 import { STATUS_LABELS, type TrackingStatus } from '@/lib/labels'
 import { Tag } from './Tag'
 
-const STYLES: Record<TrackingStatus, string> = {
-  NEW: 'bg-line-faint text-strong',
-  SHORTLISTED: 'bg-accent-tint text-accent-deep',
-  APPLIED: 'bg-accent-tint text-accent-deep',
-  INTERVIEWING: 'bg-accent text-white',
-  OFFER: 'bg-accent text-white',
-  REJECTED: 'bg-neutral-fill text-muted',
-  WITHDRAWN: 'bg-neutral-fill text-muted',
-  DISMISSED: 'bg-neutral-fill text-muted',
+const STYLES: Record<TrackingStatus, { className: string; icon: LucideIcon }> = {
+  NEW: { className: 'bg-line-faint text-strong', icon: CircleDot },
+  SHORTLISTED: { className: 'bg-st-shortlisted-bg text-st-shortlisted-fg', icon: Star },
+  APPLIED: { className: 'bg-st-applied-bg text-st-applied-fg', icon: Send },
+  INTERVIEWING: { className: 'bg-st-interviewing-bg text-st-interviewing-fg', icon: MessageSquare },
+  OFFER: { className: 'bg-st-offer-bg text-white', icon: Trophy },
+  REJECTED: { className: 'bg-strong text-white', icon: X },
+  WITHDRAWN: { className: 'bg-st-withdrawn-bg text-st-withdrawn-fg', icon: Undo2 },
+  DISMISSED: { className: 'bg-st-withdrawn-bg text-st-withdrawn-fg', icon: EyeOff },
 }
 
-/** Rows render it only when status ≠ NEW (`hideNew`). */
+/** Tracking status: own hue per status, icon + word. Cards render it only when status ≠ NEW (`hideNew`). */
 export function StatusTag({ status, hideNew = false }: { status: TrackingStatus; hideNew?: boolean }) {
   if (hideNew && status === 'NEW') {
     return null
   }
-  return <Tag className={STYLES[status]}>{STATUS_LABELS[status]}</Tag>
+  const { className, icon } = STYLES[status]
+  return (
+    <Tag className={`rounded-badge font-semibold ${className}`} icon={icon}>
+      {STATUS_LABELS[status]}
+    </Tag>
+  )
 }

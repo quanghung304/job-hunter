@@ -3,8 +3,8 @@ import { scoreBand, scoreBandClasses } from '@/lib/scoreBand'
 
 interface ScoreBadgeProps {
   score: number | null | undefined
-  /** sm 40×32 in rows; lg 72×72 (60×60 on mobile) with the band word in the detail header. */
-  size?: 'sm' | 'lg'
+  /** card 44×34 on grid/list cards; sm 40×32 in the list panel; lg 68×68 (60×60 on mobile) with the band word. */
+  size?: 'card' | 'sm' | 'lg'
   className?: string
 }
 
@@ -20,7 +20,7 @@ export function ScoreBadge({ score, size = 'sm', className }: ScoreBadgeProps) {
         role="img"
         aria-label={label}
         className={cn(
-          'num flex size-[60px] shrink-0 flex-col items-center justify-center rounded-badge lg:size-[72px]',
+          'num flex size-[60px] shrink-0 flex-col items-center justify-center rounded-badge lg:size-[68px]',
           scoreBandClasses[band],
           className,
         )}
@@ -40,7 +40,8 @@ export function ScoreBadge({ score, size = 'sm', className }: ScoreBadgeProps) {
       role="img"
       aria-label={label}
       className={cn(
-        'num inline-flex h-8 w-10 shrink-0 items-center justify-center rounded-badge text-[15px] font-semibold',
+        'num inline-flex shrink-0 items-center justify-center rounded-badge text-[15px] font-semibold',
+        size === 'card' ? 'h-[34px] w-11' : 'h-8 w-10',
         scoreBandClasses[band],
         className,
       )}

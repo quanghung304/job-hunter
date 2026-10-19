@@ -1,12 +1,15 @@
 import {
   type InfiniteData,
+  keepPreviousData,
   type QueryClient,
+  type QueryKey,
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import type { TrackingStatus } from '@/lib/labels'
+import { useEffect } from 'react'
+import type { Decision, TrackingStatus } from '@/lib/labels'
 import { allowedTargets } from '@/lib/statusMachine'
 import { api, unwrap } from './client'
 import type { components, paths } from './schema'
@@ -21,15 +24,23 @@ export type LlmAlert = components['schemas']['LlmAlertResponse']
 /** Filters and sort of `GET /api/jobs` without paging; omitted values mean "no filter". */
 export type JobsQuery = Omit<NonNullable<paths['/api/jobs']['get']['parameters']['query']>, 'page' | 'size'>
 
-export const PAGE_SIZE = 25
+/** One grid page, and each "Load more" step of the job list panel (api-spec "Pagination"). */
+export const PAGE_SIZE = 12
 
 /** Query keys are arrays starting with the resource (conventions.md). */
 export const queryKeys = {
   meta: ['meta'] as const,
   status: ['status'] as const,
   jobsAll: ['jobs'] as const,
-  jobs: (query: JobsQuery) => ['jobs', query] as const,
+  /** One grid page; `page` is 1-based like the URL. */
+  jobsGrid: (query: JobsQuery, page: number) => ['jobs', query, 'grid', page] as const,
+  /** The appendable job list of the split view. */
+  jobsList: (query: JobsQuery) => ['jobs', query, 'list'] as const,
   job: (id: number) => ['job', id] as const,
+}
+
+function isGridKey(key: QueryKey): boolean {
+  return key[0] === 'jobs' && key[2] === 'grid'
 }
 
 /** Filter values and the current profile (GET /api/meta). Rarely changes. */
@@ -56,15 +67,36 @@ export function usePausedPurpose(purpose: 'EXTRACT' | 'SCORE'): LlmAlert | undef
   return status.data?.llmAlerts.find((alert) => alert.purpose === purpose && alert.paused)
 }
 
-/** The board: pages of 25 with "Load more". */
-export function useJobs(query: JobsQuery) {
-  return useInfiniteQuery({
-    queryKey: queryKeys.jobs(query),
-    queryFn: ({ pageParam }) =>
-      unwrap(api.GET('/api/jobs', { params: { query: { ...query, page: pageParam, size: PAGE_SIZE } } })),
+function fetchJobs(query: JobsQuery, page: number): Promise<JobPage> {
+  return unwrap(api.GET('/api/jobs', { params: { query: { ...query, page, size: PAGE_SIZE } } }))
+}
+
+/** The board grid: one page of 12; `page` is 1-based. The previous page stays shown while the next loads. */
+export function useJobs(query: JobsQuery, page: number) {
+  return useQuery({
+    queryKey: queryKeys.jobsGrid(query, page),
+    queryFn: () => fetchJobs(query, page - 1),
+    placeholderData: keepPreviousData,
+  })
+}
+
+/**
+ * The job list panel: pages of 12 that "Load more" appends. Seeded with pages 1…`seedPages`
+ * (the grid page the job was opened from), also when a shorter list is still cached.
+ */
+export function useInfiniteJobs(query: JobsQuery, seedPages = 1) {
+  const result = useInfiniteQuery({
+    queryKey: queryKeys.jobsList(query),
+    queryFn: ({ pageParam }) => fetchJobs(query, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last: JobPage) => (last.page + 1 < last.totalPages ? last.page + 1 : undefined),
   })
+  const { data, hasNextPage, isFetching, fetchNextPage } = result
+  const loaded = data?.pages.length ?? 0
+  useEffect(() => {
+    if (loaded > 0 && loaded < seedPages && hasNextPage && !isFetching) void fetchNextPage()
+  }, [loaded, seedPages, hasNextPage, isFetching, fetchNextPage])
+  return result
 }
 
 export function useJob(id: number | null) {
@@ -75,19 +107,27 @@ export function useJob(id: number | null) {
   })
 }
 
-type JobsData = InfiniteData<JobPage, number>
+/** A cached board query: one grid page or the appendable list. */
+type JobsData = JobPage | InfiniteData<JobPage, number>
+
+function pagesOf(data: JobsData): JobPage[] {
+  return 'pages' in data ? data.pages : [data]
+}
 
 function isDefaultQuery(query: JobsQuery): boolean {
   return Object.entries(query).every(([key, value]) => key === 'sort' || value === undefined)
 }
 
-/** Whether a job with this status stays in a list loaded with this query (default view: NEW, SHORTLISTED). */
+/**
+ * Whether a job with this status stays in a list loaded with this query (default view: status ≠
+ * DISMISSED). A decision change never removes a card at once (frontend.md "Behavior › Board").
+ */
 export function statusVisibleIn(query: JobsQuery, status: TrackingStatus): boolean {
-  if (isDefaultQuery(query)) return status === 'NEW' || status === 'SHORTLISTED'
+  if (isDefaultQuery(query)) return status !== 'DISMISSED'
   return query.status === undefined || query.status.includes(status)
 }
 
-/** Applies `patch` to the job in every cached board list; `remove` drops it from lists it no longer belongs to. */
+/** Applies `patch` to the job in every cached board query; `remove` drops it from those it no longer belongs to. */
 function patchLists(
   client: QueryClient,
   id: number,
@@ -98,7 +138,7 @@ function patchLists(
     if (!data) continue
     const query = key[1] as JobsQuery
     let removed = 0
-    const pages = data.pages.map((page) => {
+    const pages = pagesOf(data).map((page) => {
       if (!page.items.some((job) => job.id === id)) return page
       const items: JobSummary[] = []
       for (const job of page.items) {
@@ -115,10 +155,11 @@ function patchLists(
       }
       return { ...page, items }
     })
-    client.setQueryData<JobsData>(key, {
-      ...data,
-      pages: removed ? pages.map((page) => ({ ...page, totalItems: Math.max(0, page.totalItems - removed) })) : pages,
-    })
+    const counted = removed
+      ? pages.map((page) => ({ ...page, totalItems: Math.max(0, page.totalItems - removed) }))
+      : pages
+    const next: JobsData = 'pages' in data ? { ...data, pages: counted } : (counted[0] as JobPage)
+    client.setQueryData<JobsData>(key, next)
   }
 }
 
@@ -148,7 +189,8 @@ export interface StatusChange {
 
 /**
  * Tracking status change, optimistic on the list and detail caches; rolled back on error (the
- * caller shows the toast). Lists are marked stale but not refetched, so the keyboard flow stays put.
+ * caller shows the toast). Grid pages refetch afterwards so a dismissed card's place refills; the
+ * list panel is only marked stale, so its scroll position and the keyboard flow stay put.
  */
 export function useChangeStatus() {
   const client = useQueryClient()
@@ -183,11 +225,54 @@ export function useChangeStatus() {
       patchLists(client, id, (job) => ({ ...job, ...summary }))
       // A job back in a list it had left (Undo of a dismiss): reload that list to show it again.
       for (const [key, data] of client.getQueriesData<JobsData>({ queryKey: queryKeys.jobsAll })) {
-        const present = data?.pages.some((page) => page.items.some((job) => job.id === id)) ?? false
-        if (!present && statusVisibleIn(key[1] as JobsQuery, summary.status)) {
+        const present = data ? pagesOf(data).some((page) => page.items.some((job) => job.id === id)) : false
+        if (!present && !isGridKey(key) && statusVisibleIn(key[1] as JobsQuery, summary.status)) {
           void client.invalidateQueries({ queryKey: key, exact: true })
         }
       }
+      void client.invalidateQueries({ queryKey: queryKeys.job(id) })
+      void client.invalidateQueries({ predicate: (query) => isGridKey(query.queryKey) })
+      void client.invalidateQueries({ queryKey: queryKeys.jobsAll, refetchType: 'none' })
+    },
+  })
+}
+
+export interface DecisionChange {
+  id: number
+  to: Decision | null
+}
+
+/**
+ * The owner's eligibility decision (ADR-0011), optimistic on the list and detail caches; rolled
+ * back on error (the caller shows the toast). A job marked Not eligible keeps its card until the
+ * next refetch, so nothing is removed here and lists are only marked stale.
+ */
+export function useSetDecision() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, to }: DecisionChange) =>
+      unwrap(api.PUT('/api/jobs/{id}/eligibility', { params: { path: { id } }, body: { decision: to } })),
+    onMutate: async ({ id, to }) => {
+      await client.cancelQueries({ queryKey: queryKeys.jobsAll })
+      await client.cancelQueries({ queryKey: queryKeys.job(id) })
+      const lists = client.getQueriesData<JobsData>({ queryKey: queryKeys.jobsAll })
+      const detail = client.getQueryData<JobDetail>(queryKeys.job(id))
+      patchLists(client, id, (job) => ({ ...job, eligibilityDecision: to }))
+      if (detail) {
+        client.setQueryData<JobDetail>(queryKeys.job(id), {
+          ...detail,
+          eligibilityDecision: to,
+          eligibilityDecidedAt: to === null ? null : new Date().toISOString(),
+        })
+      }
+      return { lists, detail }
+    },
+    onError: (_error, { id }, context) => {
+      context?.lists.forEach(([key, data]) => client.setQueryData(key, data))
+      if (context?.detail) client.setQueryData(queryKeys.job(id), context.detail)
+    },
+    onSuccess: (summary, { id }) => {
+      patchLists(client, id, (job) => ({ ...job, ...summary }))
       void client.invalidateQueries({ queryKey: queryKeys.job(id) })
       void client.invalidateQueries({ queryKey: queryKeys.jobsAll, refetchType: 'none' })
     },
@@ -206,11 +291,15 @@ export function useUpdateNotes(id: number) {
   })
 }
 
-/** The owner's Analyze or Score on one job (ADR-0010): one request, the answer updates list and detail. */
-export function useAnalysisAction(action: 'analyze' | 'score') {
+/**
+ * The owner's Analyze or Score on one job (ADR-0010): one request, the answer updates list and
+ * detail. The mutation key lets every button of the job show the running request.
+ */
+export function useAnalysisAction(action: 'analyze' | 'score', id: number) {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) =>
+    mutationKey: [action, id],
+    mutationFn: () =>
       unwrap(
         action === 'analyze'
           ? api.POST('/api/jobs/{id}/analyze', { params: { path: { id } } })
@@ -224,12 +313,15 @@ export function useAnalysisAction(action: 'analyze' | 'score') {
   })
 }
 
-/** Jobs of a cached board list (mobile "Job N of M"); undefined when the list is not cached. */
-export function cachedJobIds(client: QueryClient, query: JobsQuery): { ids: number[]; total: number } | undefined {
-  const data = client.getQueryData<JobsData>(queryKeys.jobs(query))
-  if (!data) return undefined
-  return {
-    ids: data.pages.flatMap((page) => page.items.map((job) => job.id)),
-    total: data.pages[data.pages.length - 1]?.totalItems ?? 0,
-  }
+/** Position of a job in the cached grid page it was opened from (mobile "Job N of M"); undefined when not cached. */
+export function cachedPosition(
+  client: QueryClient,
+  query: JobsQuery,
+  page: number,
+  id: number,
+): { position: number; total: number } | undefined {
+  const data = client.getQueryData<JobPage>(queryKeys.jobsGrid(query, page))
+  const index = data?.items.findIndex((job) => job.id === id) ?? -1
+  if (!data || index < 0) return undefined
+  return { position: (page - 1) * PAGE_SIZE + index + 1, total: data.totalItems }
 }

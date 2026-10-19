@@ -45,6 +45,13 @@ export const DECISION_LABELS: Record<Decision, string> = {
   INELIGIBLE: 'Not eligible',
 }
 
+/** Toast text after a decision change (frontend.md "Behavior › Board"). */
+export function decisionChangedText(to: Decision | null): string {
+  if (to === 'ELIGIBLE') return 'Marked eligible'
+  if (to === 'INELIGIBLE') return 'Marked not eligible'
+  return 'Decision cleared'
+}
+
 /** Values of the board's decision filter. */
 export type DecisionFilter = Decision | 'UNDECIDED'
 

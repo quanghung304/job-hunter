@@ -21,5 +21,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
+    // Page tests render up to 40 cards and click through several requests; 5 s is tight in parallel runs.
+    testTimeout: 15_000,
   },
 })

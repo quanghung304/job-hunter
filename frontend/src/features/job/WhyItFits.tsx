@@ -40,23 +40,10 @@ function Points({
 }
 
 /**
- * Card "Why it fits": the LLM summary and advice (in the profile's language), then strengths,
- * gaps and red flags. Before scoring it says what to do next.
+ * Card "Why it fits" (scored jobs only): the LLM summary and advice (in the profile's language),
+ * then strengths, gaps and red flags.
  */
 export function WhyItFits({ job, language }: { job: JobDetail; language: string | undefined }) {
-  if (job.score === null) {
-    return (
-      <SectionCard label="Why it fits">
-        <p className="m-0 text-[13.5px] text-muted">
-          {job.analysisStage === 'NOT_ANALYZED'
-            ? 'Not analyzed yet. Analyze reads the posting (one LLM call), then Score rates the fit.'
-            : job.eligibilityDecision === 'INELIGIBLE'
-              ? 'You marked it Not eligible, so it is not scored.'
-              : 'Not scored yet. Score rates the fit with one LLM call.'}
-        </p>
-      </SectionCard>
-    )
-  }
   return (
     <SectionCard label="Why it fits">
       {job.summary ? (

@@ -6,9 +6,11 @@ import {
   activeFilterCount,
   DEFAULT_FILTERS,
   parseFilters,
+  parsePage,
   toApiQuery,
   toSearchParams,
   useBoardFilters,
+  viewSearch,
 } from './useBoardFilters'
 
 describe('parseFilters / toSearchParams', () => {
@@ -92,6 +94,28 @@ describe('parseFilters / toSearchParams', () => {
   })
 })
 
+describe('page', () => {
+  it('is 1-based and 1 when missing or invalid', () => {
+    expect(parsePage(new URLSearchParams())).toBe(1)
+    expect(parsePage(new URLSearchParams('page=3'))).toBe(3)
+    expect(parsePage(new URLSearchParams('page=0'))).toBe(1)
+    expect(parsePage(new URLSearchParams('page=-2'))).toBe(1)
+    expect(parsePage(new URLSearchParams('page=two'))).toBe(1)
+  })
+
+  it('is written after the filters and left out on page 1', () => {
+    expect(viewSearch({ ...DEFAULT_FILTERS, status: ['NEW'] }, 3)).toBe('status=NEW&page=3')
+    expect(viewSearch(DEFAULT_FILTERS, 1)).toBe('')
+  })
+
+  it('is neither a filter nor part of the API query', () => {
+    const params = new URLSearchParams('page=4&sort=posted')
+
+    expect(activeFilterCount(parseFilters(params))).toBe(0)
+    expect(toApiQuery(parseFilters(params))).not.toHaveProperty('page')
+  })
+})
+
 describe('useBoardFilters', () => {
   function setup(route: string) {
     const location = { current: '' }
@@ -118,8 +142,23 @@ describe('useBoardFilters', () => {
     expect(hook.result.current.filters.minScore).toBe(70)
   })
 
+  it('reads and sets the page; a filter change goes back to page 1', () => {
+    const { hook, location } = setup('/?status=NEW&page=2')
+
+    expect(hook.result.current.page).toBe(2)
+    expect(hook.result.current.searchWithPage(5)).toBe('status=NEW&page=5')
+
+    act(() => hook.result.current.setPage(3))
+    expect(location.current).toBe('/?status=NEW&page=3')
+    expect(hook.result.current.page).toBe(3)
+
+    act(() => hook.result.current.update({ q: 'java' }))
+    expect(location.current).toBe('/?status=NEW&q=java')
+    expect(hook.result.current.page).toBe(1)
+  })
+
   it('reset returns to the default view and keeps the sort', () => {
-    const { hook, location } = setup('/?status=APPLIED&q=java&sort=posted')
+    const { hook, location } = setup('/?status=APPLIED&q=java&sort=posted&page=4')
 
     act(() => hook.result.current.reset())
 

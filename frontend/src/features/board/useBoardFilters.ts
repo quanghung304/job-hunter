@@ -131,10 +131,26 @@ export function toApiQuery(filters: BoardFilters): JobsQuery {
   }
 }
 
-/** Board filters bound to the URL. Updates replace the history entry (no back-button spam). */
+/** The 1-based grid page from the URL (`page`); 1 when missing or invalid. */
+export function parsePage(params: URLSearchParams): number {
+  return int(params, 'page', 1, 100_000) ?? 1
+}
+
+/** Search params of a view: filters plus the page (left out on page 1). */
+export function viewSearch(filters: BoardFilters, page: number): string {
+  const params = toSearchParams(filters)
+  if (page > 1) params.set('page', String(page))
+  return params.toString()
+}
+
+/**
+ * Board filters and grid page bound to the URL (bookmarkable). Updates replace the history entry
+ * (no back-button spam); any filter change goes back to page 1. Page changes are history entries.
+ */
 export function useBoardFilters() {
   const [params, setParams] = useSearchParams()
   const filters = useMemo(() => parseFilters(params), [params])
+  const page = parsePage(params)
 
   const update = useCallback(
     (patch: Partial<BoardFilters>) => {
@@ -145,6 +161,23 @@ export function useBoardFilters() {
   const reset = useCallback(() => {
     setParams((current) => toSearchParams({ ...DEFAULT_FILTERS, sort: parseFilters(current).sort }), { replace: true })
   }, [setParams])
+  const setPage = useCallback(
+    (next: number, replace = false) => {
+      // A new history entry unless replacing: Back returns to the previous page.
+      setParams((current) => new URLSearchParams(viewSearch(parseFilters(current), next)), { replace })
+    },
+    [setParams],
+  )
 
-  return { filters, update, reset, activeCount: activeFilterCount(filters), search: params.toString() }
+  return {
+    filters,
+    update,
+    reset,
+    page,
+    setPage,
+    activeCount: activeFilterCount(filters),
+    search: params.toString(),
+    /** Search params with another page, for links that keep the filters. */
+    searchWithPage: (next: number) => viewSearch(filters, next),
+  }
 }

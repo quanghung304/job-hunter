@@ -12,7 +12,7 @@ and deciding. The "Job detail · mobile" artboard predates the eligibility decis
 follow this file.
 
 The board grid, split view, new tokens and decision control (owner decisions 2026-10-19,
-ADR-0011) are built in T-026; T-020 shipped the earlier list + pane board. The Profile page
+ADR-0011) were built in T-026, replacing the list + pane board of T-020. The Profile page
 (ADR-0012) is T-028.
 
 ## Stack
@@ -41,11 +41,13 @@ frontend/
     components/     ScoreBadge, StatusTag, AnalysisTag, DecisionTag, ChecksTag, RuleResultTag, FactChip,
                     StatusActions, SourceLinks, SectionCard, SectionLabel, EmptyState, ErrorState,
                     ListSkeleton, AppHeader, Kbd
-    features/board/ BoardPage, FilterBar, StatusLegend, LayoutToggle, BoardGrid, JobCard, JobListCard,
-                    Pagination, useBoardFilters, useBoardKeyboard
+    features/board/ BoardPage (route switch), BoardGrid (`/`), FilterBar, MobileFilters, SearchField,
+                    StatusLegend, LayoutToggle, JobCard, JobListCard, Pagination, useBoardFilters,
+                    useBoardKeyboard, useCardActions, boardLayout, pageItems
     features/job/   JobSplitView, JobListPanel, JobDetailPanel, JobDetail (shared by panel and mobile
-                    page), WhyItFits, ScoreBreakdown, EligibilityPanel, EligibilityDecision, FactsPanel,
-                    DescriptionPanel, NotesEditor, HistoryList, MobileActionBar, AnalysisActions
+                    page), JobDetailPage (mobile), WhyItFits, ScoreBreakdown, EligibilityPanel,
+                    EligibilityDecision, FactsPanel, DescriptionPanel, NotesEditor, HistoryList,
+                    MobileActionBar, AnalysisActions, useStatusChanger, useDecisionChanger
     features/profile/ ProfilePage, ProfileForm, ChipsInput, ToggleChips, useProfileForm
     features/admin/ AdminPage, KpiRow, SourcesTable, LlmUsageCard, RunsList, FailuresList,
                     CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard, BulkActionTable, BulkActionDialog
@@ -159,7 +161,8 @@ and a `title` that includes the shortcut, e.g. `title="Shortlist (s)"`.
 
 ### Motion
 
-Minimal: a dismissed card collapses (height + opacity, 150ms ease-out); toast fades in;
+Minimal: a dismissed card fades out (opacity, 150ms ease-out; no height collapse, which would
+reflow the grid) before it leaves; toast fades in;
 card hover lifts 3px (selected 2px) with a 150ms ease on transform, box-shadow, border-color and
 background-color; no page transitions, no decorative animation. No lift and no transition with
 `prefers-reduced-motion`. Respect `prefers-reduced-motion` (no
@@ -171,7 +174,7 @@ transitions at all).
 |---|---|
 | `ScoreBadge` | Mono number in a box. Sizes: `sm` 44×34 on grid/list cards, 40×32 in the list panel, `lg` 68×68 with band word below in 10.5px letter-spaced caps (detail header; mobile 60×60). Band styles from `lib/scoreBand.ts`: EXCELLENT ≥ 85 = `--accent` bg + white; GOOD 70–84 = `--accent-tint` + `--accent-deep`; MAYBE 50–69 = `--maybe-bg` + `--ink-2`; WEAK < 50 = transparent + 1px inset `--control-border` + `--muted`; NONE (not scored, also when analyzed) = "—" with 1px inset `--line` and a `title` ("Not analyzed" / "Extracted, not scored"). |
 | `StatusTag` | 12px/600, radius 4px, 12px icon before the word: Shortlisted (star), Applied (send), Interviewing (message), Offer (trophy), Rejected (x), Withdrawn (undo); colors from the token table (`--st-*`; Rejected `--strong` / white; Dismissed like Withdrawn). New = `--line-faint` / `--strong`, shown only in the detail header. Cards show it only when status ≠ NEW. |
-| `AnalysisTag` | "Extracted" (`--extracted-*`, file icon) on cards and detail when analyzed and not scored; "Not analyzed" (transparent, 1px inset `--control-border`, `--muted`, clock icon) only in the detail header. Scored jobs show only the ScoreBadge. |
+| `AnalysisTag` | "Extracted" (`--extracted-*`, file icon) on cards and detail when analyzed and not scored; "Not analyzed" (transparent, 1px inset `--control-border`, `--muted`, clock icon) only in the detail header; "Analysis failed" (`--strong` / white, alert icon) for `FAILED`. Scored jobs show only the ScoreBadge. |
 | `DecisionTag` | "Eligible" (`--eligible-*`, circle-check icon) / "Not eligible" (`--ineligible-*`, ban icon). |
 | `ChecksTag` | "Check N criteria" / "Check 1 criterion" (`--attention-*`, warning icon) when the decision is undecided and some checks are UNKNOWN or FAIL. Hidden once the owner decides. |
 | `RuleResultTag` | OK = `--accent-tint` / `--accent-deep`; Unclear = `--attention-*`; Fail = `--strong` / white; 12px / 600. |
@@ -225,7 +228,8 @@ Cancel (secondary), Save (primary).
   "Label **value**": Status (default "All but dismissed"), Analysis, Decision (default "Not marked
   ineligible"), Checks, Score, Source, Type, Posted; "Reset" as an underlined text button; right
   side: `LayoutToggle` (Grid | List icon buttons with `aria-pressed`, stored in `localStorage`
-  `board.layout`, try/catch, default Grid) and "Sort: Score".
+  `board.layout`, try/catch, default Grid) and "Sort: Score". The job count is not in the bar;
+  `Pagination` shows it.
 - Content: max-width 1320px, centered, padding 20px 24px 32px, gap 16px.
 - `StatusLegend`: one row of all status, analysis and decision tags (12.5px "Legend" label).
 - Grid: `repeat(3, minmax(0,1fr))` ≥ 1100px, 2 columns 700–1099px, 1 column below; gap 16px.
@@ -235,14 +239,17 @@ Cancel (secondary), Save (primary).
   at the ends). `page` is a 1-based URL param.
 - `JobCard`: `--surface`, 1px `--card-border`, radius 10px, padding 16px 14px 12px 16px,
   min-height 216px, column gap 10px. Row 1: ScoreBadge sm, spacer, StatusTag. Title h3
-  15px/600, 2-line clamp, min-height 2.7em, rendered as a `<button>` whose `::after` covers the
-  whole card (one click target; icon buttons sit above it with `position: relative; z-index: 1`).
+  15px/600, 2-line clamp, min-height 2.7em, rendered as a link (`<a href="/jobs/:id?…">`, so it
+  can open in a new tab; "links are `<a href>`") whose `::after` covers the whole card (one click
+  target; icon buttons sit above it with `position: relative; z-index: 1`).
   "company · via sources" 13px `--muted`, one line. FactChips. Footer (top border
   `--line-faint`, pushed to the bottom): AnalysisTag / DecisionTag / ChecksTag, spacer, posted
   time (mono 12px), star and dismiss icon buttons 32×32. Hover: lift, hover shadow,
   `--card-border-hover`, `--surface-hover`. Focus within: border `--accent`. Cards do not show
   analysis buttons (those live in the detail action row and the mobile action bar).
 - Clicking a card navigates to `/jobs/:id` keeping the search params (incl. `page`).
+- A `page` past the end (e.g. after the last card of the last page was dismissed) shows the last
+  page.
 
 ### `/jobs/:id` — split view (desktop ≥ 1024px)
 - The page does not scroll: app root `height: 100dvh`, header on top, below it a flex row
@@ -256,8 +263,9 @@ Cancel (secondary), Save (primary).
   fetches the next page and **appends** it; the scroll position must not change (stable keys by
   job id, no scroll-to-bottom, no remount). "All N jobs loaded" when finished. On entry the list
   contains every page up to the grid page the job came from, and the selected card is scrolled
-  into view (`block: 'nearest'`). Footer (mono 11.5px): `j/k move · s shortlist · d dismiss ·
-  e eligible · n not eligible · Esc back`.
+  into view (`block: 'nearest'`). The URL's `page` follows the selected job (the grid page that
+  contains it), so "All jobs", `Esc` and a reload land on the right page. Footer (mono 11.5px):
+  `j/k move · s shortlist · d dismiss · e eligible · n not eligible · Esc back`.
 - `JobListCard`: like JobCard, horizontal: ScoreBadge 40×32 · title (14px/600, 2-line clamp,
   stretched button) · "company · posted" · tags row (StatusTag, AnalysisTag/DecisionTag/
   ChecksTag) · star button. Radius 8px, padding 12px 8px 12px 12px. Selected:
@@ -274,7 +282,8 @@ Cancel (secondary), Save (primary).
 2. Action row: StatusActions from `allowedTransitions` (primary first, then secondary, then quiet
    Dismiss), AnalysisActions (secondary), spacer, "Open posting ↗" (secondary link, new tab),
    "Apply" (ink link, new tab, goes to `applyUrl`).
-3. "Not analyzed yet" dashed card with an Analyze button (NOT_ANALYZED only).
+3. "Not analyzed yet" dashed card with an Analyze button (NOT_ANALYZED only; on mobile the
+   button is in the action bar instead). Both Analyze buttons of a job share the running state.
 4. Card "Why it fits" (scored only): summary (16px), "Khi apply:"-style advice line labelled with
    the localized word for the profile language (vi: "Khi apply:", en: "If applying:"), then a
    3-column auto-fit grid: Strengths (check icon `--accent`), Gaps (minus icon `--muted`),
@@ -314,7 +323,8 @@ only (not on cards).
 - These buttons are secondary, so the one-primary-per-view rule is unchanged.
 
 ### Mobile (< 1024px)
-- `/` = one column of `JobListCard`s (radius 10px, page padding 12px, gap 10px) with tags; the mono
+- `/` = one column of `JobListCard`s (radius 10px, page padding 12px, gap 10px) with tags, star
+  and dismiss, and the same numbered `Pagination` (44px targets); the mono
   count and the search icon button (opens a full-width search field) sit at the start of the filter
   row, under the shared app header. Header 56px: logo, page name, menu icon button (links Board /
   Profile / Admin). Filter bar becomes a
@@ -322,7 +332,7 @@ only (not on cards).
   filters) followed by pills of the active filter values.
 - Cards: title clamped to 2 lines, icon buttons 44×44. Tapping a card navigates to `/jobs/:id`.
 - `/jobs/:id` = full page: top bar with back chevron (returns to `/` with filters kept),
-  "Job N of M", "Posting ↗"; then `JobDetail` with cards stacked (padding 16px; the Eligibility
+  "Job N of M" (from the cached grid page), "Posting ↗"; then `JobDetail` with cards stacked (padding 16px; the Eligibility
   card contains `EligibilityDecision`), and a fixed
   **bottom action bar** (white, top border, shadow): Dismiss icon button 48×48, secondary
   action (the analysis action when it applies, see AnalysisActions), primary action (flex 1 each),
@@ -412,9 +422,11 @@ only (not on cards).
   cleared"). A job marked Not eligible keeps its card until the next refetch, then leaves the
   default view.
 - Keyboard (`useBoardKeyboard`, ignored while focus is in an input/textarea/select or a dialog
-  is open): `j`/`k` next/previous card, `Enter` on a focused card opens it, `s` shortlist toggle,
+  is open; on the grid the keys act on the focused card, in the split view on the selected job):
+  `j`/`k` next/previous card, `Enter` on a focused card opens it, `s` shortlist toggle,
   `d` dismiss, `a` mark applied, `e` mark eligible (pressing it again clears), `n` mark not
-  eligible (again clears), `o` open original posting, `/` focus search, `Esc` blur search if
+  eligible (again clears), `o` open original posting (on the grid only once the job's detail
+  was loaded: summaries carry no posting URL), `/` focus search, `Esc` blur search if
   focused, else in the split view go back to the grid.
 - The selected card is scrolled into view on keyboard moves.
 - Pagination: numbered pages on the grid, "Load more" in the list panel.

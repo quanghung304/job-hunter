@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter } from 'react-router'
+import { BrowserRouter, useLocation } from 'react-router'
 import { AppHeader } from '@/components/AppHeader'
 import { Toaster } from '@/components/ui/sonner'
+import { useIsDesktop } from '@/lib/useMediaQuery'
 import { AppRoutes } from '@/routes'
 
 const Devtools = import.meta.env.DEV
@@ -17,14 +18,19 @@ export function createQueryClient() {
   })
 }
 
-/** Providers + shell. Tests render <AppShell> inside their own router and client. */
+/**
+ * Providers + shell. Tests render <AppShell> inside their own router and client. The desktop
+ * split view (`/jobs/:id`) fills the window without page scroll: its panels scroll on their own.
+ */
 export function AppShell() {
+  const { pathname } = useLocation()
+  const fixed = useIsDesktop() && pathname.startsWith('/jobs/')
   return (
-    <>
+    <div className={fixed ? 'flex h-dvh flex-col overflow-hidden' : undefined}>
       <AppHeader />
       <AppRoutes />
       <Toaster />
-    </>
+    </div>
   )
 }
 

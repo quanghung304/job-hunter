@@ -17,7 +17,11 @@ export function SectionCard({
   id?: string
 }) {
   return (
-    <section id={id} className={cn('rounded-card border border-line bg-surface p-4 lg:px-[22px] lg:py-5', className)}>
+    <section
+      id={id}
+      data-slot="section-card"
+      className={cn('rounded-card border border-line bg-surface p-4 lg:px-[22px] lg:py-5', className)}
+    >
       <div className="mb-3 flex items-center justify-between gap-3">
         <SectionLabel>{label}</SectionLabel>
         {actions}

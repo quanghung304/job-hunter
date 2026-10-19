@@ -5,6 +5,7 @@ import { allowedTargets } from '@/lib/statusMachine'
 import { server } from './server'
 
 const NOW = Date.now()
+const NOW_ISO = new Date(NOW).toISOString()
 const hoursAgo = (hours: number) => new Date(NOW - hours * 3_600_000).toISOString()
 
 export function summary(id: number, overrides: Partial<JobSummary> = {}): JobSummary {
@@ -107,14 +108,23 @@ export interface JobsApi {
   requests: string[]
   /** Answer the next status change with this Problem Details (status, code, detail). */
   failStatusChange?: { status: number; code: string; detail: string }
+  /** Answer the next decision change with this Problem Details. */
+  failDecision?: { status: number; code: string; detail: string }
   notes: Record<number, string>
 }
 
+/** The backend's filters, as far as the tests use them: default view, status, decision, q. */
 function visible(job: JobSummary, url: URL): boolean {
   const statuses = url.searchParams.getAll('status')
+  const decisions = url.searchParams.getAll('decision')
+  const q = url.searchParams.get('q')?.toLowerCase()
   const filtered = [...url.searchParams.keys()].some((key) => !['sort', 'page', 'size'].includes(key))
-  if (!filtered) return job.status === 'NEW' || job.status === 'SHORTLISTED'
-  return statuses.length === 0 || statuses.includes(job.status)
+  if (!filtered) return job.status !== 'DISMISSED' && job.eligibilityDecision !== 'INELIGIBLE'
+  return (
+    (statuses.length === 0 || statuses.includes(job.status)) &&
+    (decisions.length === 0 || decisions.includes(job.eligibilityDecision ?? 'UNDECIDED')) &&
+    (!q || job.title.toLowerCase().includes(q) || job.company.toLowerCase().includes(q))
+  )
 }
 
 /** In-memory jobs behind MSW handlers for /api/jobs/**; returns the state to inspect. */
@@ -123,6 +133,7 @@ export function mockJobsApi(jobs: JobSummary[], details: Record<number, Partial<
   const find = (id: number) => api.jobs.find((job) => job.id === id)
   const detailOf = (job: JobSummary): JobDetail =>
     detail(job, {
+      eligibilityDecidedAt: job.eligibilityDecision ? NOW_ISO : null,
       ...details[job.id],
       notes: api.notes[job.id] ?? details[job.id]?.notes ?? null,
     })
@@ -164,6 +175,19 @@ export function mockJobsApi(jobs: JobSummary[], details: Record<number, Partial<
       }
       if (!job) return HttpResponse.json({ status: 404, code: 'JOB_NOT_FOUND' }, { status: 404 })
       job.status = body.to
+      return HttpResponse.json(job)
+    }),
+    http.put('/api/jobs/:id/eligibility', async ({ params, request }) => {
+      const body = (await request.json()) as { decision: JobSummary['eligibilityDecision'] }
+      api.requests.push(`PUT /api/jobs/${String(params.id)}/eligibility ${body.decision ?? 'null'}`)
+      const job = find(Number(params.id))
+      if (api.failDecision) {
+        const { status, code, detail: text } = api.failDecision
+        api.failDecision = undefined
+        return HttpResponse.json({ status, code, detail: text }, { status })
+      }
+      if (!job) return HttpResponse.json({ status: 404, code: 'JOB_NOT_FOUND' }, { status: 404 })
+      job.eligibilityDecision = body.decision
       return HttpResponse.json(job)
     }),
     http.put('/api/jobs/:id/notes', async ({ params, request }) => {

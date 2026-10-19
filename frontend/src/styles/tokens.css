@@ -5,9 +5,11 @@
  */
 :root {
   /* Surfaces */
-  --ground: #f6f6f3;
+  --ground: #f3f3ef;
+  --ground-2: #f7f7f4;
   --surface: #ffffff;
   --surface-muted: #fbfbf9;
+  --surface-hover: #fcfcfa;
 
   /* Text */
   --ink: #1b1d20;
@@ -20,6 +22,8 @@
   --line-faint: #f1f1ec;
   --control-border: #d9d9d3;
   --neutral-fill: #ecece6;
+  --card-border: #dcdcd5;
+  --card-border-hover: #b4b4ac;
 
   /* Accent (one hue; tints = white mix 85% / 93%, deep = black mix 35%) */
   --accent: #2f5bd3;
@@ -31,12 +35,29 @@
   --attention-bg: #fcefd9;
   --attention-fg: #7a4a00;
   --attention-icon: #b56a00;
-  --eligible-bg: #e7f0ec;
-  --eligible-fg: #1f5240;
+  --attention-row: #fffbf3;
+  --eligible-bg: #ddf2ea;
+  --eligible-fg: #13573f;
+  --ineligible-bg: #fbe3d6;
+  --ineligible-fg: #8a3510;
+  --extracted-bg: #e6eef5;
+  --extracted-fg: #2d4a66;
   --strong: #3d4147;
   --maybe-bg: #efefea;
   --icon-faint: #9a9ea4;
   --on-accent: #ffffff;
+
+  /* Tracking status tags (each status its own hue; icon + word always) */
+  --st-shortlisted-bg: #fbe4ef;
+  --st-shortlisted-fg: #86204f;
+  --st-shortlisted-icon: #c2397e;
+  --st-applied-bg: #ddeff7;
+  --st-applied-fg: #0b5670;
+  --st-interviewing-bg: #ece7fb;
+  --st-interviewing-fg: #4a2fa0;
+  --st-offer-bg: #1d7a4e;
+  --st-withdrawn-bg: #e6e6e0;
+  --st-withdrawn-fg: #4f545a;
 
   /* shadcn/ui variables, set from the tokens */
   --background: var(--ground);

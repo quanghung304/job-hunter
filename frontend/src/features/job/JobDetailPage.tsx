@@ -1,26 +1,27 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronLeft, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router'
-import { cachedJobIds, useJob } from '@/api/queries'
+import { cachedPosition, useJob } from '@/api/queries'
 import { ErrorState } from '@/components/ErrorState'
 import { ListSkeleton } from '@/components/ListSkeleton'
 import { toApiQuery, useBoardFilters } from '@/features/board/useBoardFilters'
 import { JobDetail } from './JobDetail'
 import { postingUrl } from './jobActions'
 import { MobileActionBar } from './MobileActionBar'
+import { useDecisionChanger } from './useDecisionChanger'
 import { useStatusChanger } from './useStatusChanger'
 
 /**
- * Mobile job detail (< 1024px): back bar, "Job N of M" from the cached board list (hidden when
- * the page was opened directly), the detail, and the fixed action bar.
+ * Mobile job detail (< 1024px): back bar, "Job N of M" from the cached board page (hidden when
+ * the page was opened directly), the detail with the decision control, and the fixed action bar.
  */
 export function JobDetailPage({ id }: { id: number }) {
   const job = useJob(id)
-  const { filters, search } = useBoardFilters()
+  const { filters, page, search } = useBoardFilters()
   const client = useQueryClient()
   const { change } = useStatusChanger()
-  const cached = cachedJobIds(client, toApiQuery(filters))
-  const position = cached ? cached.ids.indexOf(id) : -1
+  const { change: decide } = useDecisionChanger()
+  const cached = cachedPosition(client, toApiQuery(filters), page, id)
   const url = job.data ? postingUrl(job.data) : undefined
 
   return (
@@ -33,9 +34,9 @@ export function JobDetailPage({ id }: { id: number }) {
         >
           <ChevronLeft className="size-5" />
         </Link>
-        {cached && position >= 0 ? (
+        {cached ? (
           <span className="num text-[13px] text-muted">
-            Job {position + 1} of {cached.total}
+            Job {cached.position} of {cached.total}
           </span>
         ) : null}
         {url ? (
@@ -57,8 +58,9 @@ export function JobDetailPage({ id }: { id: number }) {
         ) : (
           <JobDetail
             job={job.data}
-            showActions={false}
+            layout="page"
             onStatusChange={(to) => change(job.data.id, job.data.status, to)}
+            onDecisionChange={(to) => decide(job.data.id, job.data.eligibilityDecision, to)}
           />
         )}
       </div>
