@@ -39,15 +39,17 @@ LLM cost.
 - Digest at 08:30: new jobs waiting for analysis, and scored jobs above the digest threshold.
 - Run now: Admin → "Run pipeline", or `curl -X POST localhost:8080/api/admin/pipeline/run`.
 - The pipeline never calls the LLM. New jobs appear as "Not analyzed". Open a job you want to
-  judge and press "Analyze" (one extraction call), then "Score" (one scoring call) if it is
-  eligible. On the admin page you can select jobs and analyze or score them in bulk, or
+  judge and press "Analyze" (one extraction call), check the eligibility criteria, mark it
+  Eligible or Not eligible if you like (ADR-0011), then "Score" (one scoring call) unless you
+  marked it Not eligible. On the admin page you can select jobs and analyze or score them in bulk, or
   re-score active jobs. Each of these shows the count first.
 
 ## Changing the profile
 
-Edit `config/profile.yaml`, restart (the app does not start without a valid profile; the
-startup error lists each invalid field). Prefilter and eligibility are re-evaluated
-automatically. To re-score active jobs with the new profile: Admin → "Re-score active jobs"
+Edit `config/profile.yaml` and restart (the app does not start without a valid profile; the
+startup error lists each invalid field), or use the Profile page (ADR-0012, from T-028); a save
+keeps `config/profile.yaml.bak` and needs no restart. Prefilter and eligibility checks are
+re-evaluated automatically; your eligibility decisions and scores are kept. To re-score active jobs with the new profile: Admin → "Re-score active jobs"
 (shows the number of LLM calls first).
 
 ## LLM models and quotas
@@ -78,9 +80,10 @@ automatically. To re-score active jobs with the new profile: Admin → "Re-score
 
 ## Changing a prompt
 
-1. Copy `docs/ai/prompts/score-v1.md` to `score-v2.md`, edit.
+1. Copy the current version (e.g. `docs/ai/prompts/score-v2.md`) to the next number
+   (`score-v3.md`), edit.
 2. Run the eval with both versions; record results in `docs/ai/eval/results.md`.
-3. If better, set `app.llm.score-prompt=score-v2` and restart. Old assessments stay;
+3. If better, set `app.llm.score-prompt` to the new id and restart. Old assessments stay;
    new ones are created on demand (Admin → "Re-score active jobs").
 
 ## Troubleshooting

@@ -1,6 +1,6 @@
 # PRD — Job Hunter
 
-Status: Approved for Phase 1 · Owner: Hugh · Last updated: 2026-10-16
+Status: Approved for Phase 1 · Owner: Hugh · Last updated: 2026-10-19
 
 ## 1. Problem
 
@@ -24,7 +24,7 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 | ID | Goal | Measure |
 |---|---|---|
 | G1 | Collect new postings automatically from ≥ 6 sources | Scheduled runs 2×/day without manual action |
-| G2 | Drop jobs I cannot take | ≤ 5% of jobs shown to me are clearly ineligible (region, on-site, full-time-only when I set part-time only) |
+| G2 | Drop jobs I cannot take | In the eval set, ≤ 5% of jobs I labeled INELIGIBLE pass all eligibility checks without a FAIL; jobs I mark Not eligible never show in the default view |
 | G3 | Rank the rest by fit | In the eval set, ≥ 80% of jobs I labeled HIGH score ≥ 70 |
 | G4 | Track my decisions | Every shown job has a status; nothing I dismissed shows again |
 | G5 | Notify me | Daily Telegram digest of new jobs and scored matches |
@@ -45,16 +45,20 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
 - F1.6 The LLM extracts structured attributes (remote type, allowed regions, employment
   type, hours, seniority, stack, languages, salary) from the description.
   It runs only when the owner presses Analyze on that job (ADR-0010), never for every collected job.
-- F1.7 A deterministic eligibility check compares attributes to the profile:
-  `ELIGIBLE`, `UNCERTAIN` or `INELIGIBLE`, with reasons.
-- F1.8 When the owner presses Score on an `ELIGIBLE` or `UNCERTAIN` job, the LLM scores it
+- F1.7 A deterministic check compares the attributes with the profile and gives one result per
+  criterion (OK, Unclear, Fail) with the reason. The app does not decide overall eligibility; the
+  owner marks a job Eligible or Not eligible (ADR-0011).
+- F1.8 When the owner presses Score on an analyzed job they have not marked Not eligible, the LLM scores it
   0–100 with a breakdown, strengths, gaps, red flags and a one-line summary in the profile's
   summary language.
 
 ### F2 — Track jobs
 
-- F2.1 Web app (React SPA on localhost, ADR-0007) listing scored jobs, sorted by score, filterable by status,
-  score range, source, eligibility, employment type and date.
+- F2.1 Web app (React SPA on localhost, ADR-0007) showing jobs as a card grid (12 per page,
+  numbered pages) with a list layout option. Each card shows the score, tracking status, analysis
+  state and eligibility decision. Filterable by status, decision, checks, analysis, score range,
+  source, employment type and date. Opening a job shows a split view: job list on the left with
+  its own scroll and "Load more", detail on the right.
 - F2.2 Job detail page: normalized fields, extracted attributes, score breakdown,
   links to original postings, my notes.
 - F2.3 Status changes with one click; every change is stored in history.
@@ -77,6 +81,11 @@ I need a remote, part-time or contract job. Finding one by hand is slow:
   pipeline run makes no LLM calls. Bulk LLM actions exist only in the admin page: bulk analysis
   and scoring of selected jobs, re-scoring, and retry. Each one runs after a dry run shows the
   count (ADR-0010).
+- F2.11 Eligibility decision per job: Eligible, Not eligible or Undecided, stored in history
+  and undoable. Jobs marked Not eligible leave the default view and cannot be scored.
+- F2.12 Profile page: the owner views and edits their own profile (`config/profile.yaml`)
+  in the app. Saving re-runs the prefilter and the eligibility checks without LLM calls
+  (ADR-0012). No other users' profiles.
 
 ## 5. Non-goals for Phase 1
 
@@ -87,7 +96,7 @@ Agents must not build these unless a task explicitly says so.
 - Filling or submitting application forms (F4) — Phase 3, assisted only, never fully automatic.
 - Scraping LinkedIn, Indeed, Glassdoor or any login-protected site.
 - Headless-browser scraping of any kind.
-- Multiple users, login, authentication, payments.
+- Multiple users, login, authentication, payments (the Profile page edits only the owner's single profile).
 - Mobile app, public deployment, cloud hosting.
 - Non-dev job tracks (tutoring). The profile format allows tracks, but only the
   `software` track is implemented in Phase 1.

@@ -51,6 +51,8 @@ Each run is also stored in the `eval_run` table so the Admin page can show the l
 result next to each model. Compare models before changing a default.
 Outputs metrics from `scoring-spec.md` §7, a confusion matrix for eligibility, and a list of
 disagreements with reasons, to stdout and `data/eval/<timestamp>.md`.
+Eligibility metrics compare each label with the eval-only rollup of the checks (scoring-spec §7);
+the app itself shows only the checks and the owner's decision.
 
 ## results.md entry template
 

@@ -9,16 +9,21 @@ Analyze and Score actions (ADR-0010). The pipeline run only prefilters. Each ste
 so a repeat request makes no call.
 
 ```
-job ──► §2 prefilter ──REJECT──► assessment(prefilter_result=REJECT)    [no LLM]
+job ──► §2 prefilter ──REJECT──► assessment(prefilter_result=REJECT)        [no LLM]
             │PASS
+            ▼  owner presses Analyze
+        §3 extraction (cached per job + prompt version)                     [LLM]
             ▼
-        §3 extraction (cached per job + prompt version)                 [LLM]
+        §4 eligibility checks: one result per criterion, no verdict         [no LLM]
             ▼
-        §4 eligibility ──INELIGIBLE──► assessment(eligibility=INELIGIBLE) [no LLM]
-            │ELIGIBLE / UNCERTAIN
+        owner decision: Eligible / Not eligible / undecided (job_tracking)
+            │ not marked Not eligible, owner presses Score
             ▼
-        §5 scoring                                                     [LLM]
+        §5 scoring                                                          [LLM]
 ```
+
+The verdict model (ELIGIBLE / UNCERTAIN / INELIGIBLE decided by the app) shipped in T-011/T-012
+is replaced by checks + owner decision in T-025 (ADR-0011).
 
 ## 2. Prefilter (rules, profile-dependent)
 
@@ -78,11 +83,14 @@ Rules the prompt must enforce: never infer facts not in the text; "Remote (US)" 
 `REMOTE_RESTRICTED` + `["US"]`; "Remote, Europe" → `["EUROPE"]`; "work from anywhere" →
 `["WORLDWIDE"]`; "CET ± 2h" → timezone min 0 max 4 (UTC); unknown → null/empty.
 
-## 4. Eligibility (Java, profile-dependent, deterministic)
+## 4. Eligibility checks (Java, profile-dependent, deterministic)
 
-Each rule yields OK, UNKNOWN or FAIL with a reason code. Result:
-any FAIL → `INELIGIBLE`; else any UNKNOWN on rules marked *critical* → `UNCERTAIN`;
-else `ELIGIBLE`. Extraction `confidence == LOW` → at most `UNCERTAIN`.
+Each rule yields one check `{code, critical, result, reason, value}`: `result` is OK, UNKNOWN
+or FAIL; `reason` is a reason code (e.g. `FULL_TIME_ONLY_SOFT`) or null; `value` is the short
+job-side text shown to the owner (e.g. "EU — Italy included", "Not stated"). The evaluator
+returns all checks in table order and **no overall verdict** (ADR-0011); the owner decides.
+The UI shows UNKNOWN as "Unclear". `critical` orders and highlights checks in the UI and is used
+by the eval rollup (§7).
 
 | Code | Critical | OK | UNKNOWN | FAIL |
 |---|---|---|---|---|
@@ -95,13 +103,15 @@ else `ELIGIBLE`. Extraction `confidence == LOW` → at most `UNCERTAIN`.
 | `SENIORITY` | no | in `preferences.seniority` or null | — | not in list |
 | `LANGUAGE` | yes | all required languages satisfied by `candidate.languages` (level ≥ required) | — | a required language unmet |
 | `SCAM` | yes | false | — | `isScamSignal == true` |
+| `EXTRACTION_CONFIDENCE` | yes | confidence HIGH or MEDIUM | confidence LOW | — |
 
 Timezone note: compute the residence offset for the current date (DST-aware) and let
 d = `preferences.timezone.maxOffsetDiffHours`. OK if `minUtcOffset - d ≤ offset ≤ maxUtcOffset + d`. The eligibility unit test must contain one
 table row per cell of this table.
 
-Implementation notes (T-011): `EligibilityEvaluator`; stored reasons are `RULE:UNKNOWN` /
-`RULE:FAIL` for non-OK rules plus `FULL_TIME_ONLY_SOFT` and `CONFIDENCE:LOW`. `WORK_AUTH` looks for
+Implementation notes (T-011): `EligibilityEvaluator`; T-011 stored reasons `RULE:UNKNOWN` /
+`RULE:FAIL` for non-OK rules plus `FULL_TIME_ONLY_SOFT` and `CONFIDENCE:LOW` next to a verdict;
+T-025 stores the checks instead (`job_assessment.eligibility_checks`). `WORK_AUTH` looks for
 country names/adjectives (table in code) and the upper-case codes US, USA, UK, EU, EEA ("work with
 us" is not the US); a sentence naming no listed country is OK. Extraction output is parsed
 leniently: missing lists become empty and over-long `roleSummary`/`regionEvidence`/
@@ -110,14 +120,16 @@ leniently: missing lists become empty and over-long `roleSummary`/`regionEvidenc
 Important for this owner: many contract/freelance roles say only "full-time" in a template
 while hiring contractors. Therefore when `employmentTypes == [FULL_TIME]` and the profile
 does not accept FULL_TIME, the result is FAIL **only if** the text also gives
-`hoursPerWeek.min ≥ 35` or says "permanent"/"employee"; otherwise UNKNOWN (critical) →
-UNCERTAIN, so the owner can decide. Record reason `FULL_TIME_ONLY_SOFT`.
+`hoursPerWeek.min ≥ 35` or says "permanent"/"employee"; otherwise UNKNOWN, so the owner can
+decide. Record reason `FULL_TIME_ONLY_SOFT`.
 
 ## 5. Scoring (LLM, profile-dependent)
 
-Prompt: `docs/ai/prompts/score-v1.md`. Input: profile excerpt (headline, years, summary,
-skills by tier, domains, languages, preferences), job (title, company, extraction JSON,
-description truncated to 8 000 chars), eligibility result and reasons.
+Prompt: `docs/ai/prompts/score-v2.md` (from T-025; score-v1 took the verdict and reasons).
+Input: profile excerpt (headline, years, summary, skills by tier, domains, languages,
+preferences), job (title, company, extraction JSON, description truncated to 8 000 chars), the
+eligibility checks (one line per check: `CODE: RESULT — value (reason)`). Scoring runs only for an
+analyzed job the owner has not marked Not eligible (ADR-0011).
 
 Rubric (weights sum to 100):
 
@@ -125,7 +137,7 @@ Rubric (weights sum to 100):
 |---|---|---|
 | `skills` | 40 | Required skills covered by core (full), secondary (half), learning (little) |
 | `experience` | 20 | Seniority and years vs requirement |
-| `arrangement` | 20 | Employment type, hours, timezone, region fit; UNCERTAIN items cost points |
+| `arrangement` | 20 | Employment type, hours, timezone, region fit; UNKNOWN or FAIL checks cost points |
 | `domain` | 10 | Domain/industry overlap, transferable context |
 | `other` | 10 | Salary vs `minSalary`, language, company/role quality, growth fit |
 
@@ -175,6 +187,10 @@ Measured by `EvalRunner` on `docs/ai/eval/labeled-jobs.jsonl` (≥ 40 jobs):
 | Relevance: labeled HIGH with score ≥ 70 | ≥ 80% |
 | Relevance: labeled LOW with score < 50 | ≥ 80% |
 | Extraction schema-valid on first try | ≥ 95% |
+
+Eligibility metrics compare the label with an **eval-only rollup** of the checks: any FAIL →
+INELIGIBLE; else any UNKNOWN on a critical check → UNCERTAIN; else ELIGIBLE. The app never
+stores or shows this rollup.
 
 ## 8. Cost control
 

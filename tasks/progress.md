@@ -10,6 +10,22 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-19 — Board grid, owner eligibility decision, Profile page (docs) — DONE
+- Mockups updated in the canvas: board as a 12-card grid with pagination and a Grid/List toggle;
+  split view with independent list and detail scroll (Load more keeps the position); colored
+  status/analysis/decision tags; bordered cards with hover and selected states; Profile page.
+- ADR-0011: the app checks eligibility per criterion, the owner decides (Eligible / Not eligible /
+  Undecided); Score allowed unless marked Not eligible; default view hides only those.
+- ADR-0012: the owner edits their single profile in the app; profile.yaml stays the source of truth.
+- Updated: PRD, overview, data-model, api-spec, frontend.md, config-spec, runbook, scoring-spec
+  §1/§4/§5/§7, eval README, testing, ADR-0004/0010 notes; tasks T-015, T-016, T-021.
+- T-011–T-014 and T-020 were already done, so their task files stay as shipped (owner decision):
+  the rework is in new tasks T-025 (eligibility checks + decision, backend), T-026 (board grid +
+  split view + decision UI); the profile work is T-027 (backend) and T-028 (frontend). T-024 was
+  skipped because a docs commit already used that tag.
+- score-v1 is released, so the new prompt input is score-v2 (draft until T-025 switches to it).
+- openapi.json not changed (regenerated in T-025/T-027).
+
 ## 2026-10-19 — T-020 Frontend: board and job detail — DONE (visual check by owner pending)
 - `api/queries.ts`: `useJobs` (infinite, 25/page), `useJob`, `useStatus` (60 s / 10 s with alerts),
   `useChangeStatus` (optimistic on list + detail caches, rollback; lists patched, not refetched),

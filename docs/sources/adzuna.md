@@ -8,7 +8,7 @@
   number of queries × pages × runs to stay well under the daily cap.
 - Data quality: `description` is truncated; `redirect_url` goes through Adzuna;
   `salary_is_predicted` marks estimated salaries (store salary only if not predicted).
-- Use: discovery. Extraction on truncated text will often give UNCERTAIN; that is fine.
+- Use: discovery. Extraction on truncated text will often give UNKNOWN eligibility checks; that is fine.
   Phase 1.5 may add "open original" enrichment only where the destination is an allowed source.
 - Expected result fields: `id`, `title`, `description`, `redirect_url`, `created`,
   `company.display_name`, `location.display_name`, `location.area[]`, `contract_time`,

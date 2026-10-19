@@ -11,6 +11,7 @@ in the same commit.
   auth and derives the profile from the user.)
 - Pagination: `page` (0-based), `size` (default 25, max 100) → response
   `{ "items": [...], "page": 0, "size": 25, "totalItems": 123, "totalPages": 5 }`.
+  The board requests `size=12` (one grid page, and each "Load more" step in the job list panel).
 - Errors: RFC 9457 Problem Details (`application/problem+json`) via Spring's
   `ProblemDetail`: `{ "type", "title", "status", "detail", "code" }` where `code` is a stable
   machine string, e.g. `ILLEGAL_STATUS_TRANSITION`, `JOB_NOT_FOUND`, `VALIDATION_FAILED`,
@@ -24,12 +25,17 @@ in the same commit.
 
 ## Jobs
 
+The eligibility model of ADR-0011 (checks + owner decision) is implemented in T-025; until then
+the shipped API returns the verdict field `eligibility` and the filter `eligibility` instead of
+`eligibilityDecision`, `checks`, `decision` and `eligibilityChecks`.
+
 ### `GET /api/jobs`
-Query (all optional): `status` (repeatable), `eligibility` (repeatable), `minScore`,
+Query (all optional): `status` (repeatable), `decision` (repeatable: `ELIGIBLE`, `INELIGIBLE`,
+`UNDECIDED`), `checks` (repeatable: `ALL_OK`, `HAS_UNKNOWN`, `HAS_FAIL`, `NOT_CHECKED`), `minScore`,
 `maxScore`, `source` (repeatable), `employmentType` (repeatable), `postedWithinDays`, `q`
 (title/company text), `includeExpired` (default false), `analysisStage` (repeatable), `sort` (`score` | `posted`, default
-`score`), `page`, `size`. With no filters, the default view applies: status ∈ {NEW, SHORTLISTED}, prefilter PASS,
-eligibility ≠ INELIGIBLE, ACTIVE. Scored jobs come first, by score; jobs not yet analyzed follow, by `postedAt`.
+`score`), `page`, `size`. With no filters, the default view applies: status ≠ DISMISSED, prefilter PASS,
+decision ≠ INELIGIBLE, ACTIVE. Scored jobs come first, by score; jobs not yet analyzed follow, by `postedAt`.
 Any filter (everything except `sort`, `page`, `size`) replaces the default view; EXPIRED jobs stay hidden unless
 `includeExpired=true`. `q` is a case-insensitive substring of title or company (`%` and `_` are literal);
 `postedWithinDays` uses `postedAt`, or `firstSeenAt` when the source gave no date; `employmentType` matches the
@@ -42,25 +48,30 @@ Item `JobSummary`:
 ```json
 { "id": 42, "title": "...", "company": "...", "locationText": "...",
   "score": 82, "scoreBand": "GOOD", "summary": "...",
-  "eligibility": "ELIGIBLE", "remoteType": "REMOTE_RESTRICTED", "allowedRegions": ["EU"],
+  "eligibilityDecision": "ELIGIBLE" | "INELIGIBLE" | null,
+  "checks": { "ok": 6, "unknown": 1, "fail": 0 } | null,
+  "remoteType": "REMOTE_RESTRICTED", "allowedRegions": ["EU"],
   "employmentTypes": ["CONTRACT"], "postedAt": "...", "firstSeenAt": "...",
   "sources": [{ "code": "himalayas", "name": "Himalayas" }],
   "status": "NEW", "jobStatus": "ACTIVE", "analysisStage": "NOT_ANALYZED" }
 ```
 `scoreBand`: `EXCELLENT` ≥ 85, `GOOD` 70–84, `MAYBE` 50–69, `WEAK` < 50, `NONE` if unscored.
+`checks` counts the eligibility check results (null when not analyzed).
 `analysisStage` (derived, ADR-0010): `NOT_ANALYZED` (no LLM call yet) · `ANALYZED`
-(extraction and eligibility done, not scored) · `SCORED` · `FAILED` (last attempt failed; retry available).
-Derivation: score present → `SCORED`; last SCORE attempt failed without a score → `FAILED`; eligibility present →
+(extraction and eligibility checks done, not scored) · `SCORED` · `FAILED` (last attempt failed; retry available).
+Derivation: score present → `SCORED`; last SCORE attempt failed without a score → `FAILED`; checks present →
 `ANALYZED`; extraction for the current prompt version failed → `FAILED`; otherwise `NOT_ANALYZED`.
 `remoteType`, `allowedRegions` and `employmentTypes` come from the extraction (null / empty until analyzed);
 `sources` lists each source once, by code. `scoreBand` is computed by `tracking.ScoreBand` (also for Telegram).
 
 ### `GET /api/jobs/{id}`
 `JobDetail` = `JobSummary` fields plus: `description`, `applyUrl`, `salary`, `tags`,
-`extraction` (attributes object, scoring-spec §3), `eligibilityReasons` (string[]),
+`extraction` (attributes object, scoring-spec §3), `eligibilityChecks`
+(`[{ code, critical, result, value, reason }]` in scoring-spec §4 order, empty when not analyzed),
+`eligibilityDecidedAt` (null when undecided),
 `prefilterReasons`, `scoreBreakdown`, `strengths`, `gaps`, `redFlags`, `applyAdvice`,
 `postings` (`[{ sourceCode, sourceName, url, firstSeenAt, lastSeenAt }]` — the UI shows
-"via <sourceName>" links), `notes`, `history` (`[{ from, to, note, at }]`),
+"via <sourceName>" links), `notes`, `history` (`[{ kind: "STATUS" | "ELIGIBILITY", from, to, note, at }]`),
 `allowedTransitions` (statuses the UI may offer).
 `salary` is `{ min, max, currency, period }` from the source, or null; `extraction` is null until an OK extraction
 exists for the current prompt version (extractions are shared by all profiles); `scoreBreakdown` is
@@ -72,9 +83,14 @@ Body `{ "to": "SHORTLISTED", "note": "optional" }` (note ≤ 2 000 chars) → 20
 409 `ILLEGAL_STATUS_TRANSITION` (also for the current status); 404 `JOB_NOT_FOUND`. Each change is written to the
 history.
 
+### `PUT /api/jobs/{id}/eligibility`
+Owner decision (ADR-0011). Body `{ "decision": "ELIGIBLE" | "INELIGIBLE" | null, "note": "optional" }`
+→ 200 updated `JobSummary`. Allowed in every analysis stage. Setting the current value is a
+no-op (200, no history entry). Errors: 404 `JOB_NOT_FOUND`.
+
 ### `POST /api/jobs/{id}/analyze`
 Owner action "Analyze" (ADR-0010). Runs extraction if no OK extraction exists for the
-current prompt version (one EXTRACT call), then eligibility (no LLM). No body → 200 `JobDetail`.
+current prompt version (one EXTRACT call), then the eligibility checks (no LLM). No body → 200 `JobDetail`.
 Repeating it makes no LLM call. A failed attempt (invalid output after the corrective retry,
 provider errors) still answers 200 with `analysisStage: FAILED`; after 3 failed attempts for the
 prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_PREFILTER_REJECTED`
@@ -82,9 +98,9 @@ prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EX
 `purpose`; the full `LlmAlert` for that purpose is added in T-022); 409 `BUDGET_REACHED`.
 
 ### `POST /api/jobs/{id}/score`
-Owner action "Score" (ADR-0010). Requires an analyzed job whose eligibility is
-ELIGIBLE or UNCERTAIN; makes one SCORE call → 200 `JobDetail`. Repeating it makes no call.
-Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_NOT_ANALYZED`; 409 `JOB_NOT_ELIGIBLE`; 409 `LLM_PAUSED`;
+Owner action "Score" (ADR-0010). Requires an analyzed job the owner has not marked INELIGIBLE
+(ADR-0011); makes one SCORE call → 200 `JobDetail`. Repeating it makes no call.
+Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_NOT_ANALYZED`; 409 `JOB_MARKED_INELIGIBLE`; 409 `LLM_PAUSED`;
 409 `BUDGET_REACHED`.
 
 ### `PUT /api/jobs/{id}/notes`
@@ -93,8 +109,25 @@ Body `{ "notes": "text ≤ 10 000 chars" }` → 204 (an empty string clears the 
 
 ### `GET /api/meta`
 Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
-"employmentTypes": [...], "eligibilities": [...], "profileId": "hugh",
+"employmentTypes": [...], "decisions": [...], "checkResults": [...], "profileId": "hugh",
 "summaryLanguage": "vi" }`. `sources` = every registered collector (enabled or not), by code.
+
+## Profile (ADR-0012)
+
+Only the current (owner's) profile. No list, create or delete endpoints in Phase 1. Implemented
+in T-027.
+
+### `GET /api/profile`
+→ `{ "id": "hugh", "hash": "3f9c1a…", "savedAt": "...", "profile": { … } }`; `profile` has the
+structure and keys of `profile.yaml` (config-spec §1).
+
+### `PUT /api/profile`
+Body `{ "baseHash": "3f9c1a…", "profile": { … } }` → 200
+`{ "id", "hash", "savedAt", "reassessed": { "jobs": 30, "prefilterChanged": 2, "checksUpdated": 13 } }`.
+Errors: 400 `VALIDATION_FAILED` with extension `errors: [{ "path": "candidate.yearsExperience",
+"message": "must not be blank" }]` (same paths as the startup validator); 400
+`PROFILE_ID_IMMUTABLE`; 409 `PROFILE_CHANGED` when `baseHash` is not the current hash (the file
+was edited elsewhere; the client reloads).
 
 ## Admin
 
@@ -160,7 +193,7 @@ updatedJobs, skippedInvalid, warnings, error }` (`error` null unless FAILED). Ig
 404 `SOURCE_NOT_FOUND` for an unknown source code.
 
 ### `POST /api/admin/jobs/analyze`
-Bulk analysis (extraction, then eligibility) of jobs the admin selected, with the same rules
+Bulk analysis (extraction, then eligibility checks) of jobs the admin selected, with the same rules
 as `/analyze` (ADR-0010). Body `{ "jobIds": [42, 57], "dryRun": true }`, at most 200 ids.
 The admin picks jobs from `GET /api/jobs?analysisStage=NOT_ANALYZED`.
 
@@ -178,9 +211,9 @@ as bulk scoring. Bulk actions run in the background one at a time, in the order 
 ### `POST /api/admin/jobs/score`
 Bulk scoring of jobs the admin selected in the Admin page table (ADR-0010). Body
 `{ "jobIds": [42, 57], "dryRun": true }`, at most 200 ids. The admin picks jobs from
-`GET /api/jobs?analysisStage=ANALYZED&eligibility=ELIGIBLE&eligibility=UNCERTAIN`.
+`GET /api/jobs?analysisStage=ANALYZED&decision=ELIGIBLE&decision=UNDECIDED`.
 
-Dry run → `{ "selected": 40, "willScore": 27, "skipped": { "notAnalyzed": 5, "ineligible": 6,
+Dry run → `{ "selected": 40, "willScore": 27, "skipped": { "notAnalyzed": 5, "markedIneligible": 6,
 "alreadyScored": 2, "expired": 0, "failedPermanently": 0, "notFound": 0 }, "estimatedCalls": 27,
 "estimatedCostUsd": 0.04, "model": { "modelId": "groq-gpt-oss-120b", "label": "...", "tier": "FREE",
 "paidCallsAllowed": false } }`. Skipped jobs make no call. A PAID `model` must be named in the
@@ -193,7 +226,7 @@ run starts). If the budget runs out mid-run, the remaining jobs stay unscored an
 
 ### `POST /api/admin/rescore`
 Bulk LLM action, admin only. Always run the dry run first; execute only after the owner confirms the count (ADR-0010).
-Re-scores ACTIVE jobs of the profile that are analyzed, ELIGIBLE or UNCERTAIN and already scored
+Re-scores ACTIVE jobs of the profile that are analyzed, not marked INELIGIBLE and already scored
 for the current score prompt version (after a profile or model change).
 Body `{ "dryRun": true }` → `{ "jobCount": 57, "estimatedCalls": 57, "estimatedCostUsd": 0.09,
 "model": { "modelId": "...", "label": "...", "tier": "PAID", "paidCallsAllowed": true } }`

@@ -1,6 +1,6 @@
 # T-021: Frontend — admin page
 
-Phase: 1 · Depends on: T-014, T-019 · Size: S–M
+Phase: 1 · Depends on: T-014, T-019, T-025 · Size: S–M
 
 ## Goal
 One page to see whether the system is healthy and to trigger maintenance actions.
@@ -17,7 +17,9 @@ One page to see whether the system is healthy and to trigger maintenance actions
   `SourcesTable` (status tag + text, long errors truncated with full text in `title`),
   `LlmUsageCard` (meter + 14-day CSS bars, no chart library), `RunsList`, `FailuresList`
   with Retry, `CompaniesTable`, `RescoreDialog` (shows `jobCount` and `estimatedCostUsd`),
-  `BulkActionTable` + `BulkActionDialog` (Analyze or Score mode, up to 200 jobs, dry run, confirm; `useBulkAction()`),
+  `BulkActionTable` + `BulkActionDialog` (Analyze or Score mode, up to 200 jobs, dry run, confirm; `useBulkAction()`;
+  Score mode lists ANALYZED jobs that are not scored and not marked INELIGIBLE; the eligibility column shows
+  DecisionTag + ChecksTag, ADR-0011),
   Export for labeling (toast with path and count).
 - App header status line reads from `GET /api/status` via `useStatus()` (finish what T-019
   stubbed). The LLM banner and LLM models card come in T-023.

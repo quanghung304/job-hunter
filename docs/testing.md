@@ -8,7 +8,7 @@ and the eval.
 
 | Layer | What | Tools | Location / naming |
 |---|---|---|---|
-| Unit | Mappers, normalization, fingerprint, prefilter rules, eligibility rules, status machine, prompt rendering, budget guard | JUnit 5, AssertJ, parameterized tests | `src/test/java/**` (`*Test`) |
+| Unit | Mappers, normalization, fingerprint, prefilter rules, eligibility checks, status machine, prompt rendering, budget guard | JUnit 5, AssertJ, parameterized tests | `src/test/java/**` (`*Test`) |
 | HTTP contract | Each collector against a recorded response | WireMock serving `fixtures/<code>/*` | `*CollectorTest` |
 | Integration | Repositories, ingest upsert/dedupe, pipeline end-to-end (WireMock sources, `FakeLlmClient`, 0 LLM calls) | Spring Boot test + Testcontainers PostgreSQL; `src/test/resources/config/application.yml` turns off the pipeline cron and startup catch-up so no test reaches a real source | `*IT` (failsafe) |
 | API | Controllers: status codes, JSON shape, Problem Details | `@WebMvcTest` + `MockMvc` | `*ControllerTest` |
@@ -24,7 +24,7 @@ and the eval.
 | Unit | `lib/` helpers (formatting, labels, status machine copy vs data-model §2), filter ↔ URL params | Vitest |
 | Component | ScoreBadge, StatusActions, FilterBar, NotesEditor, admin tables: render states (loading/empty/error/data) and interactions | Vitest + React Testing Library + `@testing-library/user-event` |
 | Page integration | Board, Job detail, Admin against a mocked API (optimistic update + rollback, keyboard shortcuts, polling) | RTL + MSW handlers in `src/test/handlers.ts` typed from `schema.d.ts` |
-| E2E smoke (`make e2e`) | 1) board loads and dismiss hides a job 2) open detail, change status, add a note, reload persists 3) admin "Run pipeline" completes with fake LLM | Playwright against the real backend with `app.llm.force-model=fake` and WireMock-served source fixtures |
+| E2E smoke (`make e2e`) | 1) board grid loads 12 cards; dismiss hides a job 2) open a job from page 2, the list panel shows pages 1–2 with the job in view, "Load more" keeps the scroll position; change status, add a note, reload persists 3) admin "Run pipeline" completes with fake LLM 4) mark a job Not eligible → after reload it is not in the default view, Undo restores it 5) Profile page: change max hours, save → toast reports re-checked jobs, reload shows the new value | Playwright against the real backend with `app.llm.force-model=fake` and WireMock-served source fixtures |
 
 E2E runs in `make e2e`, not in `make verify` (it needs a running stack).
 
@@ -61,7 +61,7 @@ E2E runs in `make e2e`, not in `make verify` (it needs a running stack).
 
 ## Coverage expectations
 
-No numeric gate. Must-have: every collector mapper, every eligibility rule row in
+No numeric gate. Must-have: every collector mapper, every eligibility check row in
 `scoring-spec.md` §4, every allowed and forbidden status transition (backend and the
 frontend copy), fingerprint examples in `data-model.md` §4, every endpoint's success and
 main error case.

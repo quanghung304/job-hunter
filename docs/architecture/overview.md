@@ -27,8 +27,8 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
                                                                                  ▼
  ┌──────────────┐   job_score         ┌──────────────┐   job_extraction   ┌──────────────┐
  │   Scoring    │ ◄────────────────── │ Eligibility  │ ◄───────────────── │  Extraction  │
- │ (LLM, per    │   ELIGIBLE /        │ (rules vs    │                    │ (LLM, per    │
- │  profile)    │   UNCERTAIN only    │  profile)    │                    │  job, cached)│
+ │ (LLM, per    │   owner did not     │ (checks vs   │                    │ (LLM, per    │
+ │  profile)    │   mark ineligible   │  profile)    │                    │  job, cached)│
  └──────┬───────┘                     └──────────────┘                    └──────────────┘
         │
         ▼
@@ -43,13 +43,13 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 | Package | Responsibility | May depend on |
 |---|---|---|
 | `common` | Clock, `Sleeper`, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`), the `RunCompleted` event (pipeline → notify), `ProgressBoard` (stage + counters of the running pipeline or bulk LLM action, read by the admin overview) | — |
-| `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
+| `profile` | Load, validate, save and reload `profile.yaml`; `ProfileProvider`, `Profile` record, `ProfileService` (save, T-027), publishes `ProfileChanged` (ADR-0012) | common |
 | `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging, `SourceCatalog` (display names), `CompanyService` (read-only company boards) | common |
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry; `JobQueryService` returns read-only `JobView`s to other modules | common, source (DTOs only) |
 | `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; `LlmUsageService` (read-only usage statistics); publishes `LlmModelStatusChanged` events (ADR-0008) | common |
-| `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
-| `scoring` | Scoring (LLM, owner action); writes scores through `AssessmentService`; `BulkActionRunner` runs the admin bulk actions (Analyze, Score, Re-score, Retry) in the background after their pre-checks | common, profile, ingest (read), llm, enrich |
-| `tracking` | `job_tracking` status machine, `TrackingService` (status changes, notes, history); `JobBoardQuery` (read-only SQL joining job + assessment + extraction + tracking of one profile for the UI); `JobDetailQuery`; `ScoreBand` | common, profile, ingest (read), enrich (read) |
+| `enrich` | Prefilter rules, extraction (LLM), eligibility checks (one result per criterion, no verdict, ADR-0011); owns `job_assessment` via `AssessmentService`; re-runs prefilter and checks on `ProfileChanged` | common, profile, llm, ingest (read) |
+| `scoring` | Scoring (LLM, owner action); writes scores through `AssessmentService`; `BulkActionRunner` runs the admin bulk actions (Analyze, Score, Re-score, Retry) in the background after their pre-checks | common, profile, ingest (read), llm, enrich, tracking (read: owner decision, from T-025) |
+| `tracking` | `job_tracking` status machine, owner eligibility decision (ADR-0011), `TrackingService` (status changes, decisions, notes, history); `JobBoardQuery` (read-only SQL joining job + assessment + extraction + tracking of one profile for the UI); `JobDetailQuery`; `ScoreBand` | common, profile, ingest (read), enrich (read) |
 | `notify` | Telegram client, digest builder, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
 | `pipeline` | `PipelineOrchestrator` (+ Postgres advisory lock, last 20 `PipelineReport`s in memory), scheduler and startup catch-up, `PipelineSchedule` (next fire times), admin trigger; the only place that calls modules in sequence; never reaches the LLM services (ArchUnit) | all above |
 | `api` | REST controllers (`/api/**`), request/response DTOs, `ProblemDetail` error mapping, OpenAPI config, SPA fallback controller | tracking, scoring, enrich, ingest, pipeline, source, llm (usage stats), profile |
@@ -89,7 +89,8 @@ public class LlmRouter {
 }
 interface LlmClient { LlmResponse send(LlmRequest request); }  // only LlmRouter calls it (ADR-0009)
 
-public interface ProfileProvider { Profile current(); }
+public interface ProfileProvider { Profile current(); String profileHash(); }
+public interface ProfileService { SavedProfile save(Profile profile, String baseHash); } // T-027
 ```
 
 `NormalizedPosting` fields are defined in `data-model.md` §3.
@@ -108,9 +109,9 @@ A run never calls an LLM (ADR-0010). Running it twice in a row changes nothing u
 ## LLM work on owner action (ADR-0010)
 
 - **Analyze** (`POST /api/jobs/{id}/analyze`): extraction (one EXTRACT call, cached per
-  prompt version), then eligibility (Java). Each call goes through `LlmRouter`.
-- **Score** (`POST /api/jobs/{id}/score`): one SCORE call, only for an analyzed job that is
-  ELIGIBLE or UNCERTAIN.
+  prompt version), then the eligibility checks (Java). Each call goes through `LlmRouter`.
+- **Score** (`POST /api/jobs/{id}/score`): one SCORE call, only for an analyzed job the owner
+  has not marked Not eligible (ADR-0011).
 - **Bulk** (admin only, with a dry run showing the count first): "Re-score active jobs",
   "Retry failed", and bulk analysis and scoring of jobs the admin selects in a table.
 - Before each call, `LlmRouter` resolves the assigned model for the purpose. If that model is

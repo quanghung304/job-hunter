@@ -2,19 +2,26 @@
 
 Two kinds of configuration:
 
-1. **`config/profile.yaml`** — who I am and what I want. Git-ignored. Template:
+1. **`config/profile.yaml`** — who I am and what I want. Git-ignored. Edited by hand or from the
+   Profile page (ADR-0012). Template:
    `config/profile.example.yaml`. Loaded by `profile` module; path from `app.profile.path`.
 2. **`application.yml` + environment variables** — how the app runs.
 3. **`config/companies.yaml`** — company boards for ATS collectors (committed).
 
 Invalid config fails startup with a message naming the field.
 
-For `profile.yaml` (loaded once at startup by `YamlProfileProvider`): every problem is listed
+For `profile.yaml` (loaded at startup by `YamlProfileProvider` and reloaded after a save from the
+Profile page): every problem is listed
 with its path (e.g. `candidate.headline: must not be blank`, `prefilter.titleInclude[1]:
 invalid regex`); unknown keys are rejected to catch typos, except inside `tracks` items and
 the removed `notify.alertMinScore` (instant alerts dropped, ADR-0010), which is ignored so older
 profile files still load;
 an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the default applies.
+
+Saving from the Profile page (T-027) validates with the same rules, writes a temp file and moves it
+over `profile.yaml`, keeps the previous file as `config/profile.yaml.bak`, and writes the YAML
+in canonical form (§1 key order): comments and the key order of a hand-edited file
+are not kept. `id` cannot be changed from the page. Hand edits still need a restart.
 
 ## 1. `profile.yaml`
 
@@ -34,10 +41,10 @@ an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the defa
 | `candidate.skills.learning` | list | no | Interested, little experience |
 | `candidate.domains` | list | no | e.g. banking, healthcare |
 | `preferences.employmentTypes` | list of `FULL_TIME`, `PART_TIME`, `CONTRACT`, `FREELANCE`, `INTERNSHIP` | yes | Acceptable types |
-| `preferences.maxHoursPerWeek` | int | no | Jobs explicitly requiring more are ineligible |
+| `preferences.maxHoursPerWeek` | int | no | Jobs explicitly requiring more fail the `HOURS` check |
 | `preferences.acceptRegions` | list | yes | Region tokens a job may be restricted to and still be OK, see §1.1 |
 | `preferences.timezone.maxOffsetDiffHours` | int | no (6) | Max difference between my tz and a required tz window |
-| `preferences.minSalary` | `{amount, currency, period}` | no | Soft: lowers score, never ineligible |
+| `preferences.minSalary` | `{amount, currency, period}` | no | Soft: lowers score, never fails a check |
 | `preferences.seniority` | list of `JUNIOR`, `MID`, `SENIOR`, `LEAD`, `PRINCIPAL` | yes | Acceptable levels |
 | `preferences.excludeCompanies` | list | no | Matched on `company_key` |
 | `prefilter.maxAgeDays` | int | no (21) | Drop postings older than this |
@@ -53,8 +60,8 @@ Used by extraction (`allowedRegions`) and by `acceptRegions`:
 `WORLDWIDE`, `EU`, `EEA`, `EUROPE`, `EMEA`, `AMERICAS`, `NORTH_AMERICA`, `LATAM`, `APAC`,
 `ASIA`, or an ISO-3166 alpha-2 country code (`IT`, `DE`, `US`, `VN`, …).
 
-Eligibility region rule (implemented in `enrich`, tested with a table):
-a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or contains
+Eligibility region check (implemented in `enrich`, tested with a table): the `REGION` check is
+UNKNOWN when `allowedRegions` is empty/unknown, and OK if it contains
 `WORLDWIDE`, or any token in `acceptRegions`, or a region that contains
 `candidate.residenceCountry` (built-in map: `IT` ∈ `EU`, `EEA`, `EUROPE`, `EMEA`).
 
@@ -78,7 +85,7 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.llm.registry-path` | `../config/llm.yaml` | Model registry, see §5 |
 | `app.llm.force-model` | — | If set (e.g. `fake`), overrides every assignment; used by tests and `make e2e` |
 | `app.llm.extract-prompt` | `extract-v1` | File name in `docs/ai/prompts/` |
-| `app.llm.score-prompt` | `score-v1` | |
+| `app.llm.score-prompt` | `score-v1` | `score-v2` from T-025 (eligibility checks instead of a verdict, ADR-0011) |
 | `app.llm.max-calls-per-run` | `150` | Budget guard (all models): HTTP attempts per owner action; a bulk action is one action (ADR-0010) |
 | `app.llm.monthly-budget-usd` | `5.00` | Hard stop for **PAID** models when estimated month cost reaches it |
 | `app.llm.allow-paid-calls` | `false` (env `LLM_ALLOW_PAID_CALLS`) | Owner's consent to PAID models (ADR-0009). While false, no request is ever sent to a PAID model (assignment, fallback, eval, "Test"); the router answers `PAID_NOT_ALLOWED` |

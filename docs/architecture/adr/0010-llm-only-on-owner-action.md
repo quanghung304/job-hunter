@@ -1,6 +1,6 @@
 # ADR-0010: LLM steps run only when the owner asks, one job at a time
 
-Status: Accepted · Date: 2026-10-18 · Amends: ADR-0004 (trigger only; the steps are unchanged)
+Status: Accepted · Date: 2026-10-18 · Amends: ADR-0004 (trigger only; the steps are unchanged) · Score condition amended by ADR-0011
 
 ## Context
 
@@ -14,7 +14,8 @@ tokens, and would use up free daily quotas (ADR-0008) before the owner had read 
 2. **Analyze**: the owner presses "Analyze" on one job (`POST /api/jobs/{id}/analyze`). At most
    one EXTRACT call, then eligibility in Java (no LLM).
 3. **Score**: the owner presses "Score" on one job (`POST /api/jobs/{id}/score`). One SCORE call,
-   only if the job is analyzed and ELIGIBLE or UNCERTAIN.
+   only if the job is analyzed and the owner has not marked it Not eligible (ADR-0011; was:
+   ELIGIBLE or UNCERTAIN).
 4. Bulk LLM actions are admin-only. The admin selects jobs in a table (max 200) and runs bulk
    Analyze or bulk Score. "Re-score active jobs" and "Retry failed" are the other two. Each one
    shows the job count and the estimated calls before it runs (dry run first).
