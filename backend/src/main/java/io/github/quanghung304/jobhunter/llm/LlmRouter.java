@@ -103,6 +103,25 @@ public class LlmRouter {
         return new ModelChoice(model.id(), model.label(), model.tier(), properties.allowPaidCalls());
     }
 
+    /**
+     * Why no model could serve {@code purpose} now, checked without a call (pre-check of the bulk
+     * actions): empty when the assigned model, or a fallback the router may use, is usable.
+     */
+    public Optional<LlmUnavailable.Reason> availability(LlmPurpose purpose) {
+        List<RegisteredModel> candidates = properties.forced()
+                ? List.of(registry.get(properties.forceModel()))
+                : candidates(assignments.current(purpose));
+        List<String> skipped = new ArrayList<>();
+        for (RegisteredModel model : candidates) {
+            Optional<String> unusable = unusable(model);
+            if (unusable.isEmpty()) {
+                return Optional.empty();
+            }
+            skipped.add(model.id() + ": " + unusable.get());
+        }
+        return Optional.of(unavailableReason(skipped));
+    }
+
     /** Assigned model first, then allowed fallbacks when auto-fallback is on. */
     List<RegisteredModel> candidates(Assignment assignment) {
         List<RegisteredModel> result = new ArrayList<>();
@@ -141,14 +160,18 @@ public class LlmRouter {
             }
             skipped.add(model.id() + ": " + quota.status(model).status());
         }
-        LlmUnavailable.Reason reason = LlmUnavailable.Reason.NO_USABLE_MODEL;
-        if (!skipped.isEmpty() && skipped.stream().allMatch(s -> s.endsWith(PAID_MARK))) {
-            reason = LlmUnavailable.Reason.PAID_NOT_ALLOWED;
-        } else if (!skipped.isEmpty() && skipped.stream().allMatch(s -> s.endsWith(BUDGET_MARK))) {
-            reason = LlmUnavailable.Reason.MONTHLY_BUDGET;
-        }
-        return new LlmUnavailable<>(purpose, reason,
+        return new LlmUnavailable<>(purpose, unavailableReason(skipped),
                 skipped.isEmpty() ? "no model configured" : String.join("; ", skipped));
+    }
+
+    private static LlmUnavailable.Reason unavailableReason(List<String> skipped) {
+        if (!skipped.isEmpty() && skipped.stream().allMatch(s -> s.endsWith(PAID_MARK))) {
+            return LlmUnavailable.Reason.PAID_NOT_ALLOWED;
+        }
+        if (!skipped.isEmpty() && skipped.stream().allMatch(s -> s.endsWith(BUDGET_MARK))) {
+            return LlmUnavailable.Reason.MONTHLY_BUDGET;
+        }
+        return LlmUnavailable.Reason.NO_USABLE_MODEL;
     }
 
     private Optional<String> unusable(RegisteredModel model) {

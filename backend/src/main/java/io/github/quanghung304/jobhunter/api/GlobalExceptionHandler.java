@@ -1,6 +1,7 @@
 package io.github.quanghung304.jobhunter.api;
 
 import io.github.quanghung304.jobhunter.common.JobHunterException;
+import io.github.quanghung304.jobhunter.llm.LlmPausedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -26,17 +27,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     static final String CODE = "code";
     static final String VALIDATION_FAILED = "VALIDATION_FAILED";
     static final String INTERNAL_ERROR = "INTERNAL_ERROR";
+    /** Extra property of {@code LLM_PAUSED}: the paused purpose (EXTRACT or SCORE). */
+    static final String PURPOSE = "purpose";
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(JobHunterException.class)
     ResponseEntity<ProblemDetail> handleJobHunter(JobHunterException ex) {
         var status = HttpStatus.valueOf(ex.httpStatus());
-        if (status.is5xxServerError()) {
+        if (status.is5xxServerError() && status != HttpStatus.NOT_IMPLEMENTED) {
             log.error("Request failed: code={}", ex.code(), ex);
         }
         var problem = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
         problem.setProperty(CODE, ex.code());
+        if (ex instanceof LlmPausedException paused) {
+            problem.setProperty(PURPOSE, paused.purpose().name());
+        }
         return ResponseEntity.status(status).body(problem);
     }
 

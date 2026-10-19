@@ -20,6 +20,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["companies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/eval/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export eval candidates for labeling (T-016)
+         * @description Not implemented yet: 501 NOT_IMPLEMENTED until T-016.
+         */
+        post: operations["exportEval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/jobs/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Analyze of selected jobs (ADR-0010)
+         * @description dryRun=true answers 200 with the counts; dryRun=false starts the run (202). Errors: 400 TOO_MANY_JOBS, 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.
+         */
+        post: operations["analyzeJobs"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/jobs/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Bulk Score of selected jobs (ADR-0010)
+         * @description dryRun=true answers 200 with the counts, model and cost; dryRun=false starts the run (202). Errors: 400 TOO_MANY_JOBS, 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.
+         */
+        post: operations["scoreJobs"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/jobs/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retry failed LLM work for one job
+         * @description Resets the attempts for the current prompt version and runs Analyze or Score in the background. 404 JOB_NOT_FOUND.
+         */
+        post: operations["retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/pipeline/run": {
         parameters: {
             query?: never;
@@ -30,6 +142,138 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["runPipeline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/rescore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-score active jobs (ADR-0010)
+         * @description Always run the dry run first and execute only after the owner confirms the count. Errors: 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.
+         */
+        post: operations["rescore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The board of the current profile
+         * @description With no filter the default view applies: status NEW or SHORTLISTED, prefilter PASS, eligibility not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.
+         */
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner action Analyze (ADR-0010)
+         * @description Extraction (at most one EXTRACT call, none when stored) and eligibility. A failed attempt answers 200 with analysisStage FAILED.
+         */
+        post: operations["analyze"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateNotes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Owner action Score (ADR-0010)
+         * @description One SCORE call for an analyzed ELIGIBLE or UNCERTAIN job; none when already scored.
+         */
+        post: operations["score"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the tracking status
+         * @description 409 ILLEGAL_STATUS_TRANSITION when the status machine does not allow it.
+         */
+        post: operations["changeStatus"];
         delete?: never;
         options?: never;
         head?: never;
@@ -52,12 +296,195 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         AcceptedResponse: {
             accepted: boolean;
+        };
+        AdminDailyLlmUsage: {
+            /** Format: int64 */
+            calls: number;
+            costUsd: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            inputTokens: number;
+            /** Format: int64 */
+            outputTokens: number;
+        };
+        AdminFailedJob: {
+            /** Format: int32 */
+            attempts: number;
+            /** Format: int64 */
+            jobId: number;
+            lastError: string | null;
+            title: string;
+        };
+        AdminFailures: {
+            extractions: components["schemas"]["AdminFailedJob"][];
+            scorings: components["schemas"]["AdminFailedJob"][];
+        };
+        AdminKpis: {
+            /** Format: int64 */
+            activeJobs: number;
+            /**
+             * Format: int32
+             * @description Enabled company boards
+             */
+            companyBoardCount: number;
+            /** Format: int64 */
+            newToday: number;
+            /** Format: int64 */
+            prefilterRejectedToday: number;
+            /** Format: int64 */
+            scoredToday: number;
+            /**
+             * Format: int32
+             * @description Enabled sources
+             */
+            sourceCount: number;
+            /**
+             * Format: int64
+             * @description Jobs in the board's default view
+             */
+            toReview: number;
+        };
+        AdminLlmUsage: {
+            /** Format: int64 */
+            callsToday: number;
+            /** @description Last 14 local days, oldest first */
+            daily: components["schemas"]["AdminDailyLlmUsage"][];
+            /** @description PAID cost of the current UTC month */
+            monthToDateUsd: number;
+            monthlyBudgetUsd: number;
+        };
+        AdminOverviewResponse: {
+            failures: components["schemas"]["AdminFailures"];
+            kpis: components["schemas"]["AdminKpis"];
+            llmAlerts: components["schemas"]["LlmAlertResponse"][];
+            llmUsage: components["schemas"]["AdminLlmUsage"];
+            /** @description Pipeline run or bulk LLM action in progress; null when idle */
+            pipelineProgress: components["schemas"]["AdminProgress"] | null;
+            /** @description Newest first, at most 20 */
+            pipelineReports: components["schemas"]["PipelineReportResponse"][];
+            pipelineRunning: boolean;
+            schedule: components["schemas"]["AdminSchedule"];
+            sources: components["schemas"]["AdminSourceStatus"][];
+        };
+        AdminProgress: {
+            /** Format: int32 */
+            percent: number;
+            /** @enum {string} */
+            stage: "COLLECT" | "PREFILTER" | "EXPIRE" | "ANALYZE" | "SCORE";
+            text: string;
+        };
+        AdminSchedule: {
+            /** Format: date-time */
+            nextDigestAt: string | null;
+            /** Format: date-time */
+            nextRunAt: string | null;
+            /** @example Europe/Rome */
+            zone: string;
+        };
+        AdminSourceLastRun: {
+            error: string | null;
+            /** Format: int32 */
+            fetched: number;
+            /** Format: int32 */
+            newJobs: number;
+            /** Format: int32 */
+            newRaw: number;
+            /** Format: date-time */
+            startedAt: string;
+            /** @enum {string|null} */
+            status: "SUCCESS" | "PARTIAL" | "FAILED" | null;
+        };
+        AdminSourceStatus: {
+            code: string;
+            enabled: boolean;
+            lastRun: components["schemas"]["AdminSourceLastRun"] | null;
+            /** Format: date-time */
+            lastSuccessAt: string | null;
+            name: string;
+        };
+        BulkAnalyzeResponse: {
+            /**
+             * Format: int32
+             * @description One EXTRACT call per job to analyze
+             */
+            estimatedCalls: number;
+            /** @description 0 for FREE/LOCAL; null for a PAID model without cost history */
+            estimatedCostUsd: number | null;
+            model: components["schemas"]["ModelChoiceResponse"];
+            /** Format: int32 */
+            selected: number;
+            skipped: components["schemas"]["BulkAnalyzeSkipped"];
+            /** Format: int32 */
+            willAnalyze: number;
+        };
+        BulkAnalyzeSkipped: {
+            /** Format: int32 */
+            alreadyAnalyzed: number;
+            /** Format: int32 */
+            expired: number;
+            /** Format: int32 */
+            failedPermanently: number;
+            /** Format: int32 */
+            notFound: number;
+            /** Format: int32 */
+            prefilterRejected: number;
+        };
+        BulkJobsRequest: {
+            dryRun: boolean;
+            /** @description At most 200 ids */
+            jobIds: number[];
+        };
+        BulkScoreResponse: {
+            /**
+             * Format: int32
+             * @description One SCORE call per job to score
+             */
+            estimatedCalls: number;
+            /** @description 0 for FREE/LOCAL; null for a PAID model without cost history */
+            estimatedCostUsd: number | null;
+            model: components["schemas"]["ModelChoiceResponse"];
+            /** Format: int32 */
+            selected: number;
+            skipped: components["schemas"]["BulkScoreSkipped"];
+            /** Format: int32 */
+            willScore: number;
+        };
+        BulkScoreSkipped: {
+            /** Format: int32 */
+            alreadyScored: number;
+            /** Format: int32 */
+            expired: number;
+            /** Format: int32 */
+            failedPermanently: number;
+            /** Format: int32 */
+            ineligible: number;
+            /** Format: int32 */
+            notAnalyzed: number;
+            /** Format: int32 */
+            notFound: number;
         };
         CollectRunResponse: {
             /** @enum {string} */
@@ -77,18 +504,332 @@ export interface components {
             updatedJobs: number;
             warnings: string[];
         };
-        MetaResponse: {
-            eligibilities: string[];
-            employmentTypes: string[];
-            profileId: string;
+        CompanyResponse: {
+            /**
+             * Format: int64
+             * @description ACTIVE jobs whose company matches the name
+             */
+            activeJobs: number;
+            /** @enum {string} */
+            ats: "GREENHOUSE" | "LEVER" | "LEVER_EU" | "ASHBY";
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string|null} */
+            lastCheckStatus: "OK" | "NOT_FOUND" | "ERROR" | null;
+            /** Format: date-time */
+            lastCheckedAt: string | null;
+            name: string;
+            slug: string;
+        };
+        DryRunRequest: {
+            dryRun: boolean;
+        };
+        HoursPerWeek: {
+            /** Format: int32 */
+            max?: number;
+            /** Format: int32 */
+            min?: number;
+        };
+        JobAttributes: {
+            allowedRegions?: string[];
+            /** @enum {string} */
+            confidence: "HIGH" | "MEDIUM" | "LOW";
+            employmentTypes?: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+            hoursPerWeek?: components["schemas"]["HoursPerWeek"];
+            isAgencyOrReposting: boolean;
+            isScamSignal: boolean;
+            /** Format: int32 */
+            minYearsExperience?: number;
+            niceToHaveSkills?: string[];
+            regionEvidence?: string;
+            /** @enum {string} */
+            remoteType: "FULLY_REMOTE" | "REMOTE_RESTRICTED" | "HYBRID" | "ONSITE" | "UNKNOWN";
+            requiredLanguages?: components["schemas"]["RequiredLanguage"][];
+            requiredSkills?: string[];
+            roleSummary: string;
+            salary?: components["schemas"]["Salary"];
+            /** @enum {string} */
+            seniority?: "JUNIOR" | "MID" | "SENIOR" | "LEAD" | "PRINCIPAL";
+            timezoneRequirement?: components["schemas"]["TimezoneRequirement"];
+            workAuthorization?: string;
+        };
+        JobDetailResponse: {
+            allowedRegions: string[];
+            /** @description Statuses the UI may offer */
+            allowedTransitions: ("NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN")[];
+            /** @enum {string} */
+            analysisStage: "NOT_ANALYZED" | "ANALYZED" | "SCORED" | "FAILED";
+            applyAdvice: string | null;
+            applyUrl: string | null;
+            company: string;
+            description: string;
+            /** @enum {string|null} */
+            eligibility: "ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE" | null;
+            eligibilityReasons: string[];
+            employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+            /** @description LLM-extracted attributes (scoring-spec §3); null until analyzed */
+            extraction: components["schemas"]["JobAttributes"] | null;
+            /** Format: date-time */
+            firstSeenAt: string;
+            gaps: string[];
+            history: components["schemas"]["StatusHistoryEntry"][];
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            jobStatus: "ACTIVE" | "EXPIRED";
+            locationText: string | null;
+            notes: string | null;
+            /** Format: date-time */
+            postedAt: string | null;
+            postings: components["schemas"]["JobPosting"][];
+            prefilterReasons: string[];
+            redFlags: string[];
+            /** @enum {string|null} */
+            remoteType: "FULLY_REMOTE" | "REMOTE_RESTRICTED" | "HYBRID" | "ONSITE" | "UNKNOWN" | null;
+            salary: components["schemas"]["JobSalary"] | null;
+            /** Format: int32 */
+            score: number | null;
+            /** @enum {string} */
+            scoreBand: "EXCELLENT" | "GOOD" | "MAYBE" | "WEAK" | "NONE";
+            scoreBreakdown: components["schemas"]["ScoreBreakdown"] | null;
             sources: components["schemas"]["SourceSummaryResponse"][];
-            statuses: string[];
+            /** @enum {string} */
+            status: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+            strengths: string[];
+            summary: string | null;
+            tags: string[];
+            title: string;
+        };
+        JobPageResponse: {
+            items: components["schemas"]["JobSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalItems: number;
+            /** Format: int32 */
+            totalPages: number;
+        };
+        JobPosting: {
+            /** Format: date-time */
+            firstSeenAt: string;
+            /** Format: date-time */
+            lastSeenAt: string;
+            sourceCode: string;
+            sourceName: string;
+            url: string;
+        };
+        JobSalary: {
+            currency: string | null;
+            max: number | null;
+            min: number | null;
+            /** @enum {string|null} */
+            period: "HOUR" | "MONTH" | "YEAR" | null;
+        };
+        JobSummaryResponse: {
+            allowedRegions: string[];
+            /** @enum {string} */
+            analysisStage: "NOT_ANALYZED" | "ANALYZED" | "SCORED" | "FAILED";
+            company: string;
+            /** @enum {string|null} */
+            eligibility: "ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE" | null;
+            employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+            /** Format: date-time */
+            firstSeenAt: string;
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            jobStatus: "ACTIVE" | "EXPIRED";
+            locationText: string | null;
+            /** Format: date-time */
+            postedAt: string | null;
+            /** @enum {string|null} */
+            remoteType: "FULLY_REMOTE" | "REMOTE_RESTRICTED" | "HYBRID" | "ONSITE" | "UNKNOWN" | null;
+            /** Format: int32 */
+            score: number | null;
+            /** @enum {string} */
+            scoreBand: "EXCELLENT" | "GOOD" | "MAYBE" | "WEAK" | "NONE";
+            sources: components["schemas"]["SourceSummaryResponse"][];
+            /** @enum {string} */
+            status: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+            summary: string | null;
+            title: string;
+        };
+        LlmAlertResponse: {
+            detail: string | null;
+            modelId: string;
+            modelLabel: string;
+            /** @description Analyze/Score for this purpose answer LLM_PAUSED */
+            paused: boolean;
+            /** @enum {string} */
+            purpose: "EXTRACT" | "SCORE" | "EVAL" | "TEST";
+            /** @enum {string} */
+            status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
+            suggestions: components["schemas"]["LlmModelSuggestion"][];
+            /** Format: date-time */
+            until: string | null;
+        };
+        LlmModelSuggestion: {
+            label: string;
+            modelId: string;
+            /** @enum {string} */
+            status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
+            /** @enum {string} */
+            tier: "FREE" | "PAID" | "LOCAL";
+        };
+        MetaResponse: {
+            eligibilities: ("ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE")[];
+            employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+            profileId: string;
+            /** @description Registered sources, by code */
+            sources: components["schemas"]["SourceSummaryResponse"][];
+            statuses: ("NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN")[];
             /** @enum {string} */
             summaryLanguage: "vi" | "en";
+        };
+        ModelChoiceResponse: {
+            label: string;
+            modelId: string;
+            paidCallsAllowed: boolean;
+            /** @enum {string} */
+            tier: "FREE" | "PAID" | "LOCAL";
+        };
+        NotesRequest: {
+            notes: string;
+        };
+        PipelineReportResponse: {
+            /** Format: int64 */
+            durationMs: number;
+            error: string | null;
+            /** Format: int32 */
+            expired: number;
+            /** Format: date-time */
+            finishedAt: string;
+            /** Format: int64 */
+            llmCalls: number;
+            /** Format: int32 */
+            newJobs: number;
+            /**
+             * Format: int32
+             * @description ACTIVE prefilter-PASS jobs waiting for Analyze
+             */
+            notAnalyzed: number;
+            /** Format: int32 */
+            prefilterEvaluated: number;
+            /** Format: int32 */
+            prefilterPassed: number;
+            /** Format: int32 */
+            prefilterRejected: number;
+            /**
+             * Format: int32
+             * @description Rows re-evaluated after a profile change
+             */
+            reassessed: number;
+            /** Format: int64 */
+            runNumber: number;
+            sources: components["schemas"]["PipelineSourceRun"][];
+            /** Format: date-time */
+            startedAt: string;
+            /** @enum {string} */
+            status: "SUCCESS" | "PARTIAL" | "FAILED";
+            /** @enum {string} */
+            trigger: "SCHEDULED" | "CATCH_UP" | "MANUAL";
+        };
+        PipelineSourceRun: {
+            /** Format: int32 */
+            fetched: number;
+            /** @description Skip reason or error */
+            message: string | null;
+            /** Format: int32 */
+            newJobs: number;
+            /** Format: int32 */
+            newRaw: number;
+            sourceCode: string;
+            /** @enum {string|null} */
+            status: "SUCCESS" | "PARTIAL" | "FAILED" | null;
+            /** Format: int32 */
+            updatedJobs: number;
+        };
+        RequiredLanguage: {
+            code: string;
+            /** @enum {string} */
+            level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "NATIVE";
+        };
+        RescoreResponse: {
+            /** Format: int32 */
+            estimatedCalls: number;
+            /** @description 0 for FREE/LOCAL; for PAID the 30-day average cost × calls, null without history */
+            estimatedCostUsd: number | null;
+            /** Format: int32 */
+            jobCount: number;
+            model: components["schemas"]["ModelChoiceResponse"];
+        };
+        RetryRequest: {
+            /** @enum {string} */
+            purpose: "EXTRACT" | "SCORE";
+        };
+        Salary: {
+            currency?: string;
+            max?: number;
+            min?: number;
+            /** @enum {string} */
+            period?: "HOUR" | "MONTH" | "YEAR";
+        };
+        ScoreBreakdown: {
+            /** Format: int32 */
+            arrangement: number;
+            /** Format: int32 */
+            domain: number;
+            /** Format: int32 */
+            experience: number;
+            /** Format: int32 */
+            other: number;
+            /** Format: int32 */
+            skills: number;
         };
         SourceSummaryResponse: {
             code: string;
             name: string;
+        };
+        StatusChangeRequest: {
+            note?: string | null;
+            /** @enum {string} */
+            to: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+        };
+        StatusHistoryEntry: {
+            /** Format: date-time */
+            at: string;
+            /** @enum {string} */
+            from: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+            note: string | null;
+            /** @enum {string} */
+            to: "NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN";
+        };
+        StatusLastRun: {
+            /** Format: int32 */
+            newJobs: number;
+            /** Format: int64 */
+            scored: number;
+            /** Format: date-time */
+            startedAt: string;
+            /** @enum {string} */
+            status: "SUCCESS" | "PARTIAL" | "FAILED";
+        };
+        StatusResponse: {
+            /** @description Newest pipeline run; null before the first */
+            lastRun: components["schemas"]["StatusLastRun"] | null;
+            llmAlerts: components["schemas"]["LlmAlertResponse"][];
+            pipelineRunning: boolean;
+        };
+        TimezoneRequirement: {
+            /** Format: int32 */
+            maxUtcOffset: number;
+            /** Format: int32 */
+            minUtcOffset: number;
+            /** Format: int32 */
+            overlapHours?: number;
         };
     };
     responses: never;
@@ -121,6 +862,158 @@ export interface operations {
             };
         };
     };
+    companies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyResponse"][];
+                };
+            };
+        };
+    };
+    exportEval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Not implemented yet */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
+                };
+            };
+        };
+    };
+    analyzeJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkJobsRequest"];
+            };
+        };
+        responses: {
+            /** @description Dry run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkAnalyzeResponse"];
+                };
+            };
+            /** @description Run started; progress in the overview (stage ANALYZE) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+        };
+    };
+    scoreJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkJobsRequest"];
+            };
+        };
+        responses: {
+            /** @description Dry run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkScoreResponse"];
+                };
+            };
+            /** @description Run started; progress in the overview (stage SCORE) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+        };
+    };
+    retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetryRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+        };
+    };
+    overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverviewResponse"];
+                };
+            };
+        };
+    };
     runPipeline: {
         parameters: {
             query?: never;
@@ -141,6 +1034,190 @@ export interface operations {
             };
         };
     };
+    rescore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DryRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Dry run */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RescoreResponse"];
+                };
+            };
+            /** @description Run started; progress in the overview (stage SCORE) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query?: {
+                status?: ("NEW" | "SHORTLISTED" | "DISMISSED" | "APPLIED" | "INTERVIEWING" | "OFFER" | "REJECTED" | "WITHDRAWN")[];
+                eligibility?: ("ELIGIBLE" | "UNCERTAIN" | "INELIGIBLE")[];
+                minScore?: number;
+                maxScore?: number;
+                source?: string[];
+                employmentType?: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+                postedWithinDays?: number;
+                /** @description Text in title or company (case-insensitive) */
+                q?: string;
+                includeExpired?: boolean;
+                analysisStage?: ("NOT_ANALYZED" | "ANALYZED" | "SCORED" | "FAILED")[];
+                sort?: "score" | "posted";
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobPageResponse"];
+                };
+            };
+        };
+    };
+    detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetailResponse"];
+                };
+            };
+        };
+    };
+    analyze: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetailResponse"];
+                };
+            };
+        };
+    };
+    updateNotes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotesRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    score: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobDetailResponse"];
+                };
+            };
+        };
+    };
+    changeStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobSummaryResponse"];
+                };
+            };
+        };
+    };
     meta: {
         parameters: {
             query?: never;
@@ -157,6 +1234,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusResponse"];
                 };
             };
         };

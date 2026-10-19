@@ -42,16 +42,16 @@ API contract: `api-spec.md`. Frontend: `frontend.md`. Decision: ADR-0007.
 
 | Package | Responsibility | May depend on |
 |---|---|---|
-| `common` | Clock, `Sleeper`, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`), the `RunCompleted` event (pipeline → notify) | — |
+| `common` | Clock, `Sleeper`, ids, text utils (HTML → text, normalization), errors, shared value enums (`common.model`: `EmploymentType`, `Seniority`, `SalaryPeriod`, `LanguageLevel`, `RemoteHint`), the `RunCompleted` event (pipeline → notify), `ProgressBoard` (stage + counters of the running pipeline or bulk LLM action, read by the admin overview) | — |
 | `profile` | Load and validate `profile.yaml`; `ProfileProvider`, `Profile` record | common |
-| `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging | common |
+| `source` | `JobCollector` interface, one sub-package per source, `CollectorRegistry`, `collector_run` logging, `SourceCatalog` (display names), `CompanyService` (read-only company boards) | common |
 | `ingest` | Store `raw_posting`, compute fingerprint, upsert `job`, link sources, expiry; `JobQueryService` returns read-only `JobView`s to other modules | common, source (DTOs only) |
-| `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; publishes `LlmModelStatusChanged` events (ADR-0008) | common |
+| `llm` | `LlmClient` interface; `AnthropicLlmClient`, `OpenAiCompatibleLlmClient`, `FakeLlmClient`; `ModelRegistry` (`config/llm.yaml`); `LlmRouter` (purpose → assigned model → client, fallback); `QuotaTracker` + `llm_model_state`; `llm_assignment`; prompt loading; `llm_call` log; budget guard; `LlmUsageService` (read-only usage statistics); publishes `LlmModelStatusChanged` events (ADR-0008) | common |
 | `enrich` | Prefilter rules, extraction (LLM), eligibility evaluator; owns `job_assessment` via `AssessmentService` | common, profile, llm, ingest (read) |
-| `scoring` | Scoring (LLM, owner action); writes scores through `AssessmentService` | common, profile, ingest (read), llm, enrich |
-| `tracking` | `job_tracking` status machine, notes, history; `JobBoardQuery` (read-only SQL joining job + assessment + tracking for the UI) | common, profile, ingest (read), enrich (read) |
+| `scoring` | Scoring (LLM, owner action); writes scores through `AssessmentService`; `BulkActionRunner` runs the admin bulk actions (Analyze, Score, Re-score, Retry) in the background after their pre-checks | common, profile, ingest (read), llm, enrich |
+| `tracking` | `job_tracking` status machine, `TrackingService` (status changes, notes, history); `JobBoardQuery` (read-only SQL joining job + assessment + extraction + tracking of one profile for the UI); `JobDetailQuery`; `ScoreBand` | common, profile, ingest (read), enrich (read) |
 | `notify` | Telegram client, digest builder, LLM quota alerts (listens to `LlmModelStatusChanged`), sent-notification log | common, profile, tracking (read), llm (events, read) |
-| `pipeline` | `PipelineOrchestrator` (+ Postgres advisory lock, last 20 `PipelineReport`s in memory), scheduler and startup catch-up, admin trigger; the only place that calls modules in sequence; never reaches the LLM services (ArchUnit) | all above |
+| `pipeline` | `PipelineOrchestrator` (+ Postgres advisory lock, last 20 `PipelineReport`s in memory), scheduler and startup catch-up, `PipelineSchedule` (next fire times), admin trigger; the only place that calls modules in sequence; never reaches the LLM services (ArchUnit) | all above |
 | `api` | REST controllers (`/api/**`), request/response DTOs, `ProblemDetail` error mapping, OpenAPI config, SPA fallback controller | tracking, scoring, enrich, ingest, pipeline, source, llm (usage stats), profile |
 | `eval` | Offline eval runner over labeled jobs | enrich, scoring, llm |
 

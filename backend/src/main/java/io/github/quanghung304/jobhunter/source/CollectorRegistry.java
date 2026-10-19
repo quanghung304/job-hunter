@@ -38,6 +38,16 @@ public class CollectorRegistry {
                 .toList();
     }
 
+    /** Codes of all registered collectors, sorted. */
+    public List<String> allCodes() {
+        return byCode.keySet().stream().sorted().toList();
+    }
+
+    public boolean isEnabled(String sourceCode) {
+        return byCode.containsKey(sourceCode)
+                && properties.source(sourceCode).map(SourcesProperties.Source::enabled).orElse(false);
+    }
+
     /** Any registered collector, enabled or not (admin "collect one source"). */
     public Optional<JobCollector> find(String sourceCode) {
         return Optional.ofNullable(byCode.get(sourceCode));

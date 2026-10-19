@@ -2,6 +2,7 @@ package io.github.quanghung304.jobhunter.scoring;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.quanghung304.jobhunter.common.ProgressListener;
 import io.github.quanghung304.jobhunter.enrich.AssessmentService;
 import io.github.quanghung304.jobhunter.enrich.AssessmentView;
 import io.github.quanghung304.jobhunter.enrich.Eligibility;
@@ -112,6 +113,12 @@ public class ScoringService {
      * model and the estimated cost; the real run stops at the first pause or budget stop.
      */
     public BulkScoreReport scoreSelected(List<Long> jobIds, Profile profile, boolean dryRun) {
+        return scoreSelected(jobIds, profile, dryRun, ProgressListener.NONE);
+    }
+
+    /** As {@link #scoreSelected(List, Profile, boolean)}, reporting "jobs done of jobs to score". */
+    public BulkScoreReport scoreSelected(List<Long> jobIds, Profile profile, boolean dryRun,
+            ProgressListener progress) {
         List<Long> ids = List.copyOf(new LinkedHashSet<>(jobIds));
         if (ids.size() > MAX_BULK) {
             throw new TooManyJobsException(ids.size(), MAX_BULK);
@@ -137,7 +144,7 @@ public class ScoringService {
         if (!toScore.isEmpty() && model.blockedByConsent()) {
             throw new PaidCallsDisabledException(model);
         }
-        Run run = run(toScore, profile, false);
+        Run run = run(toScore, profile, false, progress);
         log.info("bulk score selected={} scored={} failed={} skipped={} stoppedBy={}", ids.size(), run.scored,
                 run.failed, skipped, run.stoppedBy);
         return new BulkScoreReport(false, ids.size(), toScore.size(), skipped, toScore.size(), model, cost,
@@ -150,6 +157,11 @@ public class ScoringService {
      * model change). Dry run first; the real run is refused for a PAID model without consent.
      */
     public RescorePlan rescoreActive(Profile profile, boolean dryRun) {
+        return rescoreActive(profile, dryRun, ProgressListener.NONE);
+    }
+
+    /** As {@link #rescoreActive(Profile, boolean)}, reporting "jobs done of jobs to score". */
+    public RescorePlan rescoreActive(Profile profile, boolean dryRun, ProgressListener progress) {
         List<Long> scored = assessments.scoredJobIds(profile.id());
         Map<Long, AssessmentView> rows = assessments.findAll(scored, profile.id());
         List<JobView> active = jobs.findAll(scored).stream()
@@ -164,17 +176,18 @@ public class ScoringService {
         if (!active.isEmpty() && model.blockedByConsent()) {
             throw new PaidCallsDisabledException(model);
         }
-        Run run = run(active, profile, true);
+        Run run = run(active, profile, true, progress);
         log.info("rescore active jobs={} scored={} failed={} stoppedBy={}", active.size(), run.scored, run.failed,
                 run.stoppedBy);
         return new RescorePlan(false, active.size(), active.size(), model, cost, run.scored, run.failed,
                 run.stoppedBy, run.notProcessed);
     }
 
-    private Run run(List<JobView> toScore, Profile profile, boolean rescore) {
+    private Run run(List<JobView> toScore, Profile profile, boolean rescore, ProgressListener progress) {
         budget.beginRun();
         Run run = new Run();
         for (int i = 0; i < toScore.size(); i++) {
+            progress.progress(i, toScore.size());
             ScoringResult result = score(toScore.get(i), profile, rescore);
             switch (result.outcome()) {
                 case SCORED, ALREADY_SCORED -> run.scored++;
@@ -189,6 +202,7 @@ public class ScoringService {
                 }
             }
         }
+        progress.progress(toScore.size(), toScore.size());
         return run;
     }
 

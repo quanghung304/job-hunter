@@ -22,6 +22,17 @@ public interface JobRepository extends JpaRepository<Job, Long> {
     @Query("select j.id from Job j where j.firstSeenAt >= :since order by j.id")
     List<Long> findIdsFirstSeenSince(@Param("since") Instant since);
 
+    long countByStatus(JobStatus status);
+
+    long countByFirstSeenAtGreaterThanEqual(Instant since);
+
+    /** ACTIVE jobs per company key, for the given keys. */
+    @Query("""
+            select j.companyKey, count(j) from Job j
+            where j.status = :status and j.companyKey in :keys
+            group by j.companyKey""")
+    List<Object[]> countByCompanyKeys(@Param("status") JobStatus status, @Param("keys") Collection<String> keys);
+
     /** Marks ACTIVE jobs last seen before {@code cutoff} as EXPIRED; returns the number changed. */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("update Job j set j.status = :expired where j.status = :active and j.lastSeenAt < :cutoff")

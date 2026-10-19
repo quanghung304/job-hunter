@@ -10,6 +10,30 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-18 — T-014 REST API for board, job detail and admin — DONE
+- `tracking`: `JobBoardQuery` (one SQL over job + profile's assessment + extraction + tracking; every filter,
+  default view, `score`/`posted` sorts, pages, `countDefaultView`), `JobDetailQuery`, `TrackingService`
+  (`changeStatus` via `TrackingStatusMachine` + history event, `updateNotes`), `AnalysisStage`, `ScoreBand`.
+- `api`: `JobController` (list, detail, status, analyze, score, notes), `MetaController` (+ `GET /api/status`),
+  `AdminController` (overview, bulk analyze/score, rescore, retry, companies, eval export 501), `AdminViews`
+  (read-only assembly), DTOs; `OpenApiConfig` rewrites nullable `$ref`s to `anyOf [$ref, null]` so the TS
+  types keep `| null`. openapi.json and schema.d.ts regenerated.
+- Support: `common.ProgressBoard` (pipeline publishes COLLECT/PREFILTER/EXPIRE, bulk actions ANALYZE/SCORE),
+  `scoring.BulkActionRunner` (pre-checks then one background thread), `LlmRouter.availability` (pause/budget
+  check without a call), `LlmUsageService`, `PipelineSchedule`, `SourceCatalog`, `CompanyService`, failure lists
+  and retry resets in enrich, `LlmPausedException`/`BudgetReachedException`.
+- Choices (api-spec, overview, config-spec updated): any board filter replaces the default view; `kpis.alertsToday`
+  removed (no instant alerts, ADR-0010); bulk analyze dry run also names the EXTRACT model + cost and a real run is
+  refused for a PAID model without consent (`PAID_CALLS_DISABLED`), like bulk score; `LLM_PAUSED` carries
+  `purpose` (full `LlmAlert` in T-022); `status.lastRun.scored` = jobs scored since that run started; overview
+  sources gained `lastSuccessAt`; status note ≤ 2 000 chars.
+- Open: `JobAttributes` (reused as `extraction`) has optional, not nullable, fields in the TS types; T-020 should
+  treat them as possibly null. `LlmAlert.purpose` enum lists all purposes until T-022.
+- Tests: `JobBoardQueryIT` (15), `JobDetailQueryIT` (4), `TrackingServiceIT` (5), `LlmUsageServiceIT` (2),
+  `JobControllerTest` (15), `AdminControllerTest` (14), `MetaControllerTest` (3), `BulkActionRunnerTest` (7),
+  `ScoreBandTest`, `ProgressBoardTest`, `PipelineScheduleTest`; `LlmRouterIT` covers `availability`.
+- Next: T-020 / T-021 (frontend) or T-015 (Telegram).
+
 ## 2026-10-18 — T-013 Pipeline orchestration, scheduling, expiry — DONE
 - `pipeline`: `PipelineOrchestrator` (`runOnce`, `startAsync` on one thread, last 20 reports,
   `isRunning`), `PipelineLock` (`pg_try_advisory_lock` on a held connection), `PipelineScheduler`

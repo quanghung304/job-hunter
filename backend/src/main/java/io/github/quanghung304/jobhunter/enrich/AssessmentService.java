@@ -166,6 +166,49 @@ public class AssessmentService {
         return assessments.findScoredJobIds(profileId, scorePromptVersion);
     }
 
+    /** Unscored rows of this profile whose last scoring attempt failed (admin "Failed LLM work"). */
+    @Transactional(readOnly = true)
+    public List<FailedWork> failedScorings(String profileId) {
+        return assessments.findByProfileIdAndScorePromptVersionAndStatusAndScoreIsNullOrderByJobId(profileId,
+                        scorePromptVersion, AssessmentStatus.FAILED).stream()
+                .map(row -> new FailedWork(row.getJobId(), row.getAttempts()))
+                .toList();
+    }
+
+    /**
+     * Admin "Retry" of a failed scoring: attempts back to 0 and status PENDING, so the next Score
+     * calls the LLM again. A scored row is left alone.
+     *
+     * @return whether a row was reset
+     */
+    @Transactional
+    public boolean resetScoreAttempts(long jobId, String profileId) {
+        return assessments.findByJobIdAndProfileIdAndScorePromptVersion(jobId, profileId, scorePromptVersion)
+                .filter(row -> row.getScore() == null && row.getStatus() == AssessmentStatus.FAILED)
+                .map(row -> {
+                    row.setAttempts(0);
+                    row.setStatus(AssessmentStatus.PENDING);
+                    row.setUpdatedAt(clock.instant());
+                    assessments.save(row);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    /** Rows of this profile first prefiltered at or after {@code since} with result REJECT. */
+    @Transactional(readOnly = true)
+    public long countPrefilterRejectedSince(String profileId, Instant since) {
+        return assessments.countByProfileIdAndScorePromptVersionAndPrefilterResultAndCreatedAtGreaterThanEqual(
+                profileId, scorePromptVersion, PrefilterResult.REJECT, since);
+    }
+
+    /** Jobs of this profile with a score written at or after {@code since}. */
+    @Transactional(readOnly = true)
+    public long countScoredSince(String profileId, Instant since) {
+        return assessments.countByProfileIdAndScorePromptVersionAndScoreIsNotNullAndUpdatedAtGreaterThanEqual(
+                profileId, scorePromptVersion, since);
+    }
+
     public String scorePromptVersion() {
         return scorePromptVersion;
     }

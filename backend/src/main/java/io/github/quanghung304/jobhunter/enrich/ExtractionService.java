@@ -131,6 +131,30 @@ public class ExtractionService {
         return extractions.findByJobIdAndPromptVersion(jobId, promptVersion).map(row -> stored(row, false));
     }
 
+    /** Jobs whose extraction failed for the current prompt version (admin "Failed LLM work"). */
+    public List<FailedWork> failedJobs() {
+        return extractions.findByPromptVersionAndStatusOrderByJobId(promptVersion, ExtractionStatus.FAILED).stream()
+                .map(row -> new FailedWork(row.getJobId(), row.getAttempts()))
+                .toList();
+    }
+
+    /**
+     * Admin "Retry": a FAILED extraction of the current prompt version gets its attempts back, so
+     * the next Analyze calls the LLM again. An OK extraction is left alone.
+     *
+     * @return whether a failed row was reset
+     */
+    public boolean resetAttempts(long jobId) {
+        return extractions.findByJobIdAndPromptVersion(jobId, promptVersion)
+                .filter(row -> row.getStatus() == ExtractionStatus.FAILED)
+                .map(row -> {
+                    row.setAttempts(0);
+                    extractions.save(row);
+                    return true;
+                })
+                .orElse(false);
+    }
+
     /** Stored extraction status per job for the current prompt version; jobs without a row are absent. */
     public Map<Long, ExtractionStatus> statuses(Collection<Long> jobIds) {
         if (jobIds.isEmpty()) {

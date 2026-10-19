@@ -9,4 +9,6 @@ public interface RawPostingRepository extends JpaRepository<RawPosting, Long> {
     Optional<RawPosting> findBySourceCodeAndExternalId(String sourceCode, String externalId);
 
     List<RawPosting> findByJobId(Long jobId);
+
+    List<RawPosting> findByJobIdOrderByFirstSeenAtAscIdAsc(Long jobId);
 }

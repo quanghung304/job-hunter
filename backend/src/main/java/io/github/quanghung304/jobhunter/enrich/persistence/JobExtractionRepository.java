@@ -1,5 +1,6 @@
 package io.github.quanghung304.jobhunter.enrich.persistence;
 
+import io.github.quanghung304.jobhunter.enrich.ExtractionStatus;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -12,4 +13,6 @@ public interface JobExtractionRepository extends JpaRepository<JobExtraction, Lo
     List<JobExtraction> findByJobIdInAndPromptVersion(Collection<Long> jobIds, String promptVersion);
 
     List<JobExtraction> findByJobId(Long jobId);
+
+    List<JobExtraction> findByPromptVersionAndStatusOrderByJobId(String promptVersion, ExtractionStatus status);
 }

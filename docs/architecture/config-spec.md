@@ -85,7 +85,7 @@ a job is region-OK if its `allowedRegions` is empty/unknown (→ UNCERTAIN), or 
 | `app.llm.timeout` | `60s` | Per call; local models may need more (`app.llm.timeout-local`, default `180s`) |
 | `app.llm.fake.simulate` | — | Test-only behaviour of the fake model: `quota-after:<n>` answers a daily-quota 429 after n calls |
 | `app.notify.telegram.enabled` | `false` | |
-| `app.notify.digest-cron` | `0 30 8 * * *` | |
+| `app.notify.digest-cron` | `0 30 8 * * *` | In `app.pipeline.zone`. Also read by `PipelineSchedule` for the admin page's "next digest" (T-014); `-` = none |
 | `app.jobs.expire-after-days` | `14` | Not seen in any source for N days → EXPIRED |
 
 ## 3. Environment variables (secrets)

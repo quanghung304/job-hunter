@@ -137,6 +137,7 @@ class LlmRouterIT {
     @Test
     void dailyQuotaMarksExhaustedAndPausesThePurposeWithoutFallback() {
         fake.enqueue(Step.dailyQuota(null));
+        assertThat(router.availability(LlmPurpose.SCORE)).as("usable before the 429").isEmpty();
 
         LlmOutcome<Score> outcome = score(jobId);
 
@@ -157,6 +158,9 @@ class LlmRouterIT {
         assertThat(again).isInstanceOf(LlmUnavailable.class);
         assertThat(fake.requests()).as("an exhausted model is not called again").hasSize(1);
         assertThat(calls.count()).isEqualTo(1);
+        assertThat(router.availability(LlmPurpose.SCORE)).as("checked without a call")
+                .contains(LlmUnavailable.Reason.NO_USABLE_MODEL);
+        assertThat(fake.requests()).hasSize(1);
     }
 
     @Test

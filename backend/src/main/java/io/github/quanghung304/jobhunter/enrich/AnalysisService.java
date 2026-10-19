@@ -1,13 +1,19 @@
 package io.github.quanghung304.jobhunter.enrich;
 
+import io.github.quanghung304.jobhunter.common.ProgressListener;
 import io.github.quanghung304.jobhunter.ingest.JobNotFoundException;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
 import io.github.quanghung304.jobhunter.ingest.JobView;
 import io.github.quanghung304.jobhunter.llm.BudgetGuard;
+import io.github.quanghung304.jobhunter.llm.LlmPurpose;
+import io.github.quanghung304.jobhunter.llm.LlmRouter;
 import io.github.quanghung304.jobhunter.llm.LlmUnavailable;
+import io.github.quanghung304.jobhunter.llm.ModelChoice;
+import io.github.quanghung304.jobhunter.llm.PaidCallsDisabledException;
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.ProfileProvider;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -39,9 +45,11 @@ public class AnalysisService {
     private final ExtractionService extraction;
     private final EligibilityEvaluator eligibility;
     private final BudgetGuard budget;
+    private final LlmRouter router;
 
     public AnalysisService(JobQueryService jobs, ProfileProvider profiles, AssessmentService assessments,
-            Prefilter prefilter, ExtractionService extraction, EligibilityEvaluator eligibility, BudgetGuard budget) {
+            Prefilter prefilter, ExtractionService extraction, EligibilityEvaluator eligibility, BudgetGuard budget,
+            LlmRouter router) {
         this.jobs = jobs;
         this.profiles = profiles;
         this.assessments = assessments;
@@ -49,6 +57,7 @@ public class AnalysisService {
         this.extraction = extraction;
         this.eligibility = eligibility;
         this.budget = budget;
+        this.router = router;
     }
 
     /** Analyzes one job; repeating it makes no LLM call once the extraction is stored. */
@@ -63,6 +72,14 @@ public class AnalysisService {
      * a real run analyzes the jobs that need it and stops at the first pause or budget stop.
      */
     public BulkAnalysisReport analyzeMany(List<Long> jobIds, boolean dryRun) {
+        return analyzeMany(jobIds, dryRun, ProgressListener.NONE);
+    }
+
+    /**
+     * As {@link #analyzeMany(List, boolean)}, reporting "jobs done of jobs to analyze" after each
+     * job. A real run with a PAID EXTRACT model is refused without the owner's consent (ADR-0009).
+     */
+    public BulkAnalysisReport analyzeMany(List<Long> jobIds, boolean dryRun, ProgressListener progress) {
         List<Long> ids = List.copyOf(new LinkedHashSet<>(jobIds));
         if (ids.size() > MAX_BULK) {
             throw new TooManyJobsException(ids.size(), MAX_BULK);
@@ -93,14 +110,20 @@ public class AnalysisService {
                 toAnalyze.add(job);
             }
         }
+        ModelChoice model = router.resolve(LlmPurpose.EXTRACT);
+        BigDecimal cost = budget.estimateCostUsd(model, LlmPurpose.EXTRACT, toAnalyze.size()).orElse(null);
         if (dryRun) {
-            return new BulkAnalysisReport(true, ids.size(), toAnalyze.size(), skipped, toAnalyze.size(), 0, 0, null,
-                    List.of());
+            return new BulkAnalysisReport(true, ids.size(), toAnalyze.size(), skipped, toAnalyze.size(), model, cost, 0,
+                    0, null, List.of());
+        }
+        if (!toAnalyze.isEmpty() && model.blockedByConsent()) {
+            throw new PaidCallsDisabledException(model);
         }
         budget.beginRun();
         int analyzed = 0;
         int failed = 0;
         for (int i = 0; i < toAnalyze.size(); i++) {
+            progress.progress(i, toAnalyze.size());
             AnalysisResult result = analyze(toAnalyze.get(i));
             switch (result.outcome()) {
                 case ANALYZED -> analyzed++;
@@ -112,13 +135,14 @@ public class AnalysisService {
                     log.info("bulk analyze stopped by {} after {} job(s); {} left", result.outcome(), analyzed + failed,
                             rest.size());
                     return new BulkAnalysisReport(false, ids.size(), toAnalyze.size(), skipped, toAnalyze.size(),
-                            analyzed, failed, result.outcome(), rest);
+                            model, cost, analyzed, failed, result.outcome(), rest);
                 }
             }
         }
         log.info("bulk analyze selected={} analyzed={} failed={} skipped={}", ids.size(), analyzed, failed, skipped);
-        return new BulkAnalysisReport(false, ids.size(), toAnalyze.size(), skipped, toAnalyze.size(), analyzed, failed,
-                null, List.of());
+        progress.progress(toAnalyze.size(), toAnalyze.size());
+        return new BulkAnalysisReport(false, ids.size(), toAnalyze.size(), skipped, toAnalyze.size(), model, cost,
+                analyzed, failed, null, List.of());
     }
 
     private AnalysisResult analyze(JobView job) {

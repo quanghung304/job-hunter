@@ -10,6 +10,401 @@
         "required" : [ "accepted" ],
         "type" : "object"
       },
+      "AdminDailyLlmUsage" : {
+        "properties" : {
+          "calls" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "costUsd" : {
+            "type" : "number"
+          },
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "inputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "outputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "calls", "costUsd", "date", "inputTokens", "outputTokens" ],
+        "type" : "object"
+      },
+      "AdminFailedJob" : {
+        "properties" : {
+          "attempts" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "jobId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastError" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "attempts", "jobId", "lastError", "title" ],
+        "type" : "object"
+      },
+      "AdminFailures" : {
+        "properties" : {
+          "extractions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AdminFailedJob"
+            },
+            "type" : "array"
+          },
+          "scorings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AdminFailedJob"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "extractions", "scorings" ],
+        "type" : "object"
+      },
+      "AdminKpis" : {
+        "properties" : {
+          "activeJobs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "companyBoardCount" : {
+            "description" : "Enabled company boards",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newToday" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "prefilterRejectedToday" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "scoredToday" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "sourceCount" : {
+            "description" : "Enabled sources",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "toReview" : {
+            "description" : "Jobs in the board's default view",
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "activeJobs", "companyBoardCount", "newToday", "prefilterRejectedToday", "scoredToday", "sourceCount", "toReview" ],
+        "type" : "object"
+      },
+      "AdminLlmUsage" : {
+        "properties" : {
+          "callsToday" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "daily" : {
+            "description" : "Last 14 local days, oldest first",
+            "items" : {
+              "$ref" : "#/components/schemas/AdminDailyLlmUsage"
+            },
+            "type" : "array"
+          },
+          "monthToDateUsd" : {
+            "description" : "PAID cost of the current UTC month",
+            "type" : "number"
+          },
+          "monthlyBudgetUsd" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "callsToday", "daily", "monthToDateUsd", "monthlyBudgetUsd" ],
+        "type" : "object"
+      },
+      "AdminOverviewResponse" : {
+        "properties" : {
+          "failures" : {
+            "$ref" : "#/components/schemas/AdminFailures"
+          },
+          "kpis" : {
+            "$ref" : "#/components/schemas/AdminKpis"
+          },
+          "llmAlerts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LlmAlertResponse"
+            },
+            "type" : "array"
+          },
+          "llmUsage" : {
+            "$ref" : "#/components/schemas/AdminLlmUsage"
+          },
+          "pipelineProgress" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AdminProgress"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Pipeline run or bulk LLM action in progress; null when idle"
+          },
+          "pipelineReports" : {
+            "description" : "Newest first, at most 20",
+            "items" : {
+              "$ref" : "#/components/schemas/PipelineReportResponse"
+            },
+            "type" : "array"
+          },
+          "pipelineRunning" : {
+            "type" : "boolean"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/AdminSchedule"
+          },
+          "sources" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AdminSourceStatus"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "failures", "kpis", "llmAlerts", "llmUsage", "pipelineProgress", "pipelineReports", "pipelineRunning", "schedule", "sources" ],
+        "type" : "object"
+      },
+      "AdminProgress" : {
+        "properties" : {
+          "percent" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "stage" : {
+            "enum" : [ "COLLECT", "PREFILTER", "EXPIRE", "ANALYZE", "SCORE" ],
+            "type" : "string"
+          },
+          "text" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "percent", "stage", "text" ],
+        "type" : "object"
+      },
+      "AdminSchedule" : {
+        "properties" : {
+          "nextDigestAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "nextRunAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "zone" : {
+            "example" : "Europe/Rome",
+            "type" : "string"
+          }
+        },
+        "required" : [ "nextDigestAt", "nextRunAt", "zone" ],
+        "type" : "object"
+      },
+      "AdminSourceLastRun" : {
+        "properties" : {
+          "error" : {
+            "type" : [ "string", "null" ]
+          },
+          "fetched" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newRaw" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "SUCCESS", "PARTIAL", "FAILED" ],
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "error", "fetched", "newJobs", "newRaw", "startedAt", "status" ],
+        "type" : "object"
+      },
+      "AdminSourceStatus" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "lastRun" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AdminSourceLastRun"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "lastSuccessAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "enabled", "lastRun", "lastSuccessAt", "name" ],
+        "type" : "object"
+      },
+      "BulkAnalyzeResponse" : {
+        "properties" : {
+          "estimatedCalls" : {
+            "description" : "One EXTRACT call per job to analyze",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "estimatedCostUsd" : {
+            "description" : "0 for FREE/LOCAL; null for a PAID model without cost history",
+            "type" : [ "number", "null" ]
+          },
+          "model" : {
+            "$ref" : "#/components/schemas/ModelChoiceResponse"
+          },
+          "selected" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "skipped" : {
+            "$ref" : "#/components/schemas/BulkAnalyzeSkipped"
+          },
+          "willAnalyze" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "estimatedCalls", "estimatedCostUsd", "model", "selected", "skipped", "willAnalyze" ],
+        "type" : "object"
+      },
+      "BulkAnalyzeSkipped" : {
+        "properties" : {
+          "alreadyAnalyzed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "expired" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "failedPermanently" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notFound" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prefilterRejected" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "alreadyAnalyzed", "expired", "failedPermanently", "notFound", "prefilterRejected" ],
+        "type" : "object"
+      },
+      "BulkJobsRequest" : {
+        "properties" : {
+          "dryRun" : {
+            "type" : "boolean"
+          },
+          "jobIds" : {
+            "description" : "At most 200 ids",
+            "items" : {
+              "format" : "int64",
+              "type" : "integer"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "dryRun", "jobIds" ],
+        "type" : "object"
+      },
+      "BulkScoreResponse" : {
+        "properties" : {
+          "estimatedCalls" : {
+            "description" : "One SCORE call per job to score",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "estimatedCostUsd" : {
+            "description" : "0 for FREE/LOCAL; null for a PAID model without cost history",
+            "type" : [ "number", "null" ]
+          },
+          "model" : {
+            "$ref" : "#/components/schemas/ModelChoiceResponse"
+          },
+          "selected" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "skipped" : {
+            "$ref" : "#/components/schemas/BulkScoreSkipped"
+          },
+          "willScore" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "estimatedCalls", "estimatedCostUsd", "model", "selected", "skipped", "willScore" ],
+        "type" : "object"
+      },
+      "BulkScoreSkipped" : {
+        "properties" : {
+          "alreadyScored" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "expired" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "failedPermanently" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "ineligible" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notAnalyzed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notFound" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "alreadyScored", "expired", "failedPermanently", "ineligible", "notAnalyzed", "notFound" ],
+        "type" : "object"
+      },
       "CollectRunResponse" : {
         "properties" : {
           "collectStatus" : {
@@ -53,9 +448,192 @@
         "required" : [ "collectStatus", "error", "fetched", "newJobs", "newRaw", "runId", "skippedInvalid", "updatedJobs", "warnings" ],
         "type" : "object"
       },
-      "MetaResponse" : {
+      "CompanyResponse" : {
         "properties" : {
-          "eligibilities" : {
+          "activeJobs" : {
+            "description" : "ACTIVE jobs whose company matches the name",
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "ats" : {
+            "enum" : [ "GREENHOUSE", "LEVER", "LEVER_EU", "ASHBY" ],
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastCheckStatus" : {
+            "enum" : [ "OK", "NOT_FOUND", "ERROR" ],
+            "type" : [ "string", "null" ]
+          },
+          "lastCheckedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "slug" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "activeJobs", "ats", "enabled", "id", "lastCheckStatus", "lastCheckedAt", "name", "slug" ],
+        "type" : "object"
+      },
+      "DryRunRequest" : {
+        "properties" : {
+          "dryRun" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "dryRun" ],
+        "type" : "object"
+      },
+      "HoursPerWeek" : {
+        "properties" : {
+          "max" : {
+            "format" : "int32",
+            "maximum" : 168,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "min" : {
+            "format" : "int32",
+            "maximum" : 168,
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "JobAttributes" : {
+        "properties" : {
+          "allowedRegions" : {
+            "items" : {
+              "pattern" : "WORLDWIDE|EU|EEA|EUROPE|EMEA|AMERICAS|NORTH_AMERICA|LATAM|APAC|ASIA|[A-Z]{2}",
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "confidence" : {
+            "enum" : [ "HIGH", "MEDIUM", "LOW" ],
+            "type" : "string"
+          },
+          "employmentTypes" : {
+            "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "hoursPerWeek" : {
+            "$ref" : "#/components/schemas/HoursPerWeek"
+          },
+          "isAgencyOrReposting" : {
+            "type" : "boolean"
+          },
+          "isScamSignal" : {
+            "type" : "boolean"
+          },
+          "minYearsExperience" : {
+            "format" : "int32",
+            "maximum" : 60,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "niceToHaveSkills" : {
+            "items" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "maxItems" : 15,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "regionEvidence" : {
+            "type" : "string"
+          },
+          "remoteType" : {
+            "enum" : [ "FULLY_REMOTE", "REMOTE_RESTRICTED", "HYBRID", "ONSITE", "UNKNOWN" ],
+            "type" : "string"
+          },
+          "requiredLanguages" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RequiredLanguage"
+            },
+            "type" : "array"
+          },
+          "requiredSkills" : {
+            "items" : {
+              "minLength" : 1,
+              "type" : "string"
+            },
+            "maxItems" : 15,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "roleSummary" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "salary" : {
+            "$ref" : "#/components/schemas/Salary"
+          },
+          "seniority" : {
+            "enum" : [ "JUNIOR", "MID", "SENIOR", "LEAD", "PRINCIPAL" ],
+            "type" : "string"
+          },
+          "timezoneRequirement" : {
+            "$ref" : "#/components/schemas/TimezoneRequirement"
+          },
+          "workAuthorization" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "confidence", "isAgencyOrReposting", "isScamSignal", "remoteType", "roleSummary" ],
+        "type" : "object"
+      },
+      "JobDetailResponse" : {
+        "properties" : {
+          "allowedRegions" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "allowedTransitions" : {
+            "description" : "Statuses the UI may offer",
+            "items" : {
+              "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "analysisStage" : {
+            "enum" : [ "NOT_ANALYZED", "ANALYZED", "SCORED", "FAILED" ],
+            "type" : "string"
+          },
+          "applyAdvice" : {
+            "type" : [ "string", "null" ]
+          },
+          "applyUrl" : {
+            "type" : [ "string", "null" ]
+          },
+          "company" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "eligibility" : {
+            "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+            "type" : [ "string", "null" ]
+          },
+          "eligibilityReasons" : {
             "items" : {
               "type" : "string"
             },
@@ -63,11 +641,258 @@
           },
           "employmentTypes" : {
             "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
               "type" : "string"
             },
             "type" : "array"
           },
-          "profileId" : {
+          "extraction" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/JobAttributes"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "LLM-extracted attributes (scoring-spec §3); null until analyzed"
+          },
+          "firstSeenAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "gaps" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "history" : {
+            "items" : {
+              "$ref" : "#/components/schemas/StatusHistoryEntry"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "jobStatus" : {
+            "enum" : [ "ACTIVE", "EXPIRED" ],
+            "type" : "string"
+          },
+          "locationText" : {
+            "type" : [ "string", "null" ]
+          },
+          "notes" : {
+            "type" : [ "string", "null" ]
+          },
+          "postedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "postings" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JobPosting"
+            },
+            "type" : "array"
+          },
+          "prefilterReasons" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "redFlags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "remoteType" : {
+            "enum" : [ "FULLY_REMOTE", "REMOTE_RESTRICTED", "HYBRID", "ONSITE", "UNKNOWN" ],
+            "type" : [ "string", "null" ]
+          },
+          "salary" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/JobSalary"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "score" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0,
+            "type" : [ "integer", "null" ]
+          },
+          "scoreBand" : {
+            "enum" : [ "EXCELLENT", "GOOD", "MAYBE", "WEAK", "NONE" ],
+            "type" : "string"
+          },
+          "scoreBreakdown" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ScoreBreakdown"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "sources" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SourceSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "status" : {
+            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          },
+          "strengths" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "summary" : {
+            "type" : [ "string", "null" ]
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "allowedRegions", "allowedTransitions", "analysisStage", "applyAdvice", "applyUrl", "company", "description", "eligibility", "eligibilityReasons", "employmentTypes", "extraction", "firstSeenAt", "gaps", "history", "id", "jobStatus", "locationText", "notes", "postedAt", "postings", "prefilterReasons", "redFlags", "remoteType", "salary", "score", "scoreBand", "scoreBreakdown", "sources", "status", "strengths", "summary", "tags", "title" ],
+        "type" : "object"
+      },
+      "JobPageResponse" : {
+        "properties" : {
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JobSummaryResponse"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalItems" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalPages" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "items", "page", "size", "totalItems", "totalPages" ],
+        "type" : "object"
+      },
+      "JobPosting" : {
+        "properties" : {
+          "firstSeenAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "lastSeenAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "sourceCode" : {
+            "type" : "string"
+          },
+          "sourceName" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "firstSeenAt", "lastSeenAt", "sourceCode", "sourceName", "url" ],
+        "type" : "object"
+      },
+      "JobSalary" : {
+        "properties" : {
+          "currency" : {
+            "type" : [ "string", "null" ]
+          },
+          "max" : {
+            "type" : [ "number", "null" ]
+          },
+          "min" : {
+            "type" : [ "number", "null" ]
+          },
+          "period" : {
+            "enum" : [ "HOUR", "MONTH", "YEAR" ],
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "currency", "max", "min", "period" ],
+        "type" : "object"
+      },
+      "JobSummaryResponse" : {
+        "properties" : {
+          "allowedRegions" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "analysisStage" : {
+            "enum" : [ "NOT_ANALYZED", "ANALYZED", "SCORED", "FAILED" ],
+            "type" : "string"
+          },
+          "company" : {
+            "type" : "string"
+          },
+          "eligibility" : {
+            "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+            "type" : [ "string", "null" ]
+          },
+          "employmentTypes" : {
+            "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "firstSeenAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "jobStatus" : {
+            "enum" : [ "ACTIVE", "EXPIRED" ],
+            "type" : "string"
+          },
+          "locationText" : {
+            "type" : [ "string", "null" ]
+          },
+          "postedAt" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "remoteType" : {
+            "enum" : [ "FULLY_REMOTE", "REMOTE_RESTRICTED", "HYBRID", "ONSITE", "UNKNOWN" ],
+            "type" : [ "string", "null" ]
+          },
+          "score" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0,
+            "type" : [ "integer", "null" ]
+          },
+          "scoreBand" : {
+            "enum" : [ "EXCELLENT", "GOOD", "MAYBE", "WEAK", "NONE" ],
             "type" : "string"
           },
           "sources" : {
@@ -76,8 +901,106 @@
             },
             "type" : "array"
           },
+          "status" : {
+            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          },
+          "summary" : {
+            "type" : [ "string", "null" ]
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "allowedRegions", "analysisStage", "company", "eligibility", "employmentTypes", "firstSeenAt", "id", "jobStatus", "locationText", "postedAt", "remoteType", "score", "scoreBand", "sources", "status", "summary", "title" ],
+        "type" : "object"
+      },
+      "LlmAlertResponse" : {
+        "properties" : {
+          "detail" : {
+            "type" : [ "string", "null" ]
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "modelLabel" : {
+            "type" : "string"
+          },
+          "paused" : {
+            "description" : "Analyze/Score for this purpose answer LLM_PAUSED",
+            "type" : "boolean"
+          },
+          "purpose" : {
+            "enum" : [ "EXTRACT", "SCORE", "EVAL", "TEST" ],
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "AVAILABLE", "NEAR_LIMIT", "RATE_LIMITED", "EXHAUSTED", "ERROR" ],
+            "type" : "string"
+          },
+          "suggestions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LlmModelSuggestion"
+            },
+            "type" : "array"
+          },
+          "until" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "detail", "modelId", "modelLabel", "paused", "purpose", "status", "suggestions", "until" ],
+        "type" : "object"
+      },
+      "LlmModelSuggestion" : {
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "AVAILABLE", "NEAR_LIMIT", "RATE_LIMITED", "EXHAUSTED", "ERROR" ],
+            "type" : "string"
+          },
+          "tier" : {
+            "enum" : [ "FREE", "PAID", "LOCAL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "label", "modelId", "status", "tier" ],
+        "type" : "object"
+      },
+      "MetaResponse" : {
+        "properties" : {
+          "eligibilities" : {
+            "items" : {
+              "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "employmentTypes" : {
+            "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "profileId" : {
+            "type" : "string"
+          },
+          "sources" : {
+            "description" : "Registered sources, by code",
+            "items" : {
+              "$ref" : "#/components/schemas/SourceSummaryResponse"
+            },
+            "type" : "array"
+          },
           "statuses" : {
             "items" : {
+              "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
               "type" : "string"
             },
             "type" : "array"
@@ -90,6 +1013,239 @@
         "required" : [ "eligibilities", "employmentTypes", "profileId", "sources", "statuses", "summaryLanguage" ],
         "type" : "object"
       },
+      "ModelChoiceResponse" : {
+        "properties" : {
+          "label" : {
+            "type" : "string"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "paidCallsAllowed" : {
+            "type" : "boolean"
+          },
+          "tier" : {
+            "enum" : [ "FREE", "PAID", "LOCAL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "label", "modelId", "paidCallsAllowed", "tier" ],
+        "type" : "object"
+      },
+      "NotesRequest" : {
+        "properties" : {
+          "notes" : {
+            "maxLength" : 10000,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "notes" ],
+        "type" : "object"
+      },
+      "PipelineReportResponse" : {
+        "properties" : {
+          "durationMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "error" : {
+            "type" : [ "string", "null" ]
+          },
+          "expired" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "finishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "llmCalls" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "newJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "notAnalyzed" : {
+            "description" : "ACTIVE prefilter-PASS jobs waiting for Analyze",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prefilterEvaluated" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prefilterPassed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prefilterRejected" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reassessed" : {
+            "description" : "Rows re-evaluated after a profile change",
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "runNumber" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "sources" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PipelineSourceRun"
+            },
+            "type" : "array"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "SUCCESS", "PARTIAL", "FAILED" ],
+            "type" : "string"
+          },
+          "trigger" : {
+            "enum" : [ "SCHEDULED", "CATCH_UP", "MANUAL" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "durationMs", "error", "expired", "finishedAt", "llmCalls", "newJobs", "notAnalyzed", "prefilterEvaluated", "prefilterPassed", "prefilterRejected", "reassessed", "runNumber", "sources", "startedAt", "status", "trigger" ],
+        "type" : "object"
+      },
+      "PipelineSourceRun" : {
+        "properties" : {
+          "fetched" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "message" : {
+            "description" : "Skip reason or error",
+            "type" : [ "string", "null" ]
+          },
+          "newJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "newRaw" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sourceCode" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "SUCCESS", "PARTIAL", "FAILED" ],
+            "type" : [ "string", "null" ]
+          },
+          "updatedJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "fetched", "message", "newJobs", "newRaw", "sourceCode", "status", "updatedJobs" ],
+        "type" : "object"
+      },
+      "RequiredLanguage" : {
+        "properties" : {
+          "code" : {
+            "pattern" : "[a-z]{2}",
+            "type" : "string"
+          },
+          "level" : {
+            "enum" : [ "A1", "A2", "B1", "B2", "C1", "C2", "NATIVE" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "level" ],
+        "type" : "object"
+      },
+      "RescoreResponse" : {
+        "properties" : {
+          "estimatedCalls" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "estimatedCostUsd" : {
+            "description" : "0 for FREE/LOCAL; for PAID the 30-day average cost × calls, null without history",
+            "type" : [ "number", "null" ]
+          },
+          "jobCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "model" : {
+            "$ref" : "#/components/schemas/ModelChoiceResponse"
+          }
+        },
+        "required" : [ "estimatedCalls", "estimatedCostUsd", "jobCount", "model" ],
+        "type" : "object"
+      },
+      "RetryRequest" : {
+        "properties" : {
+          "purpose" : {
+            "enum" : [ "EXTRACT", "SCORE" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "purpose" ],
+        "type" : "object"
+      },
+      "Salary" : {
+        "properties" : {
+          "currency" : {
+            "pattern" : "[A-Z]{3}",
+            "type" : "string"
+          },
+          "max" : {
+            "minimum" : 0,
+            "type" : "number"
+          },
+          "min" : {
+            "minimum" : 0,
+            "type" : "number"
+          },
+          "period" : {
+            "enum" : [ "HOUR", "MONTH", "YEAR" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ScoreBreakdown" : {
+        "properties" : {
+          "arrangement" : {
+            "format" : "int32",
+            "maximum" : 20,
+            "type" : "integer"
+          },
+          "domain" : {
+            "format" : "int32",
+            "maximum" : 10,
+            "type" : "integer"
+          },
+          "experience" : {
+            "format" : "int32",
+            "maximum" : 20,
+            "type" : "integer"
+          },
+          "other" : {
+            "format" : "int32",
+            "maximum" : 10,
+            "type" : "integer"
+          },
+          "skills" : {
+            "format" : "int32",
+            "maximum" : 40,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "arrangement", "domain", "experience", "other", "skills" ],
+        "type" : "object"
+      },
       "SourceSummaryResponse" : {
         "properties" : {
           "code" : {
@@ -100,6 +1256,111 @@
           }
         },
         "required" : [ "code", "name" ],
+        "type" : "object"
+      },
+      "StatusChangeRequest" : {
+        "properties" : {
+          "note" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : [ "string", "null" ]
+          },
+          "to" : {
+            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "to" ],
+        "type" : "object"
+      },
+      "StatusHistoryEntry" : {
+        "properties" : {
+          "at" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "from" : {
+            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          },
+          "note" : {
+            "type" : [ "string", "null" ]
+          },
+          "to" : {
+            "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "from", "note", "to" ],
+        "type" : "object"
+      },
+      "StatusLastRun" : {
+        "properties" : {
+          "newJobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "scored" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "SUCCESS", "PARTIAL", "FAILED" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "newJobs", "scored", "startedAt", "status" ],
+        "type" : "object"
+      },
+      "StatusResponse" : {
+        "properties" : {
+          "lastRun" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/StatusLastRun"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Newest pipeline run; null before the first"
+          },
+          "llmAlerts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LlmAlertResponse"
+            },
+            "type" : "array"
+          },
+          "pipelineRunning" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "lastRun", "llmAlerts", "pipelineRunning" ],
+        "type" : "object"
+      },
+      "TimezoneRequirement" : {
+        "properties" : {
+          "maxUtcOffset" : {
+            "format" : "int32",
+            "maximum" : 14,
+            "minimum" : -12,
+            "type" : "integer"
+          },
+          "minUtcOffset" : {
+            "format" : "int32",
+            "maximum" : 14,
+            "minimum" : -12,
+            "type" : "integer"
+          },
+          "overlapHours" : {
+            "format" : "int32",
+            "maximum" : 24,
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "maxUtcOffset", "minUtcOffset" ],
         "type" : "object"
       }
     }
@@ -137,6 +1398,180 @@
         "tags" : [ "admin-controller" ]
       }
     },
+    "/api/admin/companies" : {
+      "get" : {
+        "operationId" : "companies",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CompanyResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/eval/export" : {
+      "post" : {
+        "description" : "Not implemented yet: 501 NOT_IMPLEMENTED until T-016.",
+        "operationId" : "exportEval",
+        "responses" : {
+          "501" : {
+            "content" : {
+              "application/problem+json" : { }
+            },
+            "description" : "Not implemented yet"
+          }
+        },
+        "summary" : "Export eval candidates for labeling (T-016)",
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/jobs/analyze" : {
+      "post" : {
+        "description" : "dryRun=true answers 200 with the counts; dryRun=false starts the run (202). Errors: 400 TOO_MANY_JOBS, 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.",
+        "operationId" : "analyzeJobs",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkJobsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BulkAnalyzeResponse"
+                }
+              }
+            },
+            "description" : "Dry run"
+          },
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description" : "Run started; progress in the overview (stage ANALYZE)"
+          }
+        },
+        "summary" : "Bulk Analyze of selected jobs (ADR-0010)",
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/jobs/score" : {
+      "post" : {
+        "description" : "dryRun=true answers 200 with the counts, model and cost; dryRun=false starts the run (202). Errors: 400 TOO_MANY_JOBS, 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.",
+        "operationId" : "scoreJobs",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BulkJobsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/BulkScoreResponse"
+                }
+              }
+            },
+            "description" : "Dry run"
+          },
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description" : "Run started; progress in the overview (stage SCORE)"
+          }
+        },
+        "summary" : "Bulk Score of selected jobs (ADR-0010)",
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/jobs/{id}/retry" : {
+      "post" : {
+        "description" : "Resets the attempts for the current prompt version and runs Analyze or Score in the background. 404 JOB_NOT_FOUND.",
+        "operationId" : "retry",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RetryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description" : "Accepted"
+          }
+        },
+        "summary" : "Retry failed LLM work for one job",
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/overview" : {
+      "get" : {
+        "operationId" : "overview",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AdminOverviewResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-controller" ]
+      }
+    },
     "/api/admin/pipeline/run" : {
       "post" : {
         "operationId" : "runPipeline",
@@ -155,6 +1590,353 @@
         "tags" : [ "admin-controller" ]
       }
     },
+    "/api/admin/rescore" : {
+      "post" : {
+        "description" : "Always run the dry run first and execute only after the owner confirms the count. Errors: 409 PAID_CALLS_DISABLED, 409 LLM_PAUSED, 409 BUDGET_REACHED.",
+        "operationId" : "rescore",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DryRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RescoreResponse"
+                }
+              }
+            },
+            "description" : "Dry run"
+          },
+          "202" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcceptedResponse"
+                }
+              }
+            },
+            "description" : "Run started; progress in the overview (stage SCORE)"
+          }
+        },
+        "summary" : "Re-score active jobs (ADR-0010)",
+        "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/jobs" : {
+      "get" : {
+        "description" : "With no filter the default view applies: status NEW or SHORTLISTED, prefilter PASS, eligibility not INELIGIBLE, job ACTIVE. Any filter replaces the default view; EXPIRED jobs stay hidden unless includeExpired=true.",
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "enum" : [ "NEW", "SHORTLISTED", "DISMISSED", "APPLIED", "INTERVIEWING", "OFFER", "REJECTED", "WITHDRAWN" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "eligibility",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "enum" : [ "ELIGIBLE", "UNCERTAIN", "INELIGIBLE" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "minScore",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "maxScore",
+          "required" : false,
+          "schema" : {
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "source",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "employmentType",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "postedWithinDays",
+          "required" : false,
+          "schema" : {
+            "exclusiveMinimum" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "description" : "Text in title or company (case-insensitive)",
+          "in" : "query",
+          "name" : "q",
+          "required" : false,
+          "schema" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "includeExpired",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        }, {
+          "in" : "query",
+          "name" : "analysisStage",
+          "required" : false,
+          "schema" : {
+            "items" : {
+              "enum" : [ "NOT_ANALYZED", "ANALYZED", "SCORED", "FAILED" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        }, {
+          "in" : "query",
+          "name" : "sort",
+          "required" : false,
+          "schema" : {
+            "default" : "score",
+            "enum" : [ "score", "posted" ],
+            "pattern" : "score|posted",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 25,
+            "format" : "int32",
+            "maximum" : 100,
+            "minimum" : 1,
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobPageResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The board of the current profile",
+        "tags" : [ "job-controller" ]
+      }
+    },
+    "/api/jobs/{id}" : {
+      "get" : {
+        "operationId" : "detail",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "job-controller" ]
+      }
+    },
+    "/api/jobs/{id}/analyze" : {
+      "post" : {
+        "description" : "Extraction (at most one EXTRACT call, none when stored) and eligibility. A failed attempt answers 200 with analysisStage FAILED.",
+        "operationId" : "analyze",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Owner action Analyze (ADR-0010)",
+        "tags" : [ "job-controller" ]
+      }
+    },
+    "/api/jobs/{id}/notes" : {
+      "put" : {
+        "operationId" : "updateNotes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NotesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "204" : {
+            "description" : "No Content"
+          }
+        },
+        "tags" : [ "job-controller" ]
+      }
+    },
+    "/api/jobs/{id}/score" : {
+      "post" : {
+        "description" : "One SCORE call for an analyzed ELIGIBLE or UNCERTAIN job; none when already scored.",
+        "operationId" : "score",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobDetailResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Owner action Score (ADR-0010)",
+        "tags" : [ "job-controller" ]
+      }
+    },
+    "/api/jobs/{id}/status" : {
+      "post" : {
+        "description" : "409 ILLEGAL_STATUS_TRANSITION when the status machine does not allow it.",
+        "operationId" : "changeStatus",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/StatusChangeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/JobSummaryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Change the tracking status",
+        "tags" : [ "job-controller" ]
+      }
+    },
     "/api/meta" : {
       "get" : {
         "operationId" : "meta",
@@ -164,6 +1946,24 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/MetaResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "meta-controller" ]
+      }
+    },
+    "/api/status" : {
+      "get" : {
+        "operationId" : "status",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/StatusResponse"
                 }
               }
             },

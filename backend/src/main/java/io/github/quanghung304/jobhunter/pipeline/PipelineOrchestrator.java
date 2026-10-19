@@ -1,5 +1,7 @@
 package io.github.quanghung304.jobhunter.pipeline;
 
+import io.github.quanghung304.jobhunter.common.ProgressBoard;
+import io.github.quanghung304.jobhunter.common.ProgressBoard.Stage;
 import io.github.quanghung304.jobhunter.common.RunCompleted;
 import io.github.quanghung304.jobhunter.enrich.AssessmentService;
 import io.github.quanghung304.jobhunter.enrich.PrefilterSummary;
@@ -48,6 +50,9 @@ public class PipelineOrchestrator {
 
     static final int REPORTS_KEPT = 20;
     static final int JOB_BATCH_SIZE = 1_000;
+    /** Progress percent at the end of the collect and prefilter steps. */
+    static final int COLLECT_PERCENT = 80;
+    static final int PREFILTER_PERCENT = 95;
 
     private static final Logger log = LoggerFactory.getLogger(PipelineOrchestrator.class);
 
@@ -60,6 +65,7 @@ public class PipelineOrchestrator {
     private final ProfileProvider profiles;
     private final BudgetGuard budget;
     private final PipelineLock lock;
+    private final ProgressBoard progressBoard;
     private final ApplicationEventPublisher events;
     private final Clock clock;
     private final int expireAfterDays;
@@ -74,7 +80,8 @@ public class PipelineOrchestrator {
 
     public PipelineOrchestrator(CollectorRegistry collectors, CollectorRunner runner, IngestService ingest,
             JobQueryService jobs, JobExpiryService expiry, AssessmentService assessments, ProfileProvider profiles,
-            BudgetGuard budget, PipelineLock lock, ApplicationEventPublisher events, Clock clock,
+            BudgetGuard budget, PipelineLock lock, ProgressBoard progressBoard, ApplicationEventPublisher events,
+            Clock clock,
             @Value("${app.jobs.expire-after-days:14}") int expireAfterDays) {
         this.collectors = collectors;
         this.runner = runner;
@@ -85,6 +92,7 @@ public class PipelineOrchestrator {
         this.profiles = profiles;
         this.budget = budget;
         this.lock = lock;
+        this.progressBoard = progressBoard;
         this.events = events;
         this.clock = clock;
         this.expireAfterDays = expireAfterDays;
@@ -139,8 +147,9 @@ public class PipelineOrchestrator {
     }
 
     private PipelineReport runLocked(Trigger trigger) {
-        try (PipelineLock.Handle ignored = lock.tryAcquire().orElseThrow(PipelineAlreadyRunningException::new)) {
-            PipelineReport report = run(trigger);
+        try (PipelineLock.Handle ignored = lock.tryAcquire().orElseThrow(PipelineAlreadyRunningException::new);
+                ProgressBoard.Activity progress = progressBoard.begin(Stage.COLLECT, "Starting")) {
+            PipelineReport report = run(trigger, progress);
             remember(report);
             log.info("pipeline run={} trigger={} status={} sources={} newJobs={} prefilter={}/{} reassessed={}"
                             + " notAnalyzed={} expired={} llmCalls={} ms={}", report.runNumber(), trigger,
@@ -152,12 +161,13 @@ public class PipelineOrchestrator {
         }
     }
 
-    private PipelineReport run(Trigger trigger) {
+    private PipelineReport run(Trigger trigger, ProgressBoard.Activity progress) {
         long number = runNumbers.incrementAndGet();
         Instant started = clock.instant();
         Profile profile = profiles.current();
         String profileHash = profiles.profileHash();
-        List<SourceReport> sources = collectAll(started.minus(Duration.ofDays(profile.prefilter().maxAgeDays())));
+        List<SourceReport> sources = collectAll(started.minus(Duration.ofDays(profile.prefilter().maxAgeDays())),
+                progress);
 
         int reassessed = 0;
         PrefilterSummary prefilter = new PrefilterSummary(0, 0, 0, 0);
@@ -166,8 +176,10 @@ public class PipelineOrchestrator {
         List<Long> newJobIds = List.of();
         String error = null;
         try {
+            progress.update(Stage.PREFILTER, "Prefilter", COLLECT_PERCENT);
             reassessed = assessments.reassessPrefilter(profile, profileHash);
             prefilter = assessments.prefilterJobs(activeJobs(), profile, profileHash);
+            progress.update(Stage.EXPIRE, "Expire jobs not seen for " + expireAfterDays + " days", PREFILTER_PERCENT);
             expired = expiry.expireNotSeenSince(started.minus(Duration.ofDays(expireAfterDays)));
             notAnalyzed = assessments.countNotAnalyzed(jobs.activeJobIds(), profile.id());
             newJobIds = jobs.idsFirstSeenSince(started);
@@ -184,10 +196,13 @@ public class PipelineOrchestrator {
     }
 
     /** Every enabled collector in turn; one failing (or ingest failing for it) never stops the others. */
-    private List<SourceReport> collectAll(Instant since) {
+    private List<SourceReport> collectAll(Instant since, ProgressBoard.Activity progress) {
         List<SourceReport> result = new ArrayList<>();
-        for (JobCollector collector : collectors.enabled()) {
+        List<JobCollector> enabled = collectors.enabled();
+        for (JobCollector collector : enabled) {
             String code = collector.sourceCode();
+            progress.update(Stage.COLLECT, "Collect " + (result.size() + 1) + "/" + enabled.size() + " sources · " + code,
+                    result.size() * COLLECT_PERCENT / Math.max(1, enabled.size()));
             try {
                 CollectorRunOutcome outcome = runner.run(collector, since);
                 if (outcome.skipped()) {

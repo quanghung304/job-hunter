@@ -84,6 +84,23 @@ public class CollectorRunner {
         return runs.findFirstByStatusOrderByStartedAtDesc(CollectStatus.SUCCESS).map(CollectorRun::getStartedAt);
     }
 
+    /** The newest run of this source, whatever its status. */
+    public Optional<CollectorRunView> lastRun(String sourceCode) {
+        return runs.findFirstBySourceCodeOrderByStartedAtDesc(sourceCode).map(CollectorRunner::view);
+    }
+
+    /** Start of the newest SUCCESS run of this source. */
+    public Optional<Instant> lastSuccessAt(String sourceCode) {
+        return runs.findFirstBySourceCodeAndStatusOrderByStartedAtDesc(sourceCode, CollectStatus.SUCCESS)
+                .map(CollectorRun::getStartedAt);
+    }
+
+    private static CollectorRunView view(CollectorRun run) {
+        return new CollectorRunView(run.getId(), run.getSourceCode(), run.getStatus(), run.getStartedAt(),
+                run.getFinishedAt(), run.getFetchedCount(), run.getNewRawCount(), run.getNewJobCount(),
+                run.getErrorMessage());
+    }
+
     /** {@code max-items} from the source settings, no keywords. */
     public CollectRequest defaultRequest(String sourceCode, Instant since) {
         int maxItems = sources.source(sourceCode)
