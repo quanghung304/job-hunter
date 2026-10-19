@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { cn } from 'cn'
 import { Briefcase, Menu } from 'lucide-react'
-import { useMeta } from '@/api/queries'
+import { useMeta, useStatus } from '@/api/queries'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { clockTime } from '@/lib/format'
 import { useIsDesktop } from '@/lib/useMediaQuery'
 
 const NAV = [
@@ -101,11 +102,21 @@ function MobileHeader() {
   )
 }
 
-/** "Last run 07:00 · 42 new · 9 scored" once GET /api/status exists (T-014/T-022); "—" until then. */
+/** "Last run 07:00 · 42 new · 9 scored" from GET /api/status. */
 function StatusLine() {
+  const status = useStatus()
+  const run = status.data?.lastRun
+  let text = '—'
+  if (status.data?.pipelineRunning) {
+    text = 'Pipeline running…'
+  } else if (run) {
+    text = `Last run ${clockTime(run.startedAt)} · ${run.newJobs} new · ${run.scored} scored`
+  } else if (status.data) {
+    text = 'No run yet'
+  }
   return (
-    <span className="num text-[12.5px] text-muted" title="Pipeline status (available after T-014)">
-      —
+    <span className="num text-[12.5px] text-muted" title={run ? `Last run status: ${run.status}` : 'Pipeline status'}>
+      {text}
     </span>
   )
 }

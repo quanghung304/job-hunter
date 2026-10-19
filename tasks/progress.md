@@ -10,6 +10,28 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-19 — T-020 Frontend: board and job detail — DONE (visual check by owner pending)
+- `api/queries.ts`: `useJobs` (infinite, 25/page), `useJob`, `useStatus` (60 s / 10 s with alerts),
+  `useChangeStatus` (optimistic on list + detail caches, rollback; lists patched, not refetched),
+  `useUpdateNotes`, `useAnalysisAction` (Analyze / Score, one request, updates both caches).
+- `lib`: `statusMachine.ts` (+ next-step primary), `labels.ts` (enums, rule results from reason codes,
+  prefilter reasons), `format.ts`. Components: `StatusActions`, `SourceLinks`.
+- Board: `BoardPage` (desktop split view; mobile list / full-page detail), `FilterBar` (Radix popovers),
+  `MobileFilters` (pills + bottom sheet), `SearchField` (300 ms), `JobList`/`JobRow` (collapse animation,
+  density in localStorage), `JobDetailPane`, `useBoardFilters` (URL), `useBoardKeyboard` (j k Enter s d a o /).
+- Job: `JobDetail` in the spec order (`WhyItFits`, `ScoreBreakdown`, `EligibilityPanel`, `FactsPanel`,
+  `DescriptionPanel`, `NotesEditor` 1 s autosave, `HistoryList`), `AnalysisActions`, `MobileActionBar`,
+  `JobDetailPage` ("Job N of M" from the cached list). Header status line now reads `GET /api/status`.
+- Deviations (frontend.md updated): Undo only when the way back is a legal transition; score breakdown
+  footer shows the total only (prompt version/model not in the API); "Switch model" links to `/admin#llm`
+  until T-023; mobile count + search toggle live in the filter row.
+- Tests: `statusMachine` (64 pairs), `useBoardFilters`, `StatusActions`, `BoardPage` (10: load, URL filters,
+  menu filter, optimistic dismiss + Undo, rollback, star, keyboard, typing ignored, one Analyze request,
+  deep link), `JobDetailPage` (8: panels, links, status, rollback, notes autosave with fake timers, Score);
+  Playwright `e2e/board.spec.ts` flows 1–2 (not run: need a running stack with jobs).
+- Open: owner to compare with the mockups at 1440 and 390 px; bundle is 505 kB (lazy-load admin later).
+- Next: T-021 (admin page).
+
 ## 2026-10-18 — T-014 REST API for board, job detail and admin — DONE
 - `tracking`: `JobBoardQuery` (one SQL over job + profile's assessment + extraction + tracking; every filter,
   default view, `score`/`posted` sorts, pages, `countDefaultView`), `JobDetailQuery`, `TrackingService`

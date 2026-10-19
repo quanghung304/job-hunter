@@ -1,7 +1,10 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from './server'
+
+// Pages load several queries; the 1 s default is too short when the whole suite runs in parallel.
+configure({ asyncUtilTimeout: 5000 })
 
 // openapi-fetch builds absolute URLs from the page origin.
 beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
@@ -25,3 +28,10 @@ if (!window.matchMedia) {
       dispatchEvent: () => false,
     }) as MediaQueryList
 }
+
+// jsdom lacks the pointer-capture and scroll APIs Radix primitives call.
+for (const name of ['setPointerCapture', 'releasePointerCapture'] as const) {
+  if (!Element.prototype[name]) Element.prototype[name] = () => {}
+}
+if (!Element.prototype.hasPointerCapture) Element.prototype.hasPointerCapture = () => false
+if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}

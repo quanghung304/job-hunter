@@ -12,5 +12,5 @@ test('a deep link survives a reload (SPA fallback)', async ({ page }) => {
   await page.goto('/jobs/1')
   await page.reload()
 
-  await expect(page.getByText('The job detail arrives with T-020.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Board' })).toBeAttached()
 })

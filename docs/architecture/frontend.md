@@ -148,7 +148,7 @@ transitions at all).
 | `FactChip` | `--line-faint` bg (`--neutral-fill` in the detail header), `--strong` text, 12px, radius 3px. |
 | Buttons | Primary = `--accent` bg, white; Secondary = white, 1px `--control-border`; Quiet = transparent, `--ink-2`; Leave-app ("Apply") = `--ink` bg, white; Disabled = `--neutral-fill`, `--muted`. **Exactly one primary per view**: the next step of the status flow. Desktop action buttons show their shortcut after the label in mono at 70% opacity. |
 | `SectionCard` | `--surface`, 1px `--line`, radius 6px, padding 20/22, starts with a `SectionLabel`. |
-| `Toast` | Bottom-left 24px, `--ink` bg, white text, max-width 520px, one at a time, 5 s; every status change toast has "Undo" (outlined `--muted` button). Uses shadcn Sonner restyled. |
+| `Toast` | Bottom-left 24px, `--ink` bg, white text, max-width 520px, one at a time, 5 s; a status change toast has "Undo" (outlined `--muted` button) whenever the state machine allows the way back (e.g. no Undo after "Mark applied": APPLIED → NEW is not a transition). Uses shadcn Sonner restyled. |
 | `EmptyState` | Centered inbox icon (`--icon-faint`, 32px), bold title, one muted sentence, optional secondary button. Board empty text: "Inbox zero" / "No jobs match these filters." |
 | `ErrorState` | `--ground` box, 1px `--line`, warning icon `--attention-icon`, bold title, `detail` from Problem Details, and `status · code` in mono 12px muted. Network failure variant: "Backend not reachable — Is the app running?". |
 | `ListSkeleton` | Rows with a 40×32 `--neutral-fill` block and three bars (12px, 10px, 10px) in `--neutral-fill`/`--line-faint`; no shimmer if reduced motion. |
@@ -219,7 +219,7 @@ Cancel (secondary), Save (primary).
    3-column auto-fit grid: Strengths (check icon `--accent`), Gaps (minus icon `--muted`),
    Red flags (warning icon, `--attention-fg` text; "None found" when empty).
 4. Two-column auto-fit grid (min 320px): Score breakdown (label 96px · bar 8px high in
-   `--neutral-fill` with `--accent` fill · "value/max" mono; footer: prompt version and
+   `--neutral-fill` with `--accent` fill · "value/max" mono; footer (T-020: total only, the API does not expose them yet): prompt version and
    model in mono muted, total right) and Eligibility (rule label 104px muted · value ·
    RuleResultTag).
 5. Card "Extracted facts": `<dl>` in an auto-fit grid (min 260px), each pair label 130px.
@@ -237,13 +237,13 @@ in the detail action row (text buttons).
 - Otherwise hidden. A scored job shows only its score.
 - While the request runs: spinner, button disabled, text "Analyzing…" or "Scoring…".
 - Paused purpose (`LlmAlert.paused` for that purpose): button disabled, with "Model paused" and a
-  "Switch model" link that opens `SwitchModelDialog` for that purpose.
+  "Switch model" link that opens `SwitchModelDialog` for that purpose (until T-023 the link goes to `/admin#llm`).
 - Success updates the job in the list and detail caches (`['jobs', …]`, `['job', id]`).
   409 `BUDGET_REACHED` shows an error toast with the problem `detail`.
 - These buttons are secondary, so the one-primary-per-view rule is unchanged.
 
 ### Mobile (< 1024px)
-- `/` = list only. Header 56px: logo, "Board", mono count, search icon button (opens a
+- `/` = list only (T-020: the mono count and the search icon button sit at the start of the filter row, under the shared app header, not in the header itself). Header 56px: logo, "Board", mono count, search icon button (opens a
   full-width search field), menu icon button (links Board / Admin). Filter bar becomes a
   horizontally scrolling row: black "Filters · N" pill (opens a bottom sheet with all
   filters) followed by pills of the active filter values.
@@ -310,7 +310,9 @@ in the detail action row (text buttons).
 - Status actions: only transitions allowed for the status (`lib/statusMachine.ts` mirrors
   data-model §2 and is covered by a test; the detail uses the server's `allowedTransitions`).
 - Optimistic status update with rollback on error (error toast with the problem `detail`).
-  Dismissing removes the row, selects the next row (or previous), and shows the Undo toast.
+  Dismissing removes the row, selects the next row (or previous), and shows the Undo toast. Any change that
+  takes a job out of the current list (e.g. "Mark applied" on the default view) does the same. List caches are
+  patched, not refetched, so the keyboard flow stays in place; a list the job comes back to (Undo) is reloaded.
 - Keyboard (`useBoardKeyboard`, attached to the board page only, ignored while focus is in
   an input/textarea/select or a dialog is open): `j`/`k` next/previous, `Enter` open (mobile
   route; on desktop focuses the pane), `s` shortlist toggle, `d` dismiss, `a` mark applied,

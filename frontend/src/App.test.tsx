@@ -7,8 +7,8 @@ import { renderWithProviders } from '@/test/render'
 
 describe('App routes', () => {
   it.each([
-    ['/', 'The job board arrives with T-020.'],
-    ['/jobs/1', 'The job detail arrives with T-020.'],
+    ['/', 'Nothing new to review. The next pipeline run brings new jobs.'],
+    ['/jobs/1', 'Job 1 not found'],
     ['/admin', 'Pipeline, sources and LLM usage arrive with T-021.'],
   ])('renders %s', async (route, text) => {
     renderWithProviders(<AppShell />, { route })
@@ -27,6 +27,12 @@ describe('App routes', () => {
     renderWithProviders(<AppShell />)
 
     expect(await screen.findByText('hugh')).toBeInTheDocument()
+  })
+
+  it('shows the last pipeline run in the header', async () => {
+    renderWithProviders(<AppShell />)
+
+    expect(await screen.findByText(/Last run \d\d:\d\d · 42 new · 9 scored/)).toBeInTheDocument()
   })
 
   it('marks the active nav link', async () => {
