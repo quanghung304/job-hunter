@@ -7,5 +7,5 @@ import org.springframework.context.annotation.Import;
 /** tracking services for {@code @PostgresJpaTest}s, on top of {@link EnrichTestConfig}. */
 @TestConfiguration(proxyBeanMethods = false)
 @Import({EnrichTestConfig.class, JobBoardQuery.class, JobDetailQuery.class, TrackingService.class})
-class TrackingTestConfig {
+public class TrackingTestConfig {
 }

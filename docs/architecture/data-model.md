@@ -210,7 +210,9 @@ V4 created `notification` without `ref` and with `kind in (DIGEST, ALERT)` and
 migration for `ref`, `LLM_QUOTA` and a nullable `profile_id` (quota alerts are not per profile).
 
 A job appears in at most one digest per profile; the digest includes only jobs not in a previous
-digest. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status
+digest. `job_ids` of a DIGEST row lists every scored job the digest covers, also those counted in
+"and N more" (T-015), so they are not sent again; only rows with `success = true` count. "Scored
+since the last digest" uses `job_assessment.updated_at` after the last successful digest's `sent_at`. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status
 is announced at most once per day.
 
 ### `company` (Phase 1, for ATS collectors)

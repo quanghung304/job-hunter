@@ -43,8 +43,16 @@ springdoc:
 # Application settings (docs/architecture/config-spec.md §2).
 # Keys are added here, with their documented defaults, by the task that first reads them.
 app:
+  public-base-url: http://localhost:8080   # links in Telegram messages
   profile:
     path: ../config/profile.yaml
+  notify:
+    digest-cron: "0 30 8 * * *"             # in app.pipeline.zone; "-" = no digest
+    telegram:
+      enabled: false
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      chat-id: ${TELEGRAM_CHAT_ID:}
+      api-base-url: https://api.telegram.org
   http:
     connect-timeout: 5s
     read-timeout: 20s

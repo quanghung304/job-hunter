@@ -13,10 +13,10 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  * Rows for board tests, inserted with SQL (other modules' tables). Prompt versions match
  * {@link LlmRouterTestConfig#properties}: {@code extract-v1} and {@code score-v2}.
  */
-final class BoardFixtures {
+public final class BoardFixtures {
 
     static final Instant NOW = LlmRouterTestConfig.NOW;
-    static final String HUGH = "hugh";
+    public static final String HUGH = "hugh";
     static final String OTHER = "other";
 
     static final String ATTRIBUTES = """
@@ -27,16 +27,16 @@ final class BoardFixtures {
     private final NamedParameterJdbcTemplate jdbc;
     private int counter;
 
-    BoardFixtures(NamedParameterJdbcTemplate jdbc) {
+    public BoardFixtures(NamedParameterJdbcTemplate jdbc) {
         this.jdbc = jdbc;
     }
 
     /** An ACTIVE job posted {@code daysAgo} days before {@link #NOW}. */
-    long job(String title, String company, int daysAgo) {
+    public long job(String title, String company, int daysAgo) {
         return job(title, company, daysAgo, "ACTIVE");
     }
 
-    long job(String title, String company, int daysAgo, String status) {
+    public long job(String title, String company, int daysAgo, String status) {
         return jdbc.queryForObject("""
                         insert into job (fingerprint, title, company_name, company_key, location_text, remote_hint,
                                          description_text, apply_url, salary_min, salary_currency, salary_period, tags,
@@ -55,7 +55,7 @@ final class BoardFixtures {
                 Long.class);
     }
 
-    void posting(long jobId, String sourceCode) {
+    public void posting(long jobId, String sourceCode) {
         jdbc.update("""
                         insert into raw_posting (source_code, external_id, url, payload, payload_hash, first_seen_at,
                                                  last_seen_at, job_id)
@@ -88,11 +88,11 @@ final class BoardFixtures {
     }
 
     /** Prefilter PASS, not analyzed. */
-    void passed(long jobId, String profileId) {
+    public void passed(long jobId, String profileId) {
         assessment(jobId, profileId, "PASS", null, null, null, "PENDING");
     }
 
-    void rejected(long jobId, String profileId) {
+    public void rejected(long jobId, String profileId) {
         assessment(jobId, profileId, "REJECT", null, null, null, "DONE");
     }
 
@@ -100,11 +100,11 @@ final class BoardFixtures {
      * Analyzed (OK extraction), not scored. {@code checks}: {@code OK} (all OK), {@code UNKNOWN}
      * (REGION unclear) or {@code FAIL} (REGION fails); the other checks are OK.
      */
-    void analyzed(long jobId, String profileId, String checks) {
+    public void analyzed(long jobId, String profileId, String checks) {
         assessment(jobId, profileId, "PASS", checks, extractionOf(jobId), null, "PENDING");
     }
 
-    void scored(long jobId, String profileId, int score) {
+    public void scored(long jobId, String profileId, int score) {
         assessment(jobId, profileId, "PASS", "OK", extractionOf(jobId), score, "DONE");
     }
 
@@ -113,7 +113,7 @@ final class BoardFixtures {
     }
 
     /** The owner's eligibility decision (ADR-0011); creates the tracking row if needed. */
-    void decide(long jobId, String profileId, String decision) {
+    public void decide(long jobId, String profileId, String decision) {
         jdbc.update("""
                         insert into job_tracking (job_id, profile_id, status, eligibility_decision, eligibility_decided_at,
                                                   updated_at)
@@ -141,7 +141,7 @@ final class BoardFixtures {
         return json.append("]").toString();
     }
 
-    void tracking(long jobId, String profileId, String status) {
+    public void tracking(long jobId, String profileId, String status) {
         jdbc.update("""
                         insert into job_tracking (job_id, profile_id, status, notes, updated_at)
                         values (:job, :profile, :status, null, :now)""",

@@ -10,6 +10,28 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-015 Telegram digest — DONE
+- notify: `TelegramClient` (Bot API `sendMessage`, HTML, split at line breaks into ≤ 4096-char messages, one retry
+  on 429 after `retry_after` capped at 60 s, errors never contain the token), `DigestBuilder` (waiting count, scored
+  jobs best first, top 15 + "and N more", Open/Posting links, HTML escaping), `NotificationService` (cron
+  `app.notify.digest-cron` in `app.pipeline.zone`; records every send in `notification`; DISABLED unless enabled
+  and both secrets set, WARN at startup otherwise), `NotifyProperties`; repository queries for the last successful
+  digest and the job ids already sent. No instant alerts.
+- tracking: `DigestQuery` (NEW, ACTIVE, not marked INELIGIBLE; waiting = PASS and not analyzed; scored ≥ min since a
+  time, with the first posting URL).
+- Decisions (docs updated: data-model, config-spec, runbook): a digest's `job_ids` include the "and N more" jobs, so
+  each job is in at most one digest; "scored since" uses `job_assessment.updated_at` (there is no scored-at column);
+  only successful sends count, so a failed digest's jobs come again next time.
+- Bug found by the tests: a URI template variable encodes the ':' of real bot tokens (404); the path is built
+  literally.
+- Fix in T-027's `ProfileService.replace`: on Windows the final move over profile.yaml can fail with
+  AccessDenied while another process (virus scan, indexer) holds the file; it now retries up to 5 times
+  (50–200 ms). Seen once in a full `verify`.
+- Tests: `TelegramClientTest` (8, WireMock), `DigestBuilderTest` (7), `NotificationServiceIT` (5: filters, at most
+  one digest, nothing to send, failed send retried, disabled). `BoardFixtures`/`TrackingTestConfig` made public for it.
+  Backend 804 unit + 188 IT green.
+- Next: T-022 (LLM quota alerts and model switching — backend), then T-023.
+
 ## 2026-10-22 — T-028 Frontend: Profile page — DONE (visual check by owner pending)
 - `/profile`: `ProfilePage` (header card with id, saved time, short hash, dirty tag, Discard, Save changes;
   problems banner; info box; 409 `PROFILE_CHANGED` → ErrorState with Reload; leave guard dialog via

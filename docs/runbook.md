@@ -44,6 +44,15 @@ LLM cost.
   marked it Not eligible. On the admin page you can select jobs and analyze or score them in bulk, or
   re-score active jobs. Each of these shows the count first.
 
+## Telegram digest
+
+Off by default. To turn it on: put `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env`, set
+`app.notify.telegram.enabled: true` (application.yml or `APP_NOTIFY_TELEGRAM_ENABLED=true`), restart.
+Every day at `app.notify.digest-cron` (default 08:30 Europe/Rome) one digest lists the number of new
+jobs waiting for Analyze and the jobs scored since the last digest with a score of at least
+`notify.digestMinScore` (top 15, then "and N more"). A job is in at most one digest; nothing is
+sent when there is nothing to report. Every send (also a failed one) is a row in `notification`.
+
 ## Changing the profile
 
 Edit `config/profile.yaml` and restart (the app does not start without a valid profile; the
@@ -108,7 +117,7 @@ What a save does to the file:
 | Model shows "Error" | Detail text | Missing/invalid key in `.env`, or model id removed by the provider → fix `config/llm.yaml`, restart, press "Test" |
 | Hitting limits every day | Usage today vs limit | Tighten prefilter, lower run frequency, or split steps across two providers (e.g. extraction on OpenRouter free, scoring on Groq) |
 | "Budget reached" in logs | Admin LLM usage | Raise `monthly-budget-usd` or tighten prefilter |
-| Telegram not sending | `notification.error` | Token/chat id; bot must have received a message from you first |
+| Telegram not sending | Startup log (WARN when enabled but a secret is missing), `notification.error` | `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` in `.env`, `app.notify.telegram.enabled=true`; the bot must have received a message from you first |
 | Page reload on `/jobs/42` gives 404 | SPA fallback | Check `SpaFallbackController` and that the app was started with `make run` |
 | Frontend type errors after pulling | API contract changed | `make api` |
 | Board shows only "Not analyzed" jobs | Expected: collection makes no LLM calls | Press "Analyze" on the jobs you want to judge |

@@ -95,7 +95,9 @@ UNKNOWN when `allowedRegions` is empty/unknown, and OK if it contains
 | `app.llm.allow-paid-calls` | `false` (env `LLM_ALLOW_PAID_CALLS`) | Owner's consent to PAID models (ADR-0009). While false, no request is ever sent to a PAID model (assignment, fallback, eval, "Test"); the router answers `PAID_NOT_ALLOWED` |
 | `app.llm.timeout` | `60s` | Per call; local models may need more (`app.llm.timeout-local`, default `180s`) |
 | `app.llm.fake.simulate` | — | Test-only behaviour of the fake model: `quota-after:<n>` answers a daily-quota 429 after n calls |
-| `app.notify.telegram.enabled` | `false` | |
+| `app.notify.telegram.enabled` | `false` | Also needs `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`; enabled without them = WARN at startup, nothing sent |
+| `app.notify.telegram.bot-token` / `chat-id` | env `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Secrets; never put them in the file |
+| `app.notify.telegram.api-base-url` | `https://api.telegram.org` | Bot API root; tests point it at WireMock |
 | `app.notify.digest-cron` | `0 30 8 * * *` | In `app.pipeline.zone`. Also read by `PipelineSchedule` for the admin page's "next digest" (T-014); `-` = none |
 | `app.jobs.expire-after-days` | `14` | Not seen in any source for N days → EXPIRED |
 

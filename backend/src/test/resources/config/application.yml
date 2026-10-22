@@ -4,3 +4,8 @@ app:
   pipeline:
     cron: "-"
     catch-up-enabled: false
+  # No scheduled digest either; Telegram stays off unless a test turns it on (WireMock).
+  notify:
+    digest-cron: "-"
+    telegram:
+      enabled: false

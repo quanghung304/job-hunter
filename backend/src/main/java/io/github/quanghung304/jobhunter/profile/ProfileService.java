@@ -5,6 +5,7 @@ import io.github.quanghung304.jobhunter.common.Hashing;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -126,11 +127,7 @@ public class ProfileService {
             Files.write(temp, content);
             Files.copy(target, target.resolveSibling(target.getFileName() + ".bak"),
                     StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
-            try {
-                Files.move(temp, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-            } catch (AtomicMoveNotSupportedException e) {
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING);
-            }
+            moveOver(temp, target);
             temp = null;
         } catch (IOException e) {
             throw new UncheckedIOException("cannot write " + target, e);
@@ -140,6 +137,33 @@ public class ProfileService {
                     Files.deleteIfExists(temp);
                 } catch (IOException ignored) {
                     // best effort; the target is unchanged
+                }
+            }
+        }
+    }
+
+    /** Attempts of the final move; Windows refuses it while another process (virus scan, indexer) holds the file. */
+    static final int MOVE_ATTEMPTS = 5;
+
+    private static void moveOver(Path source, Path target) throws IOException {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                try {
+                    Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                } catch (AtomicMoveNotSupportedException e) {
+                    Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+                return;
+            } catch (AccessDeniedException e) {
+                if (attempt == MOVE_ATTEMPTS) {
+                    throw e;
+                }
+                log.debug("{} is busy; retrying the move ({}/{})", target, attempt, MOVE_ATTEMPTS);
+                try {
+                    Thread.sleep(50L * attempt);
+                } catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw e;
                 }
             }
         }
