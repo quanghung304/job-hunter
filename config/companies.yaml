@@ -1,7 +1,7 @@
 # Company job boards for ATS collectors. Spec: docs/architecture/config-spec.md §4
-# The first entries are smoke-test boards seen working in public examples (Oct 2026).
-# They are NOT a target list. Task T-018 validates each entry and records the result;
-# add real remote-friendly target companies over time.
+# The first entries are smoke-test boards, all OK on 2026-10-22 (`make validate-companies`).
+# They are NOT a target list; add real remote-friendly target companies over time and run
+# `make validate-companies` after each edit (docs/runbook.md, "Company boards").
 
 companies:
   - { name: GitLab,  ats: GREENHOUSE, slug: gitlab,  notes: smoke test }

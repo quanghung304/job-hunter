@@ -228,9 +228,15 @@ ERROR alert of that model the same day.
 | enabled | boolean | |
 | last_check_status | text | `OK`, `NOT_FOUND`, `ERROR` |
 | last_checked_at | timestamptz | |
+| not_found_count | int not null default 0 | Consecutive 404s; reset by a successful fetch (V10, T-018) |
 | unique | (ats, board_slug) | |
 
-Seeded from `config/companies.yaml` on startup (upsert by ats+slug; DB keeps status).
+Seeded from `config/companies.yaml` on startup (`CompanySeeder`): upsert by ats+slug, name
+updated, check columns (`last_check_status`, `last_checked_at`, `not_found_count`) kept.
+`enabled` follows the file: a board in the file is enabled unless `not_found_count` ≥ 3, a
+board removed from the file is disabled. The collectors set `enabled = false` at the third 404
+in a row; a successful fetch (`--validate-companies` also fetches disabled boards) sets OK,
+resets the count and enables the board again.
 
 ## 2. Tracking status lifecycle
 

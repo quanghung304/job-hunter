@@ -18,7 +18,8 @@ import org.springframework.context.annotation.Import;
         "app.profile.path=../config/profile.example.yaml",
         "app.sources.arbeitnow.enabled=false", "app.sources.himalayas.enabled=false",
         "app.sources.jobicy.enabled=false", "app.sources.weworkremotely.enabled=false",
-        "app.sources.hn-whoishiring.enabled=false"})
+        "app.sources.hn-whoishiring.enabled=false", "app.sources.greenhouse.enabled=false",
+        "app.sources.lever.enabled=false", "app.sources.ashby.enabled=false"})
 @Import(TestcontainersConfiguration.class)
 class PipelineLockIT {
 

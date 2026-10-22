@@ -3,7 +3,7 @@
 MVNW := cd backend && ./mvnw
 NPM := cd frontend && npm
 
-.PHONY: verify verify-backend verify-frontend dev dev-backend dev-frontend run api e2e
+.PHONY: verify verify-backend verify-frontend dev dev-backend dev-frontend run api e2e validate-companies
 
 # Backend (unit + integration, needs Docker) then frontend (lint, typecheck, tests).
 verify: verify-backend verify-frontend
@@ -34,6 +34,11 @@ run:
 api:
 	$(MVNW) verify -Dtest=none -Dsurefire.failIfNoSpecifiedTests=false -Dit.test=OpenApiExportIT -Dapi.export=true
 	$(NPM) run gen:api
+
+# Fetches every board of config/companies.yaml once, prints OK/NOT_FOUND/ERROR with job counts
+# and exits (1 if any board is not OK). Needs the database (docker compose up -d db).
+validate-companies:
+	$(MVNW) spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.arguments=--validate-companies
 
 # Playwright smoke tests against a running app (start it first with `make run`).
 # First time only: cd frontend && npx playwright install chromium

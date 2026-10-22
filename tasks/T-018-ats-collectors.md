@@ -24,10 +24,10 @@ company health tracking.
 6. Live tests (one board per ATS).
 
 ## Acceptance criteria
-- [ ] Greenhouse `content` HTML entities are unescaped before HTML → text.
-- [ ] Lever lists (requirements etc.) are included in the description text with headings.
-- [ ] Ashby `isListed=false` jobs are skipped.
-- [ ] A 404 board does not fail the whole collector run (status PARTIAL).
+- [x] Greenhouse `content` HTML entities are unescaped before HTML → text.
+- [x] Lever lists (requirements etc.) are included in the description text with headings.
+- [x] Ashby `isListed=false` jobs are skipped.
+- [x] A 404 board does not fail the whole collector run (status PARTIAL).
 
 ## Tests
 `GreenhouseMapperTest`, `LeverMapperTest`, `AshbyMapperTest`, `CompanyBoardCollectorTest`

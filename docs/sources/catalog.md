@@ -12,9 +12,9 @@ and update "Verified" with the date you did.
 | `jobicy` | Jobicy | JSON API | none | 1 | allowed | 7-day window, 3 h delay, newest first, cursor, count ≤ 200; credit Jobicy and keep the canonical job URL; poll ≤ once per hour | [jobicy.md](jobicy.md) | 2026-10-17 (API docs + fair use) |
 | `weworkremotely` | We Work Remotely | RSS | none | 1 | allowed | Category feeds; limited, revocable personal-use right — no redistribution (Phase 4 SaaS needs permission); we keep a direct link; HTML pages behind a Cloudflare challenge | [weworkremotely.md](weworkremotely.md) | 2026-10-17 (ToS read by owner; feeds + robots.txt) |
 | `hn-whoishiring` | Hacker News "Who is hiring?" | JSON API (Algolia HN Search) | none | 1 | allowed | Monthly thread, ~250–300 free-text top-level comments; 2–3 requests per run, min interval 12h; keep the comment permalink | [hn-whoishiring.md](hn-whoishiring.md) | 2026-10-22 (API responses; terms not re-read) |
-| `greenhouse` | Greenhouse job boards | JSON API | none | 1 | allowed | Public GET; per company slug; no salary in board API | [ats.md](ats.md) | — |
-| `lever` | Lever postings | JSON API | none | 1 | allowed | Public; 1 request/s; EU host for EU accounts | [ats.md](ats.md) | — |
-| `ashby` | Ashby job boards | JSON API | none | 1 | allowed | Public; optional compensation | [ats.md](ats.md) | — |
+| `greenhouse` | Greenhouse job boards | JSON API | none | 1 | allowed | Public GET per company slug; no salary in board API; content entity-escaped | [ats.md](ats.md) | 2026-10-22 (API responses; terms not re-read) |
+| `lever` | Lever postings | JSON API | none | 1 | allowed | Public; 1 request/s; EU host for EU accounts; salaryRange not seen yet | [ats.md](ats.md) | 2026-10-22 (API responses; terms not re-read) |
+| `ashby` | Ashby job boards | JSON API | none | 1 | allowed | Public; compensation with `includeCompensation=true`; unlisted jobs skipped | [ats.md](ats.md) | 2026-10-22 (API responses; terms not re-read) |
 | `adzuna` | Adzuna | JSON API | free key | 1.5 | planned | Free tier ~25/min, 250/day, 2,500/month; truncated descriptions; links via Adzuna; licence may be needed after trial | [adzuna.md](adzuna.md) | — |
 | `remoteok` | Remote OK | JSON API | none | 1.5 | planned | Latest ~100 only; mandatory followed link-back + credit; many "remote" items are on-site | [remoteok.md](remoteok.md) | — |
 | `remotive` | Remotive | JSON API | none | — | planned (low value) | Very small feed, 24h delay, ~4 calls/day | — | — |

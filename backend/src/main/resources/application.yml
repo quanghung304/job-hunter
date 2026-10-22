@@ -46,6 +46,8 @@ app:
   public-base-url: http://localhost:8080   # links in Telegram messages
   profile:
     path: ../config/profile.yaml
+  companies:
+    path: ../config/companies.yaml
   notify:
     digest-cron: "0 30 8 * * *"             # in app.pipeline.zone; "-" = no digest
     telegram:
@@ -122,3 +124,22 @@ app:
       call-delay: 1s
       search-hits: 10
       previous-thread-days: 7
+    greenhouse:
+      enabled: true
+      max-items: 3000
+      min-interval: 12h
+      base-url: https://boards-api.greenhouse.io
+      request-delay: 1s
+    lever:
+      enabled: true
+      max-items: 3000
+      min-interval: 12h
+      base-url: https://api.lever.co
+      eu-base-url: https://api.eu.lever.co
+      request-delay: 1s
+    ashby:
+      enabled: true
+      max-items: 3000
+      min-interval: 12h
+      base-url: https://api.ashbyhq.com
+      request-delay: 1s

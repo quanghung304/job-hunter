@@ -48,7 +48,8 @@ import org.springframework.test.context.event.RecordApplicationEvents;
         "app.sources.arbeitnow.min-interval=0s", "app.sources.arbeitnow.page-delay=0s",
         "app.sources.himalayas.min-interval=0s", "app.sources.himalayas.page-delay=0s",
         "app.sources.jobicy.enabled=false", "app.sources.weworkremotely.enabled=false",
-        "app.sources.hn-whoishiring.enabled=false"})
+        "app.sources.hn-whoishiring.enabled=false", "app.sources.greenhouse.enabled=false",
+        "app.sources.lever.enabled=false", "app.sources.ashby.enabled=false"})
 @Import({TestcontainersConfiguration.class, PipelineOrchestratorIT.FixedClock.class})
 @RecordApplicationEvents
 class PipelineOrchestratorIT {

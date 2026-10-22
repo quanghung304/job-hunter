@@ -32,7 +32,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-028 | [Frontend: Profile page](T-028-frontend-profile-page.md) | T-027, T-019 | M |
 | [x] | T-015 | [Telegram digest and alerts](T-015-telegram.md) | T-013 | S |
 | [x] | T-017 | [HN "Who is hiring?" collector](T-017-hn-whoishiring.md) | T-005 | M |
-| [ ] | T-018 | [ATS collectors: Greenhouse, Lever, Ashby](T-018-ats-collectors.md) | T-005 | M |
+| [x] | T-018 | [ATS collectors: Greenhouse, Lever, Ashby](T-018-ats-collectors.md) | T-005 | M |
 | [ ] | T-016 | [Eval harness + export for labeling](T-016-eval.md) | T-012 (and a few days of data) | M |
 
 Owner tasks (not for agents):

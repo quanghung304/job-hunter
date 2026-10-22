@@ -126,6 +126,10 @@ companies:
     notes: smoke-test entry
 ```
 
+Read on every start (`CompanySeeder`): unknown keys, a blank name/slug, an unknown `ats` or a
+duplicate (ats, slug) stop the start. Boards removed from the file are disabled. Check the
+list with `make validate-companies` (docs/runbook.md).
+
 ## 5. `llm.yaml` (model registry, ADR-0008)
 
 Committed file, no secrets. Loaded at startup; invalid entries fail startup with the path

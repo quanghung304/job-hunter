@@ -107,6 +107,22 @@ What a save does to the file:
 - After switching the scoring model, existing scores keep their old model label. Use
   "Re-score active jobs" if you want all jobs judged by the same model.
 
+## Company boards (Greenhouse, Lever, Ashby)
+
+- The list is `config/companies.yaml` (`name`, `ats`: `GREENHOUSE` | `LEVER` | `LEVER_EU` | `ASHBY`,
+  `slug`, optional `notes`). It is read on every start: new boards are added, names updated,
+  boards removed from the file are disabled. An invalid entry stops the start with the list
+  of problems.
+- The slug is the last part of the company's career page URL:
+  `job-boards.greenhouse.io/<slug>`, `jobs.lever.co/<slug>` (EU accounts:
+  `jobs.eu.lever.co/<slug>` → `LEVER_EU`), `jobs.ashbyhq.com/<slug>`.
+- **Validate the list** after editing it: `docker compose up -d db`, then
+  `make validate-companies`. It fetches every board once (enabled or not), prints
+  `OK`/`NOT_FOUND`/`ERROR` with the number of jobs, records the status and exits (code 1 if any
+  board is not OK). No pipeline run starts.
+- A board that answers 404 three runs in a row is disabled (Admin → Companies). Fix the slug or
+  remove the entry; a board that answers OK in `make validate-companies` is enabled again.
+
 ## Changing a prompt
 
 1. Copy the current version (e.g. `docs/ai/prompts/score-v2.md`) to the next number
@@ -120,6 +136,7 @@ What a save does to the file:
 | Symptom | Check | Fix |
 |---|---|---|
 | A source shows 0 fetched for 2+ runs | Admin sources table: error; run `cd backend && ./mvnw verify -Plive -Dit.test=<Source>CollectorLiveTest` | API changed → capture new fixture, update mapper and `docs/sources/<code>.md`; mark `broken` in catalog until fixed |
+| A company shows NOT_FOUND / disabled | Career page URL of the company | Wrong slug or the company changed ATS → fix `config/companies.yaml`, `make validate-companies` |
 | HTTP 429 from a source | Run frequency | Raise `app.sources.<code>.min-interval` |
 | HTTP 403 / blocked | Terms changed? | Disable source, update catalog status |
 | Many `FAILED` extractions | `llm_call.error` | Invalid JSON → the model may be too weak for the prompt: run the eval, switch model or write a new prompt version |

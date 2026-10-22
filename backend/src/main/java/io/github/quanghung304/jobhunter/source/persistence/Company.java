@@ -43,6 +43,9 @@ public class Company {
     @Column(name = "last_checked_at")
     private Instant lastCheckedAt;
 
+    @Column(name = "not_found_count", nullable = false)
+    private int notFoundCount;
+
     protected Company() {
         // for JPA
     }
@@ -95,5 +98,14 @@ public class Company {
 
     public void setLastCheckedAt(Instant lastCheckedAt) {
         this.lastCheckedAt = lastCheckedAt;
+    }
+
+    /** Consecutive 404s of the board; reset by a successful fetch. */
+    public int getNotFoundCount() {
+        return notFoundCount;
+    }
+
+    public void setNotFoundCount(int notFoundCount) {
+        this.notFoundCount = notFoundCount;
     }
 }

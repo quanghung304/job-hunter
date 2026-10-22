@@ -10,6 +10,25 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-018 ATS collectors: Greenhouse, Lever, Ashby — DONE
+- source: `CompanyBoardCollector` (base: enabled boards by name, 1 s between boards, 404 → NOT_FOUND + warning,
+  3 in a row → disabled, other errors → ERROR; FAILED only if no board was read and a non-404 error happened),
+  `CompanyBoards` (status updates; OK resets the count and enables), `CompanySeeder` (startup upsert of
+  companies.yaml; check columns kept; removed boards disabled; invalid entries stop the start),
+  `CompanyBoardChecker` + `ValidateCompaniesRunner` (`make validate-companies`: report, exit 0/1 before ready).
+  `greenhouse`/`lever`/`ashby` packages: collector, DTO, mapper, properties (Lever EU host for `LEVER_EU`).
+- V10: `company.not_found_count` (data-model updated). Config `app.companies.path`, `app.sources.{greenhouse,lever,ashby}.*`.
+- Decisions (ats.md rewritten with verified shapes): company name from companies.yaml, not the vendor field;
+  Greenhouse postedAt = `first_published` (else `updated_at`); Ashby salary only from exactly one `Salary` component,
+  else the tier summary is appended to the description; Lever `salaryRange` mapped per docs but never seen (unverified).
+  Command line instead of an admin button for the board check (no API change).
+- Tests: `GreenhouseMapperTest` (8), `LeverMapperTest` (9), `AshbyMapperTest` (12), `CompanyBoardCollectorTest` (12,
+  WireMock: OK, 404 ×3 disables, 500, EU host, unlisted, check/report), `CompanySeederIT` (7), live tests (3, green).
+  `make validate-companies` on the real list: 6 of 6 boards OK (GitLab 232, Stripe 729, Spotify 81, Palantir 304,
+  Linear 34, Notion 137 jobs).
+- Owner: add real target companies to `config/companies.yaml`, then `make validate-companies`.
+- Next: T-016 (eval harness) once there are a few days of data.
+
 ## 2026-10-22 — T-017 HN "Who is hiring?" collector — DONE
 - `source.hn`: `HnCollector` (Algolia search for `whoishiring` stories → newest "Ask HN: Who is hiring?" thread,
   plus the previous one on days 1–7 UTC if the newest is from this month; `items/{id}`, top-level children only;
