@@ -1138,6 +1138,22 @@
         "required" : [ "assignment", "warning" ],
         "type" : "object"
       },
+      "LlmLastEval" : {
+        "properties" : {
+          "date" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "falseEligible" : {
+            "type" : [ "number", "null" ]
+          },
+          "highRecall" : {
+            "type" : [ "number", "null" ]
+          }
+        },
+        "required" : [ "date", "falseEligible", "highRecall" ],
+        "type" : "object"
+      },
       "LlmLimits" : {
         "properties" : {
           "requestsPerMonth" : {
@@ -1182,8 +1198,12 @@
             "type" : "string"
           },
           "lastEval" : {
-            "description" : "Newest eval run (T-016); null until then",
-            "type" : "null"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/LlmLastEval"
+            }, {
+              "type" : "null"
+            } ],
+            "description" : "Newest eval run (T-016); null until then"
           },
           "limits" : {
             "$ref" : "#/components/schemas/LlmLimits"

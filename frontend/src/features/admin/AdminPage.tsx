@@ -13,6 +13,7 @@ import { BulkActionTable } from './BulkActionTable'
 import { CompaniesTable } from './CompaniesTable'
 import { FailuresList } from './FailuresList'
 import { KpiRow } from './KpiRow'
+import { LlmModelsCard } from './LlmModelsCard'
 import { LlmUsageCard } from './LlmUsageCard'
 import { PipelineBanner } from './PipelineBanner'
 import { RescoreDialog } from './RescoreDialog'
@@ -99,6 +100,7 @@ export function AdminPage() {
         <>
           <PipelineBanner progress={overview.data.pipelineProgress} running={overview.data.pipelineRunning} />
           <KpiRow kpis={overview.data.kpis} callsToday={overview.data.llmUsage.callsToday} />
+          <LlmModelsCard />
           <div className="flex flex-wrap gap-5">
             <SourcesTable sources={overview.data.sources} />
             <LlmUsageCard usage={overview.data.llmUsage} />

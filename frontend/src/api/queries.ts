@@ -34,6 +34,10 @@ export type BulkScoreDryRun = components['schemas']['BulkScoreResponse']
 export type ProfileData = components['schemas']['Profile']
 export type ProfileView = components['schemas']['ProfileResponse']
 export type ProfileSaved = components['schemas']['ProfileSaveResponse']
+export type LlmAdmin = components['schemas']['LlmAdminResponse']
+export type LlmModel = components['schemas']['LlmModel']
+export type LlmAssignment = components['schemas']['LlmAssignment']
+export type LlmPurpose = LlmAssignment['purpose']
 
 /** Filters and sort of `GET /api/jobs` without paging; omitted values mean "no filter". */
 export type JobsQuery = Omit<NonNullable<paths['/api/jobs']['get']['parameters']['query']>, 'page' | 'size'>
@@ -56,6 +60,7 @@ export const queryKeys = {
   adminOverview: ['admin', 'overview'] as const,
   companies: ['admin', 'companies'] as const,
   profile: ['profile'] as const,
+  llmAdmin: ['admin', 'llm'] as const,
 }
 
 function isGridKey(key: QueryKey): boolean {
@@ -475,6 +480,57 @@ export function useSaveProfile() {
       void client.invalidateQueries({ queryKey: queryKeys.jobsAll })
       void client.invalidateQueries({ queryKey: ['job'] })
       void client.invalidateQueries({ queryKey: queryKeys.meta })
+    },
+  })
+}
+
+/** Assignments, models (status, usage today) and switch history (ADR-0008). */
+export function useLlmAdmin(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.llmAdmin,
+    queryFn: () => unwrap(api.GET('/api/admin/llm')),
+    enabled,
+  })
+}
+
+export interface ModelSwitch {
+  purpose: LlmPurpose
+  modelId: string
+  fallbacks?: string[]
+  autoFallback?: boolean
+  allowPaid?: boolean
+  /** ADR-0009: needed to switch to a PAID model or turn on paid fallback. */
+  confirmPaid?: boolean
+}
+
+/** Switches the model of a purpose; no LLM call is made, the purpose is un-paused (ADR-0010). */
+export function useSwitchModel() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ purpose, ...body }: ModelSwitch) =>
+      unwrap(api.PUT('/api/admin/llm/assignments/{purpose}', { params: { path: { purpose } }, body })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.status })
+      void client.invalidateQueries({ queryKey: queryKeys.llmAdmin })
+      void client.invalidateQueries({ queryKey: queryKeys.adminOverview })
+    },
+  })
+}
+
+/** One tiny call to a model ("Test"); a success clears its ERROR status. */
+export function useTestModel() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ modelId, confirmPaid }: { modelId: string; confirmPaid?: boolean }) =>
+      unwrap(
+        api.POST('/api/admin/llm/models/{modelId}/test', {
+          params: { path: { modelId } },
+          body: confirmPaid ? { confirmPaid: true } : undefined,
+        }),
+      ),
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.status })
+      void client.invalidateQueries({ queryKey: queryKeys.llmAdmin })
     },
   })
 }

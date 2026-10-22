@@ -76,7 +76,7 @@ final class LlmAdminResponses {
             @Schema(requiredMode = REQUIRED) boolean keyConfigured,
             @Schema(requiredMode = REQUIRED) List<LlmPurpose> assignedTo,
             @Schema(requiredMode = REQUIRED, nullable = true, description = "Newest eval run (T-016); null until then")
-            Object lastEval) {
+            LastEval lastEval) {
 
         static ModelResponse of(LlmAdminService.ModelView view) {
             var m = view.model();
@@ -86,6 +86,14 @@ final class LlmAdminResponses {
                     new UsageToday(u.calls(), u.inputTokens(), u.outputTokens(), u.costUsd()), !m.missingKey(),
                     view.assignedTo(), null);
         }
+    }
+
+    /** Summary of the newest eval run of a model (api-spec; filled from T-016). */
+    @Schema(name = "LlmLastEval")
+    record LastEval(
+            @Schema(requiredMode = REQUIRED) java.time.LocalDate date,
+            @Schema(requiredMode = REQUIRED, nullable = true) BigDecimal falseEligible,
+            @Schema(requiredMode = REQUIRED, nullable = true) BigDecimal highRecall) {
     }
 
     @Schema(name = "LlmSwitchEvent")

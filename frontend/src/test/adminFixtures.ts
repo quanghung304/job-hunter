@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { AdminOverview, Company, JobSummary, ModelChoice } from '@/api/queries'
+import { llmAdminFixture } from './llmFixtures'
 import { server } from './server'
 
 const DAY = 86_400_000
@@ -155,6 +156,7 @@ export function mockAdminApi(overviews: AdminOverview[] = [overviewFixture()]): 
       return HttpResponse.json(overview)
     }),
     http.get('/api/admin/companies', () => HttpResponse.json(companiesFixture)),
+    http.get('/api/admin/llm', () => HttpResponse.json(llmAdminFixture())),
     http.post('/api/admin/pipeline/run', () => {
       api.requests.push('POST /api/admin/pipeline/run')
       if (api.run === 'conflict') {

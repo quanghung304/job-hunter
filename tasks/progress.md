@@ -10,6 +10,24 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-023 LLM quota banner and model switcher — frontend — DONE (visual check by owner pending)
+- `features/llm`: `LlmAlertBanner` (under the header on every page; paused = attention row, near limit and
+  fallback-in-use = quiet rows, "Switch back" after an auto-switch; dismiss per step/model/status/reset in
+  sessionStorage), `SwitchModelDialog` (models with tier, status, usage today, last eval; ERROR/no key/EXHAUSTED
+  and PAID-while-off disabled with the reason; PAID needs a confirmation checkbox → `confirmPaid`; 409 shown in
+  the dialog), `PaidConfirmDialog` + `paidConfirmation` (repeat a 409 PAID_CONFIRMATION_REQUIRED request with
+  `confirmPaid`), `TierTag`, `ModelStatusTag`, `llmLabels`. `AnalysisActions` "Switch model" opens the dialog.
+- Admin: `LlmModelsCard` (`#llm`, after the KPI row): per step model + tags + usage meter + reset time, toggles
+  (auto-switch, allow paid fallback), fallback chips, Change model; models table with Test; switch history.
+- api: `useLlmAdmin`, `useSwitchModel`, `useTestModel`; `ApiError.problem` keeps every Problem Details field.
+  Backend: `lastEval` typed as `LlmLastEval | null` (was a bare object → unusable TS type); contract regenerated.
+- Deviations (frontend.md updated): no "N jobs waiting" in the banner (not in `LlmAlert`); missing-key hint names
+  the provider, not the env variable; paid fallback/Test confirmation is driven by the server's 409.
+- Tests: `LlmAlertBanner` (6), `SwitchModelDialog` (4), `LlmModelsCard` (7); frontend 243 green, lint/typecheck/build
+  clean. Playwright `e2e/llm.spec.ts` written, not run: it needs a stack whose EXTRACT model is an assigned fake
+  model answering 429 (`app.llm.fake.simulate=quota-after:0`), not `force-model`, which overrides any switch.
+- Next: T-017 (HN "Who is hiring?" collector).
+
 ## 2026-10-22 — T-022 LLM quota alerts and model switching — backend — DONE
 - V9: `notification.ref`, kind `LLM_QUOTA`, nullable `profile_id`, unique `ref` for successful rows.
 - llm: `LlmAlertService` (alert per purpose whose model is not AVAILABLE, `paused` from the router's

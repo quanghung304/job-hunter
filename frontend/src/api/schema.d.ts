@@ -835,6 +835,12 @@ export interface components {
             /** @description Set for a PAID model */
             warning: string | null;
         };
+        LlmLastEval: {
+            /** Format: date */
+            date: string;
+            falseEligible: number | null;
+            highRecall: number | null;
+        };
         LlmLimits: {
             /** Format: int32 */
             requestsPerMonth?: number | null;
@@ -853,7 +859,7 @@ export interface components {
             keyConfigured: boolean;
             label: string;
             /** @description Newest eval run (T-016); null until then */
-            lastEval: null;
+            lastEval: components["schemas"]["LlmLastEval"] | null;
             limits: components["schemas"]["LlmLimits"];
             modelId: string;
             provider: string;

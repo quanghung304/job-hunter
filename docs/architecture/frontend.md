@@ -207,12 +207,18 @@ Rendered directly under the app header when `GET /api/status` returns `llmAlerts
 10px 24px (16px mobile), bottom border `--line`:
 - EXHAUSTED / ERROR / paused: `--attention-bg` background, `--attention-fg` text, warning
   icon. NEAR_LIMIT: `--surface-muted` background, `--ink-2` text, gauge icon.
-- Text (one line, wraps on mobile): **"Extraction paused"** · "GPT-OSS 120B (Groq) reached its
-  daily limit (1000/1000)" · mono "resets 02:00" · "23 jobs waiting". For NEAR_LIMIT:
-  "Scoring model at 81% of today's limit".
+- Text (one line, wraps on mobile): **"Extraction paused"** · "GPT-OSS 120B (Groq): Daily request
+  limit 1000/1000 · Analyze is off" · mono "resets 02:00". For NEAR_LIMIT: "Scoring model at 81% of
+  today's limit". A limited model that a fallback replaces: "Extraction model is limited · a fallback
+  model is used". The "23 jobs waiting" count of the first draft is left out: `LlmAlert` has no such
+  number (T-023).
+- After an auto-switch (`switchedFromModelId` set): quiet row "Extraction uses Qwen … after an
+  auto-switch · GPT-OSS 120B (Groq) works again", button "Switch back" (dialog with that model
+  pre-selected).
 - Actions right-aligned: "Switch model" (secondary button, opens `SwitchModelDialog` for
   that purpose), "Details" text link to `/admin#llm`, dismiss icon button (hides this exact
-  alert for the session).
+  alert — step, model, status, reset time — for the session, `sessionStorage` key
+  `llm.dismissedAlerts`, try/catch). Paused rows use `role="alert"`, the others `role="status"`.
 
 ### `SwitchModelDialog`
 shadcn Dialog, max-width 560px. Title "Model for Extraction" / "Model for Scoring". Radio
@@ -220,9 +226,13 @@ list rows: label (600) + provider (muted) · tier tag (FREE = `--accent-tint`, L
 `--line-faint`, PAID = `--attention-bg` with text "PAID") · status tag · mono usage
 "812 / 1000 today" (or "no known limit") · last eval line in muted 12.5px ("Eval Oct 25:
 false-eligible 2.4%, HIGH recall 83%" or "Not evaluated yet"). Unusable models are disabled
-with the reason in muted text. Below: for a PAID
-selection an attention box "Paid model — counts against the $5.00 monthly budget". Footer:
-Cancel (secondary), Save (primary).
+with the reason in muted text (ERROR incl. a missing key, EXHAUSTED, and PAID while
+`paidCallsAllowed` is false: "Paid calls are off: set LLM_ALLOW_PAID_CALLS=true in .env and restart").
+The test-only fake model is listed only while a fake model serves the step. Below: for a PAID
+selection an attention box "Paid model — every Score costs money and counts against the monthly
+budget" with a checkbox "I confirm paid calls for Scoring"; Save stays disabled until it is checked
+and then sends `confirmPaid: true` (ADR-0009). A refused save (409) shows the Problem Details in
+the dialog. Footer: Cancel (secondary), Save (primary).
 
 ### `/` — Board grid
 - Under the header, the **filter bar** (`--surface-muted`, bottom border, padding 12px 24px,
@@ -319,7 +329,7 @@ only (not on cards).
 - Otherwise hidden. A scored job shows only its score.
 - While the request runs: spinner, button disabled, text "Analyzing…" or "Scoring…".
 - Paused purpose (`LlmAlert.paused` for that purpose): button disabled, with "Model paused" and a
-  "Switch model" link that opens `SwitchModelDialog` for that purpose (until T-023 the link goes to `/admin#llm`).
+  "Switch model" link that opens `SwitchModelDialog` for that purpose.
 - Success updates the job in the list and detail caches (`['jobs', …]`, `['job', id]`).
   409 `BUDGET_REACHED` shows an error toast with the problem `detail`.
 - These buttons are secondary, so the one-primary-per-view rule is unchanged.
@@ -387,11 +397,17 @@ only (not on cards).
   - Two assignment blocks side by side (auto-fit, min 360px): "Extraction" and "Scoring". Each:
     model label + tier tag + status tag, mono usage meter "812 / 1000 requests today"
     (meter fill `--accent`, turns `--attention-fg` at ≥ 80%), "resets 02:00" when known,
-    toggles "Auto-switch to fallback" and "Allow paid fallback" (shadcn Switch), fallback
+    toggles "Auto-switch to fallback" and "Allow paid fallback" (a `role="switch"` button with
+    the word on/off; "Allow paid fallback" is disabled while paid calls are off), fallback
     order as small chips, and a "Change model" secondary button (opens `SwitchModelDialog`).
+  - Paid confirmation (ADR-0009): turning on "Allow paid fallback" and "Test" on a PAID model
+    are first sent without `confirmPaid`; the server's 409 `PAID_CONFIRMATION_REQUIRED` (model,
+    cost per call) opens `PaidConfirmDialog`, and only "Confirm paid calls" repeats the request
+    with `confirmPaid: true`.
   - Models table: Model, Provider, Tier, Status (+ detail), Today (calls · tokens · cost),
-    Limits, Last eval, "Test" button. Rows with `keyConfigured=false` show "Add
-    GROQ_API_KEY to .env" (name from the registry) in muted text.
+    Limits, Last eval, "Test" button (toast "Qwen … works · 412 ms" or the failure). Rows with
+    `keyConfigured=false` show "Add the groq API key to .env" in muted text (the API gives the
+    provider, not the variable name). The fake model is hidden unless a step uses it.
   - Switch history (last 10): time · purpose · from → to · reason (User / Auto-fallback).
 - Companies table (Company, ATS, Board slug mono, Check tag, Active jobs, Checked) with the
   hint "Edit list in config/companies.yaml".

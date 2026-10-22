@@ -35,6 +35,8 @@ export class ApiError extends Error {
   readonly detail: string | null
   readonly network: boolean
   readonly errors: FieldProblem[]
+  /** Every property of the Problem Details, e.g. `modelLabel` of PAID_CONFIRMATION_REQUIRED. */
+  readonly problem: Record<string, unknown>
 
   constructor(options: {
     status: number | null
@@ -43,6 +45,7 @@ export class ApiError extends Error {
     network?: boolean
     title?: string
     errors?: FieldProblem[]
+    problem?: Record<string, unknown>
   }) {
     super(options.title ?? options.detail ?? 'Request failed')
     this.name = 'ApiError'
@@ -51,6 +54,7 @@ export class ApiError extends Error {
     this.detail = options.detail ?? null
     this.network = options.network ?? false
     this.errors = options.errors ?? []
+    this.problem = options.problem ?? {}
   }
 
   static network(cause: unknown): ApiError {
@@ -62,7 +66,14 @@ export class ApiError extends Error {
   static fromProblem(status: number, body: unknown): ApiError {
     const problem: ProblemDetail = isProblem(body) ? body : {}
     const errors = Array.isArray(problem.errors) ? problem.errors : undefined
-    return new ApiError({ status, code: problem.code, detail: problem.detail, title: problem.title, errors })
+    return new ApiError({
+      status,
+      code: problem.code,
+      detail: problem.detail,
+      title: problem.title,
+      errors,
+      problem: problem as Record<string, unknown>,
+    })
   }
 }
 

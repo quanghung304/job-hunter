@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from 'react'
 import { createBrowserRouter, RouterProvider, useLocation } from 'react-router'
 import { AppHeader } from '@/components/AppHeader'
 import { Toaster } from '@/components/ui/sonner'
+import { LlmAlertBanner } from '@/features/llm/LlmAlertBanner'
 import { useIsDesktop } from '@/lib/useMediaQuery'
 import { AppRoutes } from '@/routes'
 
@@ -28,6 +29,7 @@ export function AppShell() {
   return (
     <div className={fixed ? 'flex h-dvh flex-col overflow-hidden' : undefined}>
       <AppHeader />
+      <LlmAlertBanner />
       <AppRoutes />
       <Toaster />
     </div>

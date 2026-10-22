@@ -27,7 +27,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-026 | [Frontend: board grid, split view and eligibility decision](T-026-frontend-board-grid-split-view.md) | T-020, T-025 | M–L |
 | [x] | T-021 | [Frontend: admin page](T-021-frontend-admin.md) | T-014, T-019, T-025 | S–M |
 | [x] | T-022 | [LLM quota alerts and model switching — backend](T-022-llm-alerts-switching-backend.md) | T-010, T-014, T-015 | M |
-| [ ] | T-023 | [LLM quota banner and model switcher — frontend](T-023-llm-alerts-switching-frontend.md) | T-022, T-019, T-021 | S–M |
+| [x] | T-023 | [LLM quota banner and model switcher — frontend](T-023-llm-alerts-switching-frontend.md) | T-022, T-019, T-021 | S–M |
 | [x] | T-027 | [Profile editing — backend](T-027-profile-editing-backend.md) | T-002, T-009, T-014, T-025 | M |
 | [x] | T-028 | [Frontend: Profile page](T-028-frontend-profile-page.md) | T-027, T-019 | M |
 | [x] | T-015 | [Telegram digest and alerts](T-015-telegram.md) | T-013 | S |
