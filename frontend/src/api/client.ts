@@ -18,6 +18,14 @@ export interface ProblemDetail {
   status?: number
   detail?: string
   code?: string
+  /** `VALIDATION_FAILED` of `PUT /api/profile`: one entry per problem (api-spec "Profile"). */
+  errors?: FieldProblem[]
+}
+
+/** A problem of one field, e.g. `{ path: "candidate.headline", message: "must not be blank" }`. */
+export interface FieldProblem {
+  path: string
+  message: string
 }
 
 /** A failed API call: a Problem Details response, or no response at all (backend down). */
@@ -26,6 +34,7 @@ export class ApiError extends Error {
   readonly code: string | null
   readonly detail: string | null
   readonly network: boolean
+  readonly errors: FieldProblem[]
 
   constructor(options: {
     status: number | null
@@ -33,6 +42,7 @@ export class ApiError extends Error {
     detail?: string | null
     network?: boolean
     title?: string
+    errors?: FieldProblem[]
   }) {
     super(options.title ?? options.detail ?? 'Request failed')
     this.name = 'ApiError'
@@ -40,6 +50,7 @@ export class ApiError extends Error {
     this.code = options.code ?? null
     this.detail = options.detail ?? null
     this.network = options.network ?? false
+    this.errors = options.errors ?? []
   }
 
   static network(cause: unknown): ApiError {
@@ -50,7 +61,8 @@ export class ApiError extends Error {
 
   static fromProblem(status: number, body: unknown): ApiError {
     const problem: ProblemDetail = isProblem(body) ? body : {}
-    return new ApiError({ status, code: problem.code, detail: problem.detail, title: problem.title })
+    const errors = Array.isArray(problem.errors) ? problem.errors : undefined
+    return new ApiError({ status, code: problem.code, detail: problem.detail, title: problem.title, errors })
   }
 }
 

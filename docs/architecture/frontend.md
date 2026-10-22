@@ -20,7 +20,7 @@ ADR-0011) were built in T-026, replacing the list + pane board of T-020. The Pro
 | Concern | Choice |
 |---|---|
 | Build | Vite, TypeScript `strict: true` |
-| Routing | React Router (data router not required) |
+| Routing | React Router; a data router (`createBrowserRouter` with one catch-all route around `AppShell`, the pages keep their `<Routes>`) because the Profile page's leave guard needs `useBlocker` |
 | Server state | TanStack Query (no Redux/Zustand; local UI state with `useState`) |
 | API client | `openapi-fetch` with types from `openapi-typescript` (`src/api/schema.d.ts`, generated) |
 | UI | Tailwind CSS + shadcn/ui components (copied into `src/components/ui`, restyled with the tokens below), lucide icons |
@@ -48,7 +48,7 @@ frontend/
                     page), JobDetailPage (mobile), WhyItFits, ScoreBreakdown, EligibilityPanel,
                     EligibilityDecision, FactsPanel, DescriptionPanel, NotesEditor, HistoryList,
                     MobileActionBar, AnalysisActions, useStatusChanger, useDecisionChanger
-    features/profile/ ProfilePage, ProfileForm, ChipsInput, ToggleChips, useProfileForm
+    features/profile/ ProfilePage, ProfileForm, ChipsInput, ToggleChips, Field, useProfileForm
     features/admin/ AdminPage, KpiRow, SourcesTable, LlmUsageCard, RunsList, FailuresList,
                     CompaniesTable, PipelineBanner, RescoreDialog, LlmModelsCard (T-023), BulkActionTable,
                     BulkActionDialog, CostSummary (model, calls, cost, PAID note), AdminTag
@@ -360,6 +360,10 @@ only (not on cards).
   max hours, timezone difference, minimum salary, exclude companies); Prefilter (title include
   and exclude regex chips, max age, min skill hits); Notifications (digest minimum score).
 - Invalid field: 1px `--attention-icon` border + ring, hint text in `--attention-fg`.
+- Languages: chips "en · C1" with a remove button, then a code input, a level select and "Add".
+  Minimum salary: "Set a minimum salary" shows amount, currency and period, "Remove" clears it.
+  Time zone: text input with the browser's IANA zones as suggestions. `tracks` is not shown (the
+  backend keeps the file's tracks, api-spec "Profile").
 
 ### `/admin`
 - Container max-width 1280px, centered, padding 28px 24px 64px, vertical gap 20px.
@@ -446,11 +450,15 @@ only (not on cards).
 - Description collapsed by default per job; expanding is remembered while the job is open.
 
 ### Profile
-- Draft in local state; Discard restores the loaded profile.
+- Draft in local state; Discard restores the loaded profile. Client checks (required fields,
+  ranges, region tokens) disable Save; regexes and time zones are checked by the server only. A
+  server problem is shown at its field (list indexes and sub-paths map to the field) until that
+  field is edited; problems of no field appear only in the banner.
 - Save → `PUT /api/profile` with `baseHash`; on success invalidate `['profile']`, `['jobs']`,
   `['job']`, toast "Profile saved · eligibility re-checked for N jobs".
 - 400 → map `errors[].path` to fields + banner; 409 `PROFILE_CHANGED` → ErrorState with "Reload".
-- Leaving with unsaved changes asks for confirmation.
+- Leaving with unsaved changes asks for confirmation (dialog "Leave without saving?" with Stay /
+  Leave; closing the tab uses the browser's own prompt).
 
 ### LLM alerts and switching
 - `useStatus()` polls `GET /api/status` every 60 s, every 10 s while any alert is shown.

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router'
+import { Link, NavLink, useLocation } from 'react-router'
 import { cn } from 'cn'
 import { Briefcase, Menu } from 'lucide-react'
 import { useMeta, useStatus } from '@/api/queries'
@@ -10,6 +10,7 @@ import { useIsDesktop } from '@/lib/useMediaQuery'
 
 const NAV = [
   { to: '/', label: 'Board', end: false, match: (path: string) => path === '/' || path.startsWith('/jobs') },
+  { to: '/profile', label: 'Profile', end: true, match: (path: string) => path.startsWith('/profile') },
   { to: '/admin', label: 'Admin', end: true, match: (path: string) => path.startsWith('/admin') },
 ]
 
@@ -121,16 +122,26 @@ function StatusLine() {
   )
 }
 
+/** The profile id with its initial in an accent circle; opens the Profile page. */
 function ProfilePill() {
   const meta = useMeta()
   const id = meta.data?.profileId
   return (
-    <span
-      className="inline-flex h-7 items-center gap-2 rounded-full border border-line bg-surface px-3 text-[13px] text-ink-2"
-      title={meta.isError ? 'Profile unavailable: backend not reachable' : 'Active profile'}
+    <Link
+      to="/profile"
+      className="inline-flex h-7 items-center gap-2 rounded-full border border-line bg-surface pr-3 pl-0.5 text-[13px] text-ink-2 no-underline hover:border-control-border"
+      title={meta.isError ? 'Profile unavailable: backend not reachable' : 'Your profile'}
     >
-      <span className={cn('size-2 rounded-full', meta.isError ? 'bg-neutral-fill' : 'bg-accent')} aria-hidden />
+      <span
+        className={cn(
+          'inline-flex size-[22px] items-center justify-center rounded-full text-[11.5px] font-semibold text-white',
+          meta.isError ? 'bg-muted' : 'bg-accent',
+        )}
+        aria-hidden
+      >
+        {id ? id.charAt(0).toUpperCase() : '?'}
+      </span>
       <span data-testid="profile-id">{id ?? (meta.isError ? 'offline' : '…')}</span>
-    </span>
+    </Link>
   )
 }

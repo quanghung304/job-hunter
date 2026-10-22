@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter, useLocation } from 'react-router'
+import { createBrowserRouter, RouterProvider, useLocation } from 'react-router'
 import { AppHeader } from '@/components/AppHeader'
 import { Toaster } from '@/components/ui/sonner'
 import { useIsDesktop } from '@/lib/useMediaQuery'
@@ -34,13 +34,17 @@ export function AppShell() {
   )
 }
 
+/**
+ * A data router (needed for `useBlocker`, the Profile page's leave guard) with one catch-all route;
+ * the pages keep their `<Routes>` in `routes.tsx`.
+ */
+const router = createBrowserRouter([{ path: '*', element: <AppShell /> }])
+
 export default function App() {
   const [queryClient] = useState(createQueryClient)
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppShell />
-      </BrowserRouter>
+      <RouterProvider router={router} />
       {Devtools ? (
         <Suspense fallback={null}>
           <Devtools buttonPosition="bottom-right" />

@@ -9,6 +9,7 @@ import io.github.quanghung304.jobhunter.api.ProfileResponses.ProfileSaveResponse
 import io.github.quanghung304.jobhunter.profile.Profile;
 import io.github.quanghung304.jobhunter.profile.ProfileService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -45,8 +46,10 @@ public class ProfileController {
     @Operation(summary = "Save the profile: validate, rewrite profile.yaml (previous kept as .bak), re-check jobs"
             + " without LLM calls")
     @ApiResponse(responseCode = "200", description = "Saved")
-    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED (errors by path) or PROFILE_ID_IMMUTABLE")
-    @ApiResponse(responseCode = "409", description = "PROFILE_CHANGED: baseHash is stale; reload")
+    @ApiResponse(responseCode = "400", description = "VALIDATION_FAILED (errors by path) or PROFILE_ID_IMMUTABLE",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE))
+    @ApiResponse(responseCode = "409", description = "PROFILE_CHANGED: baseHash is stale; reload",
+            content = @Content(mediaType = MediaType.APPLICATION_PROBLEM_JSON_VALUE))
     public ProfileSaveResponse save(@Valid @RequestBody ProfileSaveRequest request) {
         JsonNode yamlShaped = tree.valueToTree(request.profile());
         Profile profile = profiles.parse(yamlShaped);

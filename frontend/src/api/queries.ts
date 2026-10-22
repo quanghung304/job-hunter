@@ -30,6 +30,10 @@ export type ModelChoice = components['schemas']['ModelChoiceResponse']
 export type RescoreDryRun = components['schemas']['RescoreResponse']
 export type BulkAnalyzeDryRun = components['schemas']['BulkAnalyzeResponse']
 export type BulkScoreDryRun = components['schemas']['BulkScoreResponse']
+/** The editable profile: the keys of profile.yaml (api-spec "Profile"). */
+export type ProfileData = components['schemas']['Profile']
+export type ProfileView = components['schemas']['ProfileResponse']
+export type ProfileSaved = components['schemas']['ProfileSaveResponse']
 
 /** Filters and sort of `GET /api/jobs` without paging; omitted values mean "no filter". */
 export type JobsQuery = Omit<NonNullable<paths['/api/jobs']['get']['parameters']['query']>, 'page' | 'size'>
@@ -51,6 +55,7 @@ export const queryKeys = {
   jobsAdmin: (query: JobsQuery, page: number) => ['jobs', query, 'admin', page] as const,
   adminOverview: ['admin', 'overview'] as const,
   companies: ['admin', 'companies'] as const,
+  profile: ['profile'] as const,
 }
 
 function isGridKey(key: QueryKey): boolean {
@@ -444,5 +449,32 @@ export function useCompanies() {
 export function useEvalExport() {
   return useMutation({
     mutationFn: () => unwrap(api.POST('/api/admin/eval/export')) as Promise<{ path: string; count: number }>,
+  })
+}
+
+/** The owner's profile with its hash (ADR-0012). Not refetched on its own: the page holds a draft. */
+export function useProfile() {
+  return useQuery({
+    queryKey: queryKeys.profile,
+    queryFn: () => unwrap(api.GET('/api/profile')),
+    staleTime: Infinity,
+  })
+}
+
+/**
+ * Saves the profile with the hash it was loaded with. On success the profile is reloaded and the
+ * job lists and details refetch (prefilter and eligibility checks were re-evaluated, no LLM).
+ */
+export function useSaveProfile() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: ({ baseHash, profile }: { baseHash: string; profile: ProfileData }) =>
+      unwrap(api.PUT('/api/profile', { body: { baseHash, profile } })),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: queryKeys.profile })
+      void client.invalidateQueries({ queryKey: queryKeys.jobsAll })
+      void client.invalidateQueries({ queryKey: ['job'] })
+      void client.invalidateQueries({ queryKey: queryKeys.meta })
+    },
   })
 }

@@ -2429,21 +2429,13 @@
           },
           "400" : {
             "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProfileSaveResponse"
-                }
-              }
+              "application/problem+json" : { }
             },
             "description" : "VALIDATION_FAILED (errors by path) or PROFILE_ID_IMMUTABLE"
           },
           "409" : {
             "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ProfileSaveResponse"
-                }
-              }
+              "application/problem+json" : { }
             },
             "description" : "PROFILE_CHANGED: baseHash is stale; reload"
           }

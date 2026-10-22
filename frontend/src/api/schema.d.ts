@@ -1495,7 +1495,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                    "application/problem+json": unknown;
                 };
             };
             /** @description PROFILE_CHANGED: baseHash is stale; reload */
@@ -1504,7 +1504,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                    "application/problem+json": unknown;
                 };
             };
         };

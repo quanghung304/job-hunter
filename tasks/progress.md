@@ -10,6 +10,23 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-028 Frontend: Profile page — DONE (visual check by owner pending)
+- `/profile`: `ProfilePage` (header card with id, saved time, short hash, dirty tag, Discard, Save changes;
+  problems banner; info box; 409 `PROFILE_CHANGED` → ErrorState with Reload; leave guard dialog via
+  `useBlocker` + `useBeforeUnload`), `ProfileForm` (Candidate, Skills and domains, Preferences, Prefilter,
+  Notifications; YAML path under each label), `ChipsInput`, `ToggleChips`, `Field`, `useProfileForm` (draft,
+  dirty, client checks, server `errors[]` mapped to fields). Header: "Profile" nav link; profile pill links to it.
+- `api`: `useProfile`, `useSaveProfile` (invalidates profile, jobs, job, meta); `ApiError.errors`.
+- App switched to a data router (`createBrowserRouter`, one catch-all route around `AppShell`) because
+  `useBlocker` needs one; frontend.md said "data router not required" and was updated.
+- Backend fix: `PUT /api/profile` 400/409 are declared as problem+json (T-027 had declared them with the
+  success body); openapi.json + schema.d.ts regenerated.
+- Tests: `ChipsInput` (4), `ProfileForm` (5 + 3 `clientProblems`), `ProfilePage` (6: load, save with baseHash +
+  toast + new hash, 400 errors at fields and banner, 409 + Reload, leave guard Stay/Leave, no guard when clean).
+  Frontend 226 tests green, lint/typecheck/build clean. Playwright `e2e/profile.spec.ts` (flow 5) written, not
+  run; it rewrites config/profile.yaml of the stack it runs against and restores the value.
+- Next: T-015 (Telegram), then T-022/T-023.
+
 ## 2026-10-22 — T-027 Profile editing — backend — DONE
 - profile: `ProfileProvider.snapshot()` (`ProfileSnapshot`: profile, hash, savedAt; `current()`/`profileHash()` are
   defaults); `YamlProfileProvider.reload()` swaps a volatile snapshot; `ProfileParser` (YAML or JSON tree → Profile,
