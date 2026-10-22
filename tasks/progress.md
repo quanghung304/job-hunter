@@ -10,6 +10,24 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-017 HN "Who is hiring?" collector — DONE
+- `source.hn`: `HnCollector` (Algolia search for `whoishiring` stories → newest "Ask HN: Who is hiring?" thread,
+  plus the previous one on days 1–7 UTC if the newest is from this month; `items/{id}`, top-level children only;
+  skips comments older than `since`; failing search or every thread → FAILED, one failing thread → PARTIAL),
+  `HnHeaderParser`/`HnHeader` (pure; `|` or spaced em-dash segments classified by keywords: work mode, role,
+  salary, employment, other), `HnMapper`, DTOs, `HnProperties`; config `app.sources.hn-whoishiring.*`
+  (enabled, max-items 500, min-interval 12h, call-delay 1s). Pipeline ITs disable the source.
+- Spec deviations (hn-whoishiring.md rewritten with the verified shapes): title = first segment naming a role, not
+  segment 2 (real headers put ONSITE/location second); `locationText`, `employmentHint` and HYBRID added; prose
+  segments > 150 chars ignored; "no separator" is a parser warning only (a PARTIAL run would defeat min-interval);
+  blank company → `Unknown (HN {id})`; rawPayload drops the replies; Firebase fallback not implemented.
+- Algolia omits deleted comments (53 of 319 kids); the fixture's deleted child is synthetic (documented).
+- Tests: `HnHeaderParserTest` (48: 22 real headers, 6 without separator, remote hint, header line),
+  `HnMapperTest` (20), `HnCollectorTest` (12, WireMock), `HnCollectorLiveTest` (run once, green: 266 comments).
+  On the full October thread 187 of 266 comments get a role title.
+- Catalog "Verified" 2026-10-22 (API responses; HN/Algolia terms not re-read by the owner).
+- Next: T-018 (ATS collectors).
+
 ## 2026-10-22 — T-023 LLM quota banner and model switcher — frontend — DONE (visual check by owner pending)
 - `features/llm`: `LlmAlertBanner` (under the header on every page; paused = attention row, near limit and
   fallback-in-use = quiet rows, "Switch back" after an auto-switch; dismiss per step/model/status/reset in

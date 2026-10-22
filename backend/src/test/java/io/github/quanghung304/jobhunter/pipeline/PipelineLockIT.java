@@ -17,7 +17,8 @@ import org.springframework.context.annotation.Import;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
         "app.profile.path=../config/profile.example.yaml",
         "app.sources.arbeitnow.enabled=false", "app.sources.himalayas.enabled=false",
-        "app.sources.jobicy.enabled=false", "app.sources.weworkremotely.enabled=false"})
+        "app.sources.jobicy.enabled=false", "app.sources.weworkremotely.enabled=false",
+        "app.sources.hn-whoishiring.enabled=false"})
 @Import(TestcontainersConfiguration.class)
 class PipelineLockIT {
 

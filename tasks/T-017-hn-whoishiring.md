@@ -19,9 +19,9 @@ previous) "Ask HN: Who is hiring?" thread.
 4. Live test.
 
 ## Acceptance criteria
-- [ ] Only top-level children become postings; nested replies ignored.
-- [ ] Header parser handles the cases in step 1 per the spec.
-- [ ] Re-running on the same thread creates no duplicates (externalId = comment id).
+- [x] Only top-level children become postings; nested replies ignored.
+- [x] Header parser handles the cases in step 1 per the spec.
+- [x] Re-running on the same thread creates no duplicates (externalId = comment id).
 
 ## Tests
 `HnHeaderParserTest` (≥ 15 real-looking headers), `HnMapperTest`, `HnCollectorTest` (WireMock),

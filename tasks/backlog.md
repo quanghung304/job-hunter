@@ -31,7 +31,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-027 | [Profile editing — backend](T-027-profile-editing-backend.md) | T-002, T-009, T-014, T-025 | M |
 | [x] | T-028 | [Frontend: Profile page](T-028-frontend-profile-page.md) | T-027, T-019 | M |
 | [x] | T-015 | [Telegram digest and alerts](T-015-telegram.md) | T-013 | S |
-| [ ] | T-017 | [HN "Who is hiring?" collector](T-017-hn-whoishiring.md) | T-005 | M |
+| [x] | T-017 | [HN "Who is hiring?" collector](T-017-hn-whoishiring.md) | T-005 | M |
 | [ ] | T-018 | [ATS collectors: Greenhouse, Lever, Ashby](T-018-ats-collectors.md) | T-005 | M |
 | [ ] | T-016 | [Eval harness + export for labeling](T-016-eval.md) | T-012 (and a few days of data) | M |
 

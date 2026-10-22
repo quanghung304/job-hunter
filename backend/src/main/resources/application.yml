@@ -114,3 +114,11 @@ app:
         - /categories/remote-back-end-programming-jobs.rss
         - /categories/remote-full-stack-programming-jobs.rss
         - /categories/remote-devops-sysadmin-jobs.rss
+    hn-whoishiring:
+      enabled: true
+      max-items: 500
+      min-interval: 12h
+      base-url: https://hn.algolia.com
+      call-delay: 1s
+      search-hits: 10
+      previous-thread-days: 7
