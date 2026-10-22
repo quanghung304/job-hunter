@@ -21,7 +21,11 @@ an empty value (`maxHoursPerWeek:`) is the same as omitting the key, so the defa
 Saving from the Profile page (T-027) validates with the same rules, writes a temp file and moves it
 over `profile.yaml`, keeps the previous file as `config/profile.yaml.bak`, and writes the YAML
 in canonical form (§1 key order): comments and the key order of a hand-edited file
-are not kept. `id` cannot be changed from the page. Hand edits still need a restart.
+are not kept; absent optional keys and empty optional lists stay absent (no `null`s), defaults are
+written as values, multi-line text as a `|` block, and a header comment line marks the file as
+saved from the app. `tracks` is not edited in the app and is written back exactly as it was in the
+file (track-specific keys such as `subjects` survive). `id` cannot be changed from the page. Hand
+edits still need a restart: a save after a hand edit is refused (`PROFILE_CHANGED`) until then.
 
 ## 1. `profile.yaml`
 

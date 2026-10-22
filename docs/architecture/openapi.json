@@ -1239,6 +1239,293 @@
         "required" : [ "fetched", "message", "newJobs", "newRaw", "sourceCode", "status", "updatedJobs" ],
         "type" : "object"
       },
+      "Profile" : {
+        "properties" : {
+          "candidate" : {
+            "$ref" : "#/components/schemas/ProfileCandidate"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "notify" : {
+            "$ref" : "#/components/schemas/ProfileNotify"
+          },
+          "preferences" : {
+            "$ref" : "#/components/schemas/ProfilePreferences"
+          },
+          "prefilter" : {
+            "$ref" : "#/components/schemas/ProfilePrefilter"
+          },
+          "summaryLanguage" : {
+            "enum" : [ "vi", "en" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "candidate", "id", "notify", "preferences", "prefilter", "summaryLanguage" ],
+        "type" : "object"
+      },
+      "ProfileCandidate" : {
+        "properties" : {
+          "city" : {
+            "type" : [ "string", "null" ]
+          },
+          "domains" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "headline" : {
+            "type" : "string"
+          },
+          "languages" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ProfileLanguage"
+            },
+            "type" : "array"
+          },
+          "residenceCountry" : {
+            "description" : "ISO-3166 alpha-2",
+            "type" : "string"
+          },
+          "skills" : {
+            "$ref" : "#/components/schemas/ProfileSkills"
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "timezone" : {
+            "description" : "IANA time zone, e.g. Europe/Rome",
+            "type" : "string"
+          },
+          "yearsExperience" : {
+            "type" : "number"
+          }
+        },
+        "required" : [ "domains", "headline", "languages", "residenceCountry", "skills", "summary", "timezone", "yearsExperience" ],
+        "type" : "object"
+      },
+      "ProfileLanguage" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "level" : {
+            "enum" : [ "A1", "A2", "B1", "B2", "C1", "C2", "NATIVE" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "level" ],
+        "type" : "object"
+      },
+      "ProfileNotify" : {
+        "properties" : {
+          "digestMinScore" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "digestMinScore" ],
+        "type" : "object"
+      },
+      "ProfilePreferences" : {
+        "properties" : {
+          "acceptRegions" : {
+            "description" : "Region tokens (config-spec §1.1)",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "employmentTypes" : {
+            "items" : {
+              "enum" : [ "FULL_TIME", "PART_TIME", "CONTRACT", "FREELANCE", "INTERNSHIP" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "excludeCompanies" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "maxHoursPerWeek" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "minSalary" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ProfileSalary"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "seniority" : {
+            "items" : {
+              "enum" : [ "JUNIOR", "MID", "SENIOR", "LEAD", "PRINCIPAL" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "timezone" : {
+            "$ref" : "#/components/schemas/ProfileTimezone"
+          }
+        },
+        "required" : [ "acceptRegions", "employmentTypes", "excludeCompanies", "seniority", "timezone" ],
+        "type" : "object"
+      },
+      "ProfilePrefilter" : {
+        "properties" : {
+          "maxAgeDays" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "minSkillHits" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "titleExclude" : {
+            "description" : "Case-insensitive regexes",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "titleInclude" : {
+            "description" : "Case-insensitive regexes",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "maxAgeDays", "minSkillHits", "titleExclude", "titleInclude" ],
+        "type" : "object"
+      },
+      "ProfileResponse" : {
+        "properties" : {
+          "hash" : {
+            "description" : "sha256 of profile.yaml; send it back as baseHash",
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "profile" : {
+            "$ref" : "#/components/schemas/Profile"
+          },
+          "savedAt" : {
+            "description" : "Last change of profile.yaml",
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "hash", "id", "profile", "savedAt" ],
+        "type" : "object"
+      },
+      "ProfileSalary" : {
+        "properties" : {
+          "amount" : {
+            "type" : "number"
+          },
+          "currency" : {
+            "description" : "ISO-4217, e.g. EUR",
+            "type" : "string"
+          },
+          "period" : {
+            "enum" : [ "HOUR", "MONTH", "YEAR" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "amount", "currency", "period" ],
+        "type" : "object"
+      },
+      "ProfileSaveRequest" : {
+        "properties" : {
+          "baseHash" : {
+            "description" : "The hash the client loaded",
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "profile" : {
+            "$ref" : "#/components/schemas/Profile"
+          }
+        },
+        "required" : [ "baseHash", "profile" ],
+        "type" : "object"
+      },
+      "ProfileSaveResponse" : {
+        "properties" : {
+          "hash" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "reassessed" : {
+            "$ref" : "#/components/schemas/ReassessedResponse"
+          },
+          "savedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "required" : [ "hash", "id", "reassessed", "savedAt" ],
+        "type" : "object"
+      },
+      "ProfileSkills" : {
+        "properties" : {
+          "core" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "learning" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "secondary" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "core", "learning", "secondary" ],
+        "type" : "object"
+      },
+      "ProfileTimezone" : {
+        "properties" : {
+          "maxOffsetDiffHours" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "maxOffsetDiffHours" ],
+        "type" : "object"
+      },
+      "ReassessedResponse" : {
+        "properties" : {
+          "checksUpdated" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "jobs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prefilterChanged" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "checksUpdated", "jobs", "prefilterChanged" ],
+        "type" : "object"
+      },
       "RequiredLanguage" : {
         "properties" : {
           "code" : {
@@ -2097,6 +2384,72 @@
           }
         },
         "tags" : [ "meta-controller" ]
+      }
+    },
+    "/api/profile" : {
+      "get" : {
+        "operationId" : "get",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "The current profile with its hash (send it back as baseHash)",
+        "tags" : [ "profile-controller" ]
+      },
+      "put" : {
+        "operationId" : "save",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProfileSaveRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileSaveResponse"
+                }
+              }
+            },
+            "description" : "Saved"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileSaveResponse"
+                }
+              }
+            },
+            "description" : "VALIDATION_FAILED (errors by path) or PROFILE_ID_IMMUTABLE"
+          },
+          "409" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProfileSaveResponse"
+                }
+              }
+            },
+            "description" : "PROFILE_CHANGED: baseHash is stale; reload"
+          }
+        },
+        "summary" : "Save the profile: validate, rewrite profile.yaml (previous kept as .bak), re-check jobs without LLM calls",
+        "tags" : [ "profile-controller" ]
       }
     },
     "/api/status" : {

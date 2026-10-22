@@ -316,6 +316,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The current profile with its hash (send it back as baseHash) */
+        get: operations["get"];
+        /** Save the profile: validate, rewrite profile.yaml (previous kept as .bak), re-check jobs without LLM calls */
+        put: operations["save"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/status": {
         parameters: {
             query?: never;
@@ -814,6 +832,105 @@ export interface components {
             status: "SUCCESS" | "PARTIAL" | "FAILED" | null;
             /** Format: int32 */
             updatedJobs: number;
+        };
+        Profile: {
+            candidate: components["schemas"]["ProfileCandidate"];
+            id: string;
+            notify: components["schemas"]["ProfileNotify"];
+            preferences: components["schemas"]["ProfilePreferences"];
+            prefilter: components["schemas"]["ProfilePrefilter"];
+            /** @enum {string} */
+            summaryLanguage: "vi" | "en";
+        };
+        ProfileCandidate: {
+            city?: string | null;
+            domains: string[];
+            headline: string;
+            languages: components["schemas"]["ProfileLanguage"][];
+            /** @description ISO-3166 alpha-2 */
+            residenceCountry: string;
+            skills: components["schemas"]["ProfileSkills"];
+            summary: string;
+            /** @description IANA time zone, e.g. Europe/Rome */
+            timezone: string;
+            yearsExperience: number;
+        };
+        ProfileLanguage: {
+            code: string;
+            /** @enum {string} */
+            level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "NATIVE";
+        };
+        ProfileNotify: {
+            /** Format: int32 */
+            digestMinScore: number;
+        };
+        ProfilePreferences: {
+            /** @description Region tokens (config-spec §1.1) */
+            acceptRegions: string[];
+            employmentTypes: ("FULL_TIME" | "PART_TIME" | "CONTRACT" | "FREELANCE" | "INTERNSHIP")[];
+            excludeCompanies: string[];
+            /** Format: int32 */
+            maxHoursPerWeek?: number | null;
+            minSalary?: components["schemas"]["ProfileSalary"] | null;
+            seniority: ("JUNIOR" | "MID" | "SENIOR" | "LEAD" | "PRINCIPAL")[];
+            timezone: components["schemas"]["ProfileTimezone"];
+        };
+        ProfilePrefilter: {
+            /** Format: int32 */
+            maxAgeDays: number;
+            /** Format: int32 */
+            minSkillHits: number;
+            /** @description Case-insensitive regexes */
+            titleExclude: string[];
+            /** @description Case-insensitive regexes */
+            titleInclude: string[];
+        };
+        ProfileResponse: {
+            /** @description sha256 of profile.yaml; send it back as baseHash */
+            hash: string;
+            id: string;
+            profile: components["schemas"]["Profile"];
+            /**
+             * Format: date-time
+             * @description Last change of profile.yaml
+             */
+            savedAt: string;
+        };
+        ProfileSalary: {
+            amount: number;
+            /** @description ISO-4217, e.g. EUR */
+            currency: string;
+            /** @enum {string} */
+            period: "HOUR" | "MONTH" | "YEAR";
+        };
+        ProfileSaveRequest: {
+            /** @description The hash the client loaded */
+            baseHash: string;
+            profile: components["schemas"]["Profile"];
+        };
+        ProfileSaveResponse: {
+            hash: string;
+            id: string;
+            reassessed: components["schemas"]["ReassessedResponse"];
+            /** Format: date-time */
+            savedAt: string;
+        };
+        ProfileSkills: {
+            core: string[];
+            learning: string[];
+            secondary: string[];
+        };
+        ProfileTimezone: {
+            /** Format: int32 */
+            maxOffsetDiffHours: number;
+        };
+        ReassessedResponse: {
+            /** Format: int32 */
+            checksUpdated: number;
+            /** Format: int32 */
+            jobs: number;
+            /** Format: int32 */
+            prefilterChanged: number;
         };
         RequiredLanguage: {
             code: string;
@@ -1326,6 +1443,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MetaResponse"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileResponse"];
+                };
+            };
+        };
+    };
+    save: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileSaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED (errors by path) or PROFILE_ID_IMMUTABLE */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description PROFILE_CHANGED: baseHash is stale; reload */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileSaveResponse"];
                 };
             };
         };

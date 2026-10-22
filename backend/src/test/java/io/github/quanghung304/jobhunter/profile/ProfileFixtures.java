@@ -21,6 +21,12 @@ public final class ProfileFixtures {
         return new YamlProfileProvider(new ProfileProperties(path.toString()), VALIDATOR);
     }
 
+    /** A {@link ProfileService} over the file at {@code path}, publishing to {@code events}. */
+    public static ProfileService service(Path path, org.springframework.context.ApplicationEventPublisher events) {
+        var provider = new YamlProfileProvider(new ProfileProperties(path.toString()), VALIDATOR);
+        return new ProfileService(provider, events);
+    }
+
     public static Profile example() {
         return load(EXAMPLE).current();
     }

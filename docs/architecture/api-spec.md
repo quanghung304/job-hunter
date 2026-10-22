@@ -114,19 +114,28 @@ Values for filter controls: `{ "sources": [{code,name}], "statuses": [...],
 ## Profile (ADR-0012)
 
 Only the current (owner's) profile. No list, create or delete endpoints in Phase 1. Implemented
-in T-027.
+in T-027 (`ProfileController`, `profile.ProfileService`).
 
 ### `GET /api/profile`
 → `{ "id": "hugh", "hash": "3f9c1a…", "savedAt": "...", "profile": { … } }`; `profile` has the
-structure and keys of `profile.yaml` (config-spec §1).
+structure and keys of `profile.yaml` (config-spec §1) with defaults filled in, regexes as text and
+absent optional values as `null` (`city`, `maxHoursPerWeek`, `minSalary`). `tracks` is not part of
+it (not editable; a save keeps the file's tracks). `hash` = sha256 of the file, `savedAt` = its
+last-modified time.
 
 ### `PUT /api/profile`
 Body `{ "baseHash": "3f9c1a…", "profile": { … } }` → 200
 `{ "id", "hash", "savedAt", "reassessed": { "jobs": 30, "prefilterChanged": 2, "checksUpdated": 13 } }`.
-Errors: 400 `VALIDATION_FAILED` with extension `errors: [{ "path": "candidate.yearsExperience",
-"message": "must not be blank" }]` (same paths as the startup validator); 400
-`PROFILE_ID_IMMUTABLE`; 409 `PROFILE_CHANGED` when `baseHash` is not the current hash (the file
-was edited elsewhere; the client reloads).
+A `null` or missing optional value means "use the default", as an empty key in the file. The
+response comes after the jobs were re-checked (synchronously, no LLM): `jobs` = assessment rows
+re-evaluated, `prefilterChanged` = rows whose PASS/REJECT changed, `checksUpdated` = rows whose
+eligibility checks changed. Errors (checked in this order; the file is unchanged on any error):
+409 `PROFILE_CHANGED` when `baseHash` is not the current hash, or the file was edited by hand since
+the app loaded it (detail says to restart); 400 `PROFILE_ID_IMMUTABLE`; 400 `VALIDATION_FAILED`
+with extension `errors: [{ "path": "candidate.yearsExperience", "message": "must not be null" }]`
+(same paths and rules as the startup validator; all Bean Validation problems are listed, a value
+that cannot be read at all — unknown key, invalid regex or time zone — is reported alone); 400
+`BAD_REQUEST` for a body that is not JSON of this shape (e.g. an unknown enum value).
 
 ## Admin
 

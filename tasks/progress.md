@@ -10,6 +10,26 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-027 Profile editing — backend — DONE
+- profile: `ProfileProvider.snapshot()` (`ProfileSnapshot`: profile, hash, savedAt; `current()`/`profileHash()` are
+  defaults); `YamlProfileProvider.reload()` swaps a volatile snapshot; `ProfileParser` (YAML or JSON tree → Profile,
+  problems by path; shared by startup and the API); `ProfileYamlWriter` (§1 key order, no nulls, empty optional
+  lists left out, defaults written, `|` blocks, header comment); `ProfileService.parse/save` (stale hash or hand
+  edit → `PROFILE_CHANGED` 409, `PROFILE_ID_IMMUTABLE`, `VALIDATION_FAILED` with every problem, write check, temp
+  file + atomic move, `.bak`, reload, `ProfileChanged` event with the listener's counts).
+- enrich: `reassessPrefilter` returns `Reassessment(jobs, prefilterChanged, checksUpdated)`;
+  `ProfileChangeListener` (synchronous, no LLM). pipeline uses `.jobs()`.
+- api: `GET/PUT /api/profile` (`ProfileController`, `ProfileDto` mirrors the YAML keys; problem extension
+  `errors: [{path, message}]`); openapi.json + schema.d.ts regenerated.
+- Deviations (docs updated: api-spec, config-spec, runbook): `tracks` is not in the API and is written back
+  verbatim (track-specific keys like `subjects` would otherwise be lost); a hand edit after startup makes saves
+  return `PROFILE_CHANGED` until a restart (ADR-0012 said "until the page reloads"; GET does not reload the file,
+  so a page reload alone does not help — reloading on GET would apply hand edits as a side effect of a read).
+- Tests: `ProfileServiceTest` (9), `ProfileYamlWriterTest` (6, incl. YAML look-alikes `NO`/`no`/`on`, regexes,
+  multi-line), `ProfileControllerTest` (7, standalone MockMvc over a temp file), `ProfileChangedIT` (prefilter and
+  checks re-evaluated, score and decision kept, 0 LLM calls), `AssessmentServiceIT` counts.
+- Next: T-028 (frontend Profile page).
+
 ## 2026-10-19 — T-021 Frontend: admin page — DONE (visual check by owner pending)
 - `api/queries.ts`: `useAdminOverview` (3 s while a run or bulk action is in progress, else 60 s),
   `useRunPipeline`, `useRescore` and `useBulkAction(mode)` (each `{ dryRun, execute }`), `useBulkCandidates`

@@ -28,7 +28,7 @@ Tick `[x]` when merged and add a line to `progress.md`.
 | [x] | T-021 | [Frontend: admin page](T-021-frontend-admin.md) | T-014, T-019, T-025 | S–M |
 | [ ] | T-022 | [LLM quota alerts and model switching — backend](T-022-llm-alerts-switching-backend.md) | T-010, T-014, T-015 | M |
 | [ ] | T-023 | [LLM quota banner and model switcher — frontend](T-023-llm-alerts-switching-frontend.md) | T-022, T-019, T-021 | S–M |
-| [ ] | T-027 | [Profile editing — backend](T-027-profile-editing-backend.md) | T-002, T-009, T-014, T-025 | M |
+| [x] | T-027 | [Profile editing — backend](T-027-profile-editing-backend.md) | T-002, T-009, T-014, T-025 | M |
 | [ ] | T-028 | [Frontend: Profile page](T-028-frontend-profile-page.md) | T-027, T-019 | M |
 | [ ] | T-015 | [Telegram digest and alerts](T-015-telegram.md) | T-013 | S |
 | [ ] | T-017 | [HN "Who is hiring?" collector](T-017-hn-whoishiring.md) | T-005 | M |

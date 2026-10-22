@@ -177,7 +177,7 @@ public class PipelineOrchestrator {
         String error = null;
         try {
             progress.update(Stage.PREFILTER, "Prefilter", COLLECT_PERCENT);
-            reassessed = assessments.reassessPrefilter(profile, profileHash);
+            reassessed = assessments.reassessPrefilter(profile, profileHash).jobs();
             prefilter = assessments.prefilterJobs(activeJobs(), profile, profileHash);
             progress.update(Stage.EXPIRE, "Expire jobs not seen for " + expireAfterDays + " days", PREFILTER_PERCENT);
             expired = expiry.expireNotSeenSince(started.minus(Duration.ofDays(expireAfterDays)));

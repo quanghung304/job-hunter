@@ -292,16 +292,17 @@ public class AssessmentService {
     /**
      * Runs the prefilter again for every row of this profile (current score prompt version) whose
      * profile hash differs, stores the new result and hash, and re-evaluates the eligibility checks
-     * of rows with an OK extraction. No LLM calls; scores are kept.
+     * of rows with an OK extraction. No LLM calls; scores are kept (and the owner's decisions live
+     * in {@code tracking}).
      *
-     * @return the number of rows re-evaluated
+     * @return rows re-evaluated, rows whose prefilter result changed, rows whose checks changed
      */
     @Transactional
-    public int reassessPrefilter(Profile profile, String profileHash) {
+    public Reassessment reassessPrefilter(Profile profile, String profileHash) {
         List<JobAssessment> stale = assessments.findByProfileIdAndScorePromptVersionAndProfileHashNotOrderById(
                 profile.id(), scorePromptVersion, profileHash);
         if (stale.isEmpty()) {
-            return 0;
+            return new Reassessment(0, 0, 0);
         }
         Map<Long, JobView> views = new HashMap<>();
         List<Long> ids = stale.stream().map(JobAssessment::getJobId).toList();
@@ -312,15 +313,22 @@ public class AssessmentService {
         Map<Long, JobExtraction> extracted = okExtractions(ids);
         Instant now = clock.instant();
         int rejected = 0;
+        int prefilterChanged = 0;
+        int checksUpdated = 0;
         for (JobAssessment row : stale) {
             JobView job = views.get(row.getJobId());
+            PrefilterResult before = row.getPrefilterResult();
+            JsonNode checksBefore = row.getEligibilityChecks();
             PrefilterDecision decision = prefilter.evaluate(job, profile);
             apply(row, job, profile, profileHash, decision, now, Optional.ofNullable(extracted.get(row.getJobId())));
             rejected += decision.passed() ? 0 : 1;
+            prefilterChanged += before != decision.result() ? 1 : 0;
+            checksUpdated += java.util.Objects.equals(checksBefore, row.getEligibilityChecks()) ? 0 : 1;
         }
         assessments.saveAll(stale);
-        log.info("prefilter reassessed profile={} rows={} rejected={}", profile.id(), stale.size(), rejected);
-        return stale.size();
+        log.info("prefilter reassessed profile={} rows={} rejected={} prefilterChanged={} checksUpdated={}",
+                profile.id(), stale.size(), rejected, prefilterChanged, checksUpdated);
+        return new Reassessment(stale.size(), prefilterChanged, checksUpdated);
     }
 
     /**

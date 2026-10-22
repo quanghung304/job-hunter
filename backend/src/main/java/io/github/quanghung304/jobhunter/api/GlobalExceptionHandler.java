@@ -2,6 +2,8 @@ package io.github.quanghung304.jobhunter.api;
 
 import io.github.quanghung304.jobhunter.common.JobHunterException;
 import io.github.quanghung304.jobhunter.llm.LlmPausedException;
+import io.github.quanghung304.jobhunter.profile.ProfileValidationException;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -29,6 +31,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     static final String INTERNAL_ERROR = "INTERNAL_ERROR";
     /** Extra property of {@code LLM_PAUSED}: the paused purpose (EXTRACT or SCORE). */
     static final String PURPOSE = "purpose";
+    /** Extra property of an invalid profile: {@code [{path, message}]} (api-spec "Profile"). */
+    static final String ERRORS = "errors";
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
@@ -42,6 +46,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setProperty(CODE, ex.code());
         if (ex instanceof LlmPausedException paused) {
             problem.setProperty(PURPOSE, paused.purpose().name());
+        }
+        if (ex instanceof ProfileValidationException invalid) {
+            problem.setProperty(ERRORS, invalid.problems().stream()
+                    .map(p -> Map.of("path", p.path(), "message", p.message()))
+                    .toList());
         }
         return ResponseEntity.status(status).body(problem);
     }

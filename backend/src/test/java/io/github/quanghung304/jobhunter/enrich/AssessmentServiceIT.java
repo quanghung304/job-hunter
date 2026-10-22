@@ -170,9 +170,10 @@ class AssessmentServiceIT {
         setScore(stillPassing, 77);
         insertOtherPromptVersionRow(nowExcluded, PROFILE.id());
 
-        int reassessed = service.reassessPrefilter(PROFILE, "new");
+        Reassessment reassessed = service.reassessPrefilter(PROFILE, "new");
 
-        assertThat(reassessed).isEqualTo(3);
+        assertThat(reassessed).as("rows, prefilter changed (excluded, passing), checks changed (kept)")
+                .isEqualTo(new Reassessment(3, 2, 1));
         JobAssessment excluded = reload(nowExcluded);
         assertThat(excluded.getPrefilterResult()).isEqualTo(PrefilterResult.REJECT);
         assertThat(excluded.getPrefilterReasons()).containsExactly("TITLE_EXCLUDED", "NOT_RELEVANT");
@@ -200,7 +201,7 @@ class AssessmentServiceIT {
                 .findByJobIdAndProfileIdAndScorePromptVersion(nowExcluded, PROFILE.id(), "score-v0").orElseThrow();
         assertThat(otherVersion.getProfileHash()).isEqualTo("old");
 
-        assertThat(service.reassessPrefilter(PROFILE, "new")).as("idempotent").isZero();
+        assertThat(service.reassessPrefilter(PROFILE, "new")).as("idempotent").isEqualTo(new Reassessment(0, 0, 0));
     }
 
     @Test

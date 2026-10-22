@@ -47,10 +47,20 @@ LLM cost.
 ## Changing the profile
 
 Edit `config/profile.yaml` and restart (the app does not start without a valid profile; the
-startup error lists each invalid field), or use the Profile page (ADR-0012, from T-028); a save
-keeps `config/profile.yaml.bak` and needs no restart. Prefilter and eligibility checks are
-re-evaluated automatically; your eligibility decisions and scores are kept. To re-score active jobs with the new profile: Admin → "Re-score active jobs"
-(shows the number of LLM calls first).
+startup error lists each invalid field), or use the Profile page (ADR-0012, from T-028; the API
+`PUT /api/profile` exists since T-027); a save needs no restart. Prefilter and eligibility checks
+are re-evaluated automatically (no LLM call); your eligibility decisions and scores are kept. To
+re-score active jobs with the new profile: Admin → "Re-score active jobs" (shows the number of LLM
+calls first).
+
+What a save does to the file:
+- It is rewritten in canonical form: comments and your key order are gone, defaults are written
+  out, a one-line header comment says it was saved from the app. `tracks` is kept as it was.
+- The previous version is `config/profile.yaml.bak` (only the last one). To undo a save, copy it
+  back and restart.
+- **Hand edits after the app started** are not loaded until a restart; until then a save from the
+  page is refused with `PROFILE_CHANGED` ("edited outside the app; restart"), so the hand edit is
+  never overwritten. Restart, reload the page, then edit.
 
 ## LLM models and quotas
 

@@ -1,63 +1,81 @@
 package io.github.quanghung304.jobhunter.profile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.quanghung304.jobhunter.common.Hashing;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Loads {@code app.profile.path} once at construction, so an invalid profile fails startup.
- * Unknown keys are rejected (typos), except inside {@code tracks}.
+ * Loads {@code app.profile.path} at construction, so an invalid profile fails startup. Unknown
+ * keys are rejected (typos), except inside {@code tracks}. {@link #reload()} reads the file again
+ * after a save from the Profile page and swaps the immutable snapshot (ADR-0012).
  */
 @Component
 class YamlProfileProvider implements ProfileProvider {
 
     private static final Logger log = LoggerFactory.getLogger(YamlProfileProvider.class);
 
-    private static final ObjectMapper YAML = new ObjectMapper(new YAMLFactory())
-            .registerModule(new JavaTimeModule())
-            .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-            .enable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
-
-    private final Profile profile;
-    private final String profileHash;
+    private final Path path;
+    private final Validator validator;
+    private volatile ProfileSnapshot snapshot;
 
     YamlProfileProvider(ProfileProperties properties, Validator validator) {
-        Path path = properties.file();
-        byte[] bytes = read(path);
-        this.profile = parse(path, bytes);
-        validate(path, profile, validator);
-        this.profileHash = Hashing.sha256Hex(bytes);
-        warnAboutUnsupportedTracks(profile);
-        log.info("Loaded profile id={} hash={} from {}", profile.id(), profileHash.substring(0, 12),
+        this.path = properties.file();
+        this.validator = validator;
+        this.snapshot = load();
+        warnAboutUnsupportedTracks(snapshot.profile());
+        log.info("Loaded profile id={} hash={} from {}", snapshot.profile().id(), snapshot.hash().substring(0, 12),
                 path.toAbsolutePath().normalize());
     }
 
     @Override
-    public Profile current() {
-        return profile;
+    public ProfileSnapshot snapshot() {
+        return snapshot;
     }
 
-    @Override
-    public String profileHash() {
-        return profileHash;
+    Path path() {
+        return path;
     }
 
-    private static byte[] read(Path path) {
+    Validator validator() {
+        return validator;
+    }
+
+    /** Reads and validates the file again and makes it the current profile. */
+    ProfileSnapshot reload() {
+        ProfileSnapshot loaded = load();
+        snapshot = loaded;
+        log.info("Reloaded profile id={} hash={}", loaded.profile().id(), loaded.hash().substring(0, 12));
+        return loaded;
+    }
+
+    private ProfileSnapshot load() {
+        byte[] bytes = read(path);
+        Profile profile;
+        try {
+            profile = ProfileParser.fromYaml(bytes);
+        } catch (ProfileParser.ProblemsException e) {
+            throw invalid(e.problems(), e.getCause());
+        }
+        List<ProfileProblem> problems = ProfileParser.validate(profile, validator);
+        if (!problems.isEmpty()) {
+            throw invalid(problems, null);
+        }
+        return new ProfileSnapshot(profile, Hashing.sha256Hex(bytes), lastModified(path));
+    }
+
+    private InvalidProfileException invalid(List<ProfileProblem> problems, Throwable cause) {
+        return new InvalidProfileException(path, problems.stream().map(ProfileProblem::toString).toList(), cause);
+    }
+
+    static byte[] read(Path path) {
         try {
             return Files.readAllBytes(path);
         } catch (NoSuchFileException e) {
@@ -69,64 +87,13 @@ class YamlProfileProvider implements ProfileProvider {
         }
     }
 
-    private static Profile parse(Path path, byte[] bytes) {
+    private static Instant lastModified(Path path) {
         try {
-            // Parse to a tree first: reports syntax errors and empty (comment-only) files.
-            JsonNode tree = YAML.readTree(bytes);
-            if (tree == null || tree.isMissingNode() || tree.isNull()) {
-                throw new InvalidProfileException(path, List.of("file is empty"));
-            }
-            return YAML.readValue(bytes, Profile.class);
-        } catch (JsonMappingException e) {
-            throw new InvalidProfileException(path, List.of(fieldPath(e) + ": " + firstLine(e.getOriginalMessage())), e);
-        } catch (JsonProcessingException e) {
-            var location = e.getLocation();
-            String where = location != null ? "line " + location.getLineNr() + ": " : "";
-            throw new InvalidProfileException(path, List.of("YAML syntax error at " + where + firstLine(e.getOriginalMessage())), e);
+            return Files.getLastModifiedTime(path).toInstant();
         } catch (IOException e) {
-            throw new InvalidProfileException(path, List.of("cannot parse file: " + e.getMessage()), e);
+            throw new InvalidProfileException(path, List.of("cannot read file: " + e.getMessage()), e);
         }
     }
-
-    private static void validate(Path path, Profile profile, Validator validator) {
-        List<String> problems = validator.validate(profile).stream()
-                .map(YamlProfileProvider::describe)
-                .sorted()
-                .toList();
-        if (!problems.isEmpty()) {
-            throw new InvalidProfileException(path, problems);
-        }
-    }
-
-    private static String describe(ConstraintViolation<Profile> violation) {
-        // Hibernate Validator renders list elements as e.g. "acceptRegions[2].<list element>".
-        String field = violation.getPropertyPath().toString()
-                .replace(".<list element>", "")
-                .replaceFirst("^notifySettings\\b", "notify");
-        return field + ": " + violation.getMessage();
-    }
-
-    /** E.g. {@code preferences.seniority[1]}. */
-    private static String fieldPath(JsonMappingException e) {
-        var path = new StringBuilder();
-        for (JsonMappingException.Reference ref : e.getPath()) {
-            if (ref.getFieldName() != null) {
-                path.append(path.isEmpty() ? "" : ".").append(ref.getFieldName());
-            } else if (ref.getIndex() >= 0) {
-                path.append('[').append(ref.getIndex()).append(']');
-            }
-        }
-        return path.isEmpty() ? "(root)" : path.toString();
-    }
-
-    private static String firstLine(String message) {
-        if (message == null) {
-            return "";
-        }
-        int newline = message.indexOf('\n');
-        return newline < 0 ? message : message.substring(0, newline);
-    }
-
 
     private static void warnAboutUnsupportedTracks(Profile profile) {
         profile.tracks().stream()
