@@ -1,7 +1,5 @@
 package io.github.quanghung304.jobhunter.notify;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.quanghung304.jobhunter.common.Sleeper;
 import io.github.quanghung304.jobhunter.notify.DigestBuilder.Digest;
 import io.github.quanghung304.jobhunter.notify.persistence.Notification;
 import io.github.quanghung304.jobhunter.notify.persistence.NotificationRepository;
@@ -20,7 +18,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +28,6 @@ import org.springframework.stereotype.Service;
  * {@code app.notify.telegram.enabled=true} and the bot token and chat id are set.
  */
 @Service
-@EnableConfigurationProperties(NotifyProperties.class)
 public class NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
@@ -44,7 +40,7 @@ public class NotificationService {
     public record DigestResult(Outcome outcome, List<Long> jobIds) {
     }
 
-    private final TelegramClient telegram;
+    private final TelegramGateway telegram;
     private final ProfileProvider profiles;
     private final DigestQuery digests;
     private final NotificationRepository notifications;
@@ -52,18 +48,10 @@ public class NotificationService {
     private final ZoneId zone;
     private final String publicBaseUrl;
 
-    public NotificationService(NotifyProperties properties, Sleeper sleeper, ObjectMapper json,
-            ProfileProvider profiles, DigestQuery digests, NotificationRepository notifications, Clock clock,
-            @Value("${app.pipeline.zone:Europe/Rome}") ZoneId zone,
+    public NotificationService(TelegramGateway telegram, ProfileProvider profiles, DigestQuery digests,
+            NotificationRepository notifications, Clock clock, @Value("${app.pipeline.zone:Europe/Rome}") ZoneId zone,
             @Value("${app.public-base-url:http://localhost:8080}") String publicBaseUrl) {
-        NotifyProperties.Telegram settings = properties.telegram();
-        this.telegram = settings.usable() ? new TelegramClient(settings, sleeper, json) : null;
-        if (settings.enabled() && !settings.usable()) {
-            log.warn("app.notify.telegram.enabled=true but TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing;"
-                    + " no Telegram messages will be sent");
-        } else if (!settings.enabled()) {
-            log.info("Telegram notifications are off (app.notify.telegram.enabled=false)");
-        }
+        this.telegram = telegram;
         this.profiles = profiles;
         this.digests = digests;
         this.notifications = notifications;
@@ -84,7 +72,7 @@ public class NotificationService {
      * not marked Not eligible and not in an earlier digest.
      */
     public synchronized DigestResult sendDigest() {
-        if (telegram == null) {
+        if (!telegram.enabled()) {
             return new DigestResult(Outcome.DISABLED, List.of());
         }
         Profile profile = profiles.current();
@@ -108,7 +96,7 @@ public class NotificationService {
         }
         List<Long> jobIds = digest.get().jobIds();
         try {
-            telegram.sendMessage(digest.get().html());
+            telegram.send(digest.get().html());
             notifications.save(new Notification(profileId, NotificationChannel.TELEGRAM, NotificationKind.DIGEST,
                     jobIds, now, true, null));
             return new DigestResult(Outcome.SENT, jobIds);

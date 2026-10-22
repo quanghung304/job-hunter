@@ -206,14 +206,17 @@ Written by `EvalRunner` (T-016): `id`, `extract_model_id`, `score_model_id`,
 
 `profile_id` was added in T-003: without it "once per profile" cannot be checked.
 V4 created `notification` without `ref` and with `kind in (DIGEST, ALERT)` and
-`profile_id not null`; V7 removed `ALERT` (instant alerts dropped, ADR-0010). T-022 adds a new
-migration for `ref`, `LLM_QUOTA` and a nullable `profile_id` (quota alerts are not per profile).
+`profile_id not null`; V7 removed `ALERT` (instant alerts dropped, ADR-0010); V9 (T-022) added `ref`,
+kind `LLM_QUOTA`, a nullable `profile_id` (quota alerts are not per profile) and a unique index on
+`ref` for successful rows (a failed send may be retried).
 
 A job appears in at most one digest per profile; the digest includes only jobs not in a previous
 digest. `job_ids` of a DIGEST row lists every scored job the digest covers, also those counted in
 "and N more" (T-015), so they are not sent again; only rows with `success = true` count. "Scored
-since the last digest" uses `job_assessment.updated_at` after the last successful digest's `sent_at`. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` so each model/status
-is announced at most once per day.
+since the last digest" uses `job_assessment.updated_at` after the last successful digest's `sent_at`. `LLM_QUOTA` rows use `ref` = `<model_id>:<status>:<yyyy-MM-dd>` (UTC date) so each model/status
+is announced at most once per day; an auto-fallback switch uses `fallback:<purpose>:<to_model_id>:<date>`.
+Only models that serve EXTRACT or SCORE are announced; "back to AVAILABLE" only after an EXHAUSTED or
+ERROR alert of that model the same day.
 
 ### `company` (Phase 1, for ATS collectors)
 | Column | Type | Notes |

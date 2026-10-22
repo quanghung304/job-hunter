@@ -79,6 +79,14 @@ What a save does to the file:
 - **When a model runs out** you get a Telegram message and a banner on every page. Click
   "Switch model" and pick another usable model; the Analyze/Score buttons work again.
   If you do nothing, the Analyze/Score buttons for that step stay disabled until the limit resets.
+  Telegram (when enabled) says it once per model, status and day: near the limit (80%), exhausted
+  (with the reset time), error (check the key), back to normal after an exhausted/error alert, and
+  "switched Extraction to X" after an auto-switch. Models that serve no step stay silent. The texts
+  follow the profile's summary language. Without the web UI (until T-023) switch with
+  `curl -X PUT localhost:8080/api/admin/llm/assignments/EXTRACT -H 'Content-Type: application/json'
+  -d '{"modelId":"groq-qwen3-27b"}'`; `GET /api/admin/llm` shows models, status and usage today.
+- **After an auto-switch** the purpose stays on the fallback model; once the old model works again
+  the banner suggests switching back (nothing switches back by itself).
 - **Paid models (Claude) are off by default** (ADR-0009). To allow them set
   `LLM_ALLOW_PAID_CALLS=true` in `.env` and restart; the monthly budget
   (`app.llm.monthly-budget-usd`) still applies. While off, a PAID assignment or fallback
@@ -87,7 +95,9 @@ What a save does to the file:
   fallback" off unless you accept Claude costs (they count against the monthly budget).
 - **Adding a model**: add an entry under `models:` in `config/llm.yaml` (provider, modelId,
   tier, known limits, `minOutputTokens` for reasoning models), restart, press "Test" on the
-  Admin page, run the eval with it, then switch to it. Before the Admin page exists:
+  Admin page (or `POST /api/admin/llm/models/<id>/test`: one tiny call, also clears an ERROR status
+  after you fixed the key; a PAID model needs `{"confirmPaid":true}` and paid calls enabled), run the
+  eval with it, then switch to it. Before the Admin page exists:
   `cd backend && ./mvnw test -Plive -Dtest=LlmProvidersLiveTest` (FREE models only; add the
   id to the test's list).
 - **Check which models a key can use**: Groq lists them at `GET https://api.groq.com/openai/v1/models`

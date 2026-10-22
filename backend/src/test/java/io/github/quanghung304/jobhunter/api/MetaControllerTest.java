@@ -10,6 +10,11 @@ import io.github.quanghung304.jobhunter.common.ProgressBoard;
 import io.github.quanghung304.jobhunter.enrich.AssessmentService;
 import io.github.quanghung304.jobhunter.enrich.ExtractionService;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
+import io.github.quanghung304.jobhunter.llm.LlmAlert;
+import io.github.quanghung304.jobhunter.llm.LlmAlertService;
+import io.github.quanghung304.jobhunter.llm.LlmPurpose;
+import io.github.quanghung304.jobhunter.llm.ModelStatus;
+import io.github.quanghung304.jobhunter.llm.ModelTier;
 import io.github.quanghung304.jobhunter.llm.LlmUsageService;
 import io.github.quanghung304.jobhunter.pipeline.PipelineOrchestrator;
 import io.github.quanghung304.jobhunter.pipeline.PipelineReport;
@@ -46,6 +51,9 @@ class MetaControllerTest {
 
     @MockitoBean
     ProfileProvider profileProvider;
+
+    @MockitoBean
+    LlmAlertService llmAlerts;
 
     @MockitoBean
     CollectorRegistry collectors;
@@ -111,6 +119,27 @@ class MetaControllerTest {
                 .andExpect(jsonPath("$.lastRun").isEmpty())
                 .andExpect(jsonPath("$.pipelineRunning").value(false))
                 .andExpect(jsonPath("$.llmAlerts").isEmpty());
+    }
+
+    @Test
+    void statusCarriesTheLlmAlertsWithPausedAndSuggestions() throws Exception {
+        given(pipeline.lastReport()).willReturn(Optional.empty());
+        given(llmAlerts.alerts()).willReturn(List.of(new LlmAlert(LlmPurpose.EXTRACT, "groq-gpt-oss-120b",
+                "GPT-OSS 120B (Groq)", ModelStatus.EXHAUSTED, "Daily request limit 1000/1000",
+                Instant.parse("2026-10-18T00:00:00Z"), true, null,
+                List.of(new LlmAlert.Suggestion("groq-qwen3-27b", "Qwen 3.8 27B (Groq)", ModelTier.FREE,
+                        ModelStatus.AVAILABLE)))));
+
+        mvc.perform(get("/api/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.llmAlerts[0].purpose").value("EXTRACT"))
+                .andExpect(jsonPath("$.llmAlerts[0].modelLabel").value("GPT-OSS 120B (Groq)"))
+                .andExpect(jsonPath("$.llmAlerts[0].status").value("EXHAUSTED"))
+                .andExpect(jsonPath("$.llmAlerts[0].until").value("2026-10-18T00:00:00Z"))
+                .andExpect(jsonPath("$.llmAlerts[0].paused").value(true))
+                .andExpect(jsonPath("$.llmAlerts[0].switchedFromModelId").isEmpty())
+                .andExpect(jsonPath("$.llmAlerts[0].suggestions[0].modelId").value("groq-qwen3-27b"))
+                .andExpect(jsonPath("$.llmAlerts[0].suggestions[0].tier").value("FREE"));
     }
 
     @Test

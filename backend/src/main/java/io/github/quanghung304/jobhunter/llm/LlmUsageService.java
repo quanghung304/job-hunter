@@ -62,6 +62,29 @@ public class LlmUsageService {
                 byDate.containsKey(today) ? byDate.get(today).calls() : 0, daily);
     }
 
+    /** Calls, tokens and cost of one model since a time ({@code cost} null when no call had a cost). */
+    public record ModelUsage(long calls, long inputTokens, long outputTokens, BigDecimal costUsd) {
+
+        public static final ModelUsage NONE = new ModelUsage(0, 0, 0, null);
+    }
+
+    /** Usage per model since {@code since} (admin "LLM models": today in UTC), by model id. */
+    public Map<String, ModelUsage> usageByModel(Instant since) {
+        Map<String, ModelUsage> result = new HashMap<>();
+        jdbc.query("""
+                        select c.model_id, count(*) as calls, coalesce(sum(c.input_tokens), 0) as input_tokens,
+                               coalesce(sum(c.output_tokens), 0) as output_tokens, sum(c.cost_usd) as cost_usd
+                        from llm_call c
+                        where c.created_at >= :since
+                        group by c.model_id""",
+                new MapSqlParameterSource("since", Timestamp.from(since)),
+                rs -> {
+                    result.put(rs.getString("model_id"), new ModelUsage(rs.getLong("calls"), rs.getLong("input_tokens"),
+                            rs.getLong("output_tokens"), rs.getBigDecimal("cost_usd")));
+                });
+        return result;
+    }
+
     /** The error of the newest failed call of this purpose per job (admin "Failed LLM work"). */
     public Map<Long, String> lastErrors(LlmPurpose purpose, Collection<Long> jobIds) {
         Map<Long, String> result = new HashMap<>();

@@ -14,6 +14,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             nativeQuery = true)
     List<Notification> findByProfileIdContainingJob(@Param("profileId") String profileId, @Param("jobId") long jobId);
 
+    /** Whether an alert with this dedupe key was sent successfully. */
+    boolean existsByRefAndSuccessTrue(String ref);
+
     /** The last successful notification of this kind for the profile. */
     Optional<Notification> findFirstByProfileIdAndKindAndSuccessTrueOrderBySentAtDesc(String profileId,
             NotificationKind kind);

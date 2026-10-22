@@ -996,6 +996,35 @@
         "required" : [ "allowedRegions", "analysisStage", "checks", "company", "eligibilityDecision", "employmentTypes", "firstSeenAt", "id", "jobStatus", "locationText", "postedAt", "remoteType", "score", "scoreBand", "sources", "status", "summary", "title" ],
         "type" : "object"
       },
+      "LlmAdminResponse" : {
+        "properties" : {
+          "assignments" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LlmAssignment"
+            },
+            "type" : "array"
+          },
+          "history" : {
+            "description" : "Last 10 switches, newest first",
+            "items" : {
+              "$ref" : "#/components/schemas/LlmSwitchEvent"
+            },
+            "type" : "array"
+          },
+          "models" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LlmModel"
+            },
+            "type" : "array"
+          },
+          "paidCallsAllowed" : {
+            "description" : "app.llm.allow-paid-calls (ADR-0009)",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "assignments", "history", "models", "paidCallsAllowed" ],
+        "type" : "object"
+      },
       "LlmAlertResponse" : {
         "properties" : {
           "detail" : {
@@ -1025,12 +1054,167 @@
             },
             "type" : "array"
           },
+          "switchedFromModelId" : {
+            "description" : "Set when auto-fallback switched away from this model, which is usable again",
+            "type" : [ "string", "null" ]
+          },
           "until" : {
             "format" : "date-time",
             "type" : [ "string", "null" ]
           }
         },
-        "required" : [ "detail", "modelId", "modelLabel", "paused", "purpose", "status", "suggestions", "until" ],
+        "required" : [ "detail", "modelId", "modelLabel", "paused", "purpose", "status", "suggestions", "switchedFromModelId", "until" ],
+        "type" : "object"
+      },
+      "LlmAssignment" : {
+        "properties" : {
+          "allowPaid" : {
+            "type" : "boolean"
+          },
+          "autoFallback" : {
+            "type" : "boolean"
+          },
+          "fallbacks" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "purpose" : {
+            "enum" : [ "EXTRACT", "SCORE", "EVAL", "TEST" ],
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "updatedBy" : {
+            "description" : "config, user or auto-fallback",
+            "type" : "string"
+          }
+        },
+        "required" : [ "allowPaid", "autoFallback", "fallbacks", "modelId", "purpose", "updatedAt", "updatedBy" ],
+        "type" : "object"
+      },
+      "LlmAssignmentRequest" : {
+        "properties" : {
+          "allowPaid" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "autoFallback" : {
+            "type" : [ "boolean", "null" ]
+          },
+          "confirmPaid" : {
+            "description" : "Required (true) to switch to a PAID model or turn on allowPaid",
+            "type" : [ "boolean", "null" ]
+          },
+          "fallbacks" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : [ "array", "null" ]
+          },
+          "modelId" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "modelId" ],
+        "type" : "object"
+      },
+      "LlmAssignmentSaved" : {
+        "properties" : {
+          "assignment" : {
+            "$ref" : "#/components/schemas/LlmAssignment"
+          },
+          "warning" : {
+            "description" : "Set for a PAID model",
+            "type" : [ "string", "null" ]
+          }
+        },
+        "required" : [ "assignment", "warning" ],
+        "type" : "object"
+      },
+      "LlmLimits" : {
+        "properties" : {
+          "requestsPerMonth" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "rpd" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "rpm" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "tokensPerDay" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          },
+          "tokensPerMinute" : {
+            "format" : "int32",
+            "type" : [ "integer", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "LlmModel" : {
+        "properties" : {
+          "assignedTo" : {
+            "items" : {
+              "enum" : [ "EXTRACT", "SCORE", "EVAL", "TEST" ],
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "detail" : {
+            "type" : [ "string", "null" ]
+          },
+          "keyConfigured" : {
+            "type" : "boolean"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "lastEval" : {
+            "description" : "Newest eval run (T-016); null until then",
+            "type" : "null"
+          },
+          "limits" : {
+            "$ref" : "#/components/schemas/LlmLimits"
+          },
+          "modelId" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "providerModel" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "AVAILABLE", "NEAR_LIMIT", "RATE_LIMITED", "EXHAUSTED", "ERROR" ],
+            "type" : "string"
+          },
+          "tier" : {
+            "enum" : [ "FREE", "PAID", "LOCAL" ],
+            "type" : "string"
+          },
+          "until" : {
+            "format" : "date-time",
+            "type" : [ "string", "null" ]
+          },
+          "usageToday" : {
+            "$ref" : "#/components/schemas/LlmUsageToday",
+            "description" : "Since 00:00 UTC"
+          }
+        },
+        "required" : [ "assignedTo", "detail", "keyConfigured", "label", "lastEval", "limits", "modelId", "provider", "providerModel", "status", "tier", "until", "usageToday" ],
         "type" : "object"
       },
       "LlmModelSuggestion" : {
@@ -1051,6 +1235,83 @@
           }
         },
         "required" : [ "label", "modelId", "status", "tier" ],
+        "type" : "object"
+      },
+      "LlmSwitchEvent" : {
+        "properties" : {
+          "at" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "fromModelId" : {
+            "type" : "string"
+          },
+          "purpose" : {
+            "enum" : [ "EXTRACT", "SCORE", "EVAL", "TEST" ],
+            "type" : "string"
+          },
+          "reason" : {
+            "enum" : [ "USER", "AUTO_FALLBACK", "RESTORED" ],
+            "type" : "string"
+          },
+          "toModelId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "at", "fromModelId", "purpose", "reason", "toModelId" ],
+        "type" : "object"
+      },
+      "LlmTestRequest" : {
+        "properties" : {
+          "confirmPaid" : {
+            "description" : "Required (true) to test a PAID model",
+            "type" : [ "boolean", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "LlmTestResult" : {
+        "properties" : {
+          "detail" : {
+            "description" : "Why it failed",
+            "type" : [ "string", "null" ]
+          },
+          "latencyMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "ok" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "description" : "The model's status after the call",
+            "enum" : [ "AVAILABLE", "NEAR_LIMIT", "RATE_LIMITED", "EXHAUSTED", "ERROR" ],
+            "type" : "string"
+          }
+        },
+        "required" : [ "detail", "latencyMs", "ok", "status" ],
+        "type" : "object"
+      },
+      "LlmUsageToday" : {
+        "properties" : {
+          "calls" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "costUsd" : {
+            "description" : "null when no call had a cost",
+            "type" : [ "number", "null" ]
+          },
+          "inputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "outputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "calls", "costUsd", "inputTokens", "outputTokens" ],
         "type" : "object"
       },
       "MetaResponse" : {
@@ -1931,6 +2192,123 @@
         },
         "summary" : "Retry failed LLM work for one job",
         "tags" : [ "admin-controller" ]
+      }
+    },
+    "/api/admin/llm" : {
+      "get" : {
+        "operationId" : "overview_1",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LlmAdminResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Assignments, models (status, limits, usage today) and switch history",
+        "tags" : [ "llm-admin-controller" ]
+      }
+    },
+    "/api/admin/llm/assignments/{purpose}" : {
+      "put" : {
+        "operationId" : "switchModel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "purpose",
+          "required" : true,
+          "schema" : {
+            "enum" : [ "EXTRACT", "SCORE", "EVAL", "TEST" ],
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LlmAssignmentRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LlmAssignmentSaved"
+                }
+              }
+            },
+            "description" : "Saved"
+          },
+          "400" : {
+            "content" : {
+              "application/problem+json" : { }
+            },
+            "description" : "UNKNOWN_MODEL or VALIDATION_FAILED"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : { }
+            },
+            "description" : "MODEL_UNUSABLE, PAID_CALLS_DISABLED or PAID_CONFIRMATION_REQUIRED (with estimatedCostPerCallUsd)"
+          }
+        },
+        "summary" : "Switch the model of EXTRACT or SCORE; no LLM call is made, the purpose is un-paused",
+        "tags" : [ "llm-admin-controller" ]
+      }
+    },
+    "/api/admin/llm/models/{modelId}/test" : {
+      "post" : {
+        "operationId" : "test",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "modelId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LlmTestRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LlmTestResult"
+                }
+              }
+            },
+            "description" : "Tested (ok false when the call failed)"
+          },
+          "404" : {
+            "content" : {
+              "application/problem+json" : { }
+            },
+            "description" : "UNKNOWN_MODEL"
+          },
+          "409" : {
+            "content" : {
+              "application/problem+json" : { }
+            },
+            "description" : "PAID_CALLS_DISABLED or PAID_CONFIRMATION_REQUIRED"
+          }
+        },
+        "summary" : "One tiny call to the model (purpose TEST); a success clears ERROR and expired statuses",
+        "tags" : [ "llm-admin-controller" ]
       }
     },
     "/api/admin/overview" : {

@@ -116,6 +116,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/llm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assignments, models (status, limits, usage today) and switch history */
+        get: operations["overview_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/llm/assignments/{purpose}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Switch the model of EXTRACT or SCORE; no LLM call is made, the purpose is un-paused */
+        put: operations["switchModel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/llm/models/{modelId}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** One tiny call to the model (purpose TEST); a success clears ERROR and expired statuses */
+        post: operations["test"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/overview": {
         parameters: {
             query?: never;
@@ -735,6 +786,14 @@ export interface components {
             summary: string | null;
             title: string;
         };
+        LlmAdminResponse: {
+            assignments: components["schemas"]["LlmAssignment"][];
+            /** @description Last 10 switches, newest first */
+            history: components["schemas"]["LlmSwitchEvent"][];
+            models: components["schemas"]["LlmModel"][];
+            /** @description app.llm.allow-paid-calls (ADR-0009) */
+            paidCallsAllowed: boolean;
+        };
         LlmAlertResponse: {
             detail: string | null;
             modelId: string;
@@ -746,8 +805,67 @@ export interface components {
             /** @enum {string} */
             status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
             suggestions: components["schemas"]["LlmModelSuggestion"][];
+            /** @description Set when auto-fallback switched away from this model, which is usable again */
+            switchedFromModelId: string | null;
             /** Format: date-time */
             until: string | null;
+        };
+        LlmAssignment: {
+            allowPaid: boolean;
+            autoFallback: boolean;
+            fallbacks: string[];
+            modelId: string;
+            /** @enum {string} */
+            purpose: "EXTRACT" | "SCORE" | "EVAL" | "TEST";
+            /** Format: date-time */
+            updatedAt: string;
+            /** @description config, user or auto-fallback */
+            updatedBy: string;
+        };
+        LlmAssignmentRequest: {
+            allowPaid?: boolean | null;
+            autoFallback?: boolean | null;
+            /** @description Required (true) to switch to a PAID model or turn on allowPaid */
+            confirmPaid?: boolean | null;
+            fallbacks?: string[] | null;
+            modelId: string;
+        };
+        LlmAssignmentSaved: {
+            assignment: components["schemas"]["LlmAssignment"];
+            /** @description Set for a PAID model */
+            warning: string | null;
+        };
+        LlmLimits: {
+            /** Format: int32 */
+            requestsPerMonth?: number | null;
+            /** Format: int32 */
+            rpd?: number | null;
+            /** Format: int32 */
+            rpm?: number | null;
+            /** Format: int32 */
+            tokensPerDay?: number | null;
+            /** Format: int32 */
+            tokensPerMinute?: number | null;
+        };
+        LlmModel: {
+            assignedTo: ("EXTRACT" | "SCORE" | "EVAL" | "TEST")[];
+            detail: string | null;
+            keyConfigured: boolean;
+            label: string;
+            /** @description Newest eval run (T-016); null until then */
+            lastEval: null;
+            limits: components["schemas"]["LlmLimits"];
+            modelId: string;
+            provider: string;
+            providerModel: string;
+            /** @enum {string} */
+            status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
+            /** @enum {string} */
+            tier: "FREE" | "PAID" | "LOCAL";
+            /** Format: date-time */
+            until: string | null;
+            /** @description Since 00:00 UTC */
+            usageToday: components["schemas"]["LlmUsageToday"];
         };
         LlmModelSuggestion: {
             label: string;
@@ -756,6 +874,42 @@ export interface components {
             status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
             /** @enum {string} */
             tier: "FREE" | "PAID" | "LOCAL";
+        };
+        LlmSwitchEvent: {
+            /** Format: date-time */
+            at: string;
+            fromModelId: string;
+            /** @enum {string} */
+            purpose: "EXTRACT" | "SCORE" | "EVAL" | "TEST";
+            /** @enum {string} */
+            reason: "USER" | "AUTO_FALLBACK" | "RESTORED";
+            toModelId: string;
+        };
+        LlmTestRequest: {
+            /** @description Required (true) to test a PAID model */
+            confirmPaid?: boolean | null;
+        };
+        LlmTestResult: {
+            /** @description Why it failed */
+            detail: string | null;
+            /** Format: int64 */
+            latencyMs: number;
+            ok: boolean;
+            /**
+             * @description The model's status after the call
+             * @enum {string}
+             */
+            status: "AVAILABLE" | "NEAR_LIMIT" | "RATE_LIMITED" | "EXHAUSTED" | "ERROR";
+        };
+        LlmUsageToday: {
+            /** Format: int64 */
+            calls: number;
+            /** @description null when no call had a cost */
+            costUsd: number | null;
+            /** Format: int64 */
+            inputTokens: number;
+            /** Format: int64 */
+            outputTokens: number;
         };
         MetaResponse: {
             /** @description Values of the checks filter */
@@ -1170,6 +1324,114 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AcceptedResponse"];
+                };
+            };
+        };
+    };
+    overview_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LlmAdminResponse"];
+                };
+            };
+        };
+    };
+    switchModel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                purpose: "EXTRACT" | "SCORE" | "EVAL" | "TEST";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LlmAssignmentRequest"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LlmAssignmentSaved"];
+                };
+            };
+            /** @description UNKNOWN_MODEL or VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
+                };
+            };
+            /** @description MODEL_UNUSABLE, PAID_CALLS_DISABLED or PAID_CONFIRMATION_REQUIRED (with estimatedCostPerCallUsd) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
+                };
+            };
+        };
+    };
+    test: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                modelId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LlmTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Tested (ok false when the call failed) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LlmTestResult"];
+                };
+            };
+            /** @description UNKNOWN_MODEL */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
+                };
+            };
+            /** @description PAID_CALLS_DISABLED or PAID_CONFIRMATION_REQUIRED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": unknown;
                 };
             };
         };

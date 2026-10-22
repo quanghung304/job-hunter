@@ -96,6 +96,27 @@ public class LlmRouter {
         return callModels(purpose, List.of(registry.get(modelId)), null, prompt, jobId, responseType);
     }
 
+    /**
+     * Admin "Test" (T-022): one call to the model even when its status is ERROR, EXHAUSTED or
+     * RATE_LIMITED, so that a success clears it. A missing key, the budget guard and the paid
+     * consent (ADR-0009) still apply; the call is logged with purpose TEST.
+     */
+    public <T> LlmOutcome<T> probe(String modelId, String promptId, Class<T> responseType) {
+        RenderedPrompt prompt = prompts.get(promptId).render(Map.of());
+        RegisteredModel model = registry.get(modelId);
+        if (model.missingKey()) {
+            quota.markMissingKey(model);
+            return new LlmUnavailable<>(LlmPurpose.TEST, LlmUnavailable.Reason.NO_USABLE_MODEL, "missing key");
+        }
+        Optional<LlmUnavailable.Reason> stop = budget.check(model.tier());
+        if (stop.isPresent()) {
+            return new LlmUnavailable<>(LlmPurpose.TEST, stop.get(), "budget guard");
+        }
+        return this.<T>attempt(LlmPurpose.TEST, model, prompt, null, responseType)
+                .orElseGet(() -> new LlmUnavailable<>(LlmPurpose.TEST, LlmUnavailable.Reason.NO_USABLE_MODEL,
+                        model.id() + ": " + quota.status(model).status()));
+    }
+
     /** The model that would serve {@code purpose} now (EXTRACT or SCORE), without calling it. */
     public ModelChoice resolve(LlmPurpose purpose) {
         String modelId = properties.forced() ? properties.forceModel() : assignments.current(purpose).modelId();

@@ -29,7 +29,8 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "profile_id", nullable = false, updatable = false)
+    /** Null for LLM quota alerts, which are not per profile. */
+    @Column(name = "profile_id", updatable = false)
     private String profileId;
 
     @Enumerated(EnumType.STRING)
@@ -53,6 +54,10 @@ public class Notification {
     @Column(name = "error", updatable = false)
     private String error;
 
+    /** Dedupe key of LLM quota alerts: {@code <model_id>:<status>:<yyyy-MM-dd>} (UTC). */
+    @Column(name = "ref", updatable = false)
+    private String ref;
+
     protected Notification() {
         // for JPA
     }
@@ -72,6 +77,14 @@ public class Notification {
         this.sentAt = sentAt;
         this.success = success;
         this.error = error;
+    }
+
+    /** An LLM quota alert (no profile, no jobs). */
+    public static Notification llmQuota(String ref, Instant sentAt, boolean success, String error) {
+        Notification row = new Notification(null, NotificationChannel.TELEGRAM, NotificationKind.LLM_QUOTA, List.of(),
+                sentAt, success, error);
+        row.ref = ref;
+        return row;
     }
 
     public Long getId() {
@@ -105,5 +118,9 @@ public class Notification {
 
     public String getError() {
         return error;
+    }
+
+    public String getRef() {
+        return ref;
     }
 }

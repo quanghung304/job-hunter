@@ -94,7 +94,7 @@ Repeating it makes no LLM call. A failed attempt (invalid output after the corre
 provider errors) still answers 200 with `analysisStage: FAILED`; after 3 failed attempts for the
 prompt version no further call is made. Errors: 404 `JOB_NOT_FOUND`; 409 `JOB_EXPIRED`; 409 `JOB_PREFILTER_REJECTED`
 (no call: the prefilter rejects the job for this profile); 409 `LLM_PAUSED` (the Problem Details carry
-`purpose`; the full `LlmAlert` for that purpose is added in T-022); 409 `BUDGET_REACHED`.
+`purpose` and, since T-022, `alert` = the `LlmAlert` of that purpose); 409 `BUDGET_REACHED`.
 
 ### `POST /api/jobs/{id}/score`
 Owner action "Score" (ADR-0010). Requires an analyzed job the owner has not marked INELIGIBLE
@@ -163,9 +163,13 @@ that cannot be read at all — unknown key, invalid regex or time zone — is re
   "paused": true,
   "suggestions": [{ "modelId": "openrouter-nemotron-super", "label": "...", "tier": "FREE", "status": "AVAILABLE" }] }
 ```
-One entry per purpose whose assigned model is not `AVAILABLE`. `paused` = owner actions for that
+One entry per purpose whose assigned model is not `AVAILABLE`, plus (T-022) one per purpose that
+auto-fallback switched away from a model that is usable again: then `status` is the current model's
+(`AVAILABLE`), `switchedFromModelId` names the previous model and `suggestions` holds only it (switch
+back). `switchedFromModelId` is null otherwise. `paused` = owner actions for that
 purpose (Analyze or Score) are refused with `LLM_PAUSED` until the model recovers or is switched. `suggestions` = usable models from the assignment's fallbacks, then
-other usable registry models (FREE/LOCAL before PAID).
+other usable registry models (FREE/LOCAL before PAID); models in `ERROR` (also a missing key) or
+`EXHAUSTED` and the current model are left out, and the `fake` model unless the current one is fake.
 
 The app header's status line ("Last run 07:00 · 42 new · 9 scored") uses the newest
 `pipelineReports` entry. "Today" = since local midnight in `app.pipeline.zone`.
@@ -187,7 +191,7 @@ Details:
 - `kpis`: `prefilterRejectedToday` = assessment rows created today with REJECT; `scoredToday` = jobs whose
   score was written today; `sourceCount` = enabled collectors; `companyBoardCount` = enabled companies.
   (`alertsToday` was removed: instant alerts no longer exist, ADR-0010.)
-- `llmAlerts` is always `[]` until T-022.
+- `llmAlerts`: as in `GET /api/status` (T-022).
 
 ### `POST /api/admin/pipeline/run`
 Starts a run asynchronously → 202 `{ "accepted": true }`; 409 `PIPELINE_ALREADY_RUNNING`.
@@ -257,7 +261,8 @@ jobs whose `company_key` equals the normalized company name.
 Lightweight, polled by the app header on every page every 60 s (every 10 s while a banner
 is shown): `{ "lastRun": { "startedAt", "newJobs", "scored", "status" } | null,
 "pipelineRunning": false, "llmAlerts": [LlmAlert] }`. The run itself scores nothing (ADR-0010):
-`scored` = jobs scored by owner actions since that run started. `llmAlerts` is `[]` until T-022.
+`scored` = jobs scored by owner actions since that run started. `llmAlerts` = the `LlmAlert` list
+above (computed per request, nothing stored).
 
 ## LLM models (ADR-0008)
 
@@ -275,22 +280,36 @@ is shown): `{ "lastRun": { "startedAt", "newJobs", "scored", "status" } | null,
       "usageToday": { "calls": 812, "inputTokens": 2400000, "outputTokens": 310000, "costUsd": null },
       "keyConfigured": true, "assignedTo": ["EXTRACT", "SCORE"],
       "lastEval": { "date": "2026-10-25", "falseEligible": 0.024, "highRecall": 0.83 } | null } ],
-  "history": [{ "purpose", "fromModelId", "toModelId", "reason", "at" }] }
+  "history": [{ "purpose", "fromModelId", "toModelId", "reason", "at" }],
+  "paidCallsAllowed": false }
 ```
-`lastEval` is read from the newest matching entry the eval runner records (T-016).
+`lastEval` is read from the newest matching entry the eval runner records (T-016); null until then.
+`usageToday` counts `llm_call` rows since 00:00 UTC (`costUsd` null when none had a cost);
+`limits` lists `rpm`, `rpd`, `tokensPerMinute`, `tokensPerDay`, `requestsPerMonth` (null = unknown);
+`history` = the last 10 switches, newest first; `paidCallsAllowed` = `app.llm.allow-paid-calls`.
 
 ### `PUT /api/admin/llm/assignments/{purpose}`
-Body `{ "modelId": "openrouter-nemotron-super", "fallbacks": [...], "autoFallback": false, "allowPaid": false }`
-(all but `modelId` optional) → 200 updated assignment. Errors: 400 `UNKNOWN_MODEL`,
-409 `MODEL_UNUSABLE` (status `ERROR`, e.g. missing key). A manual switch to a PAID model is
+Body `{ "modelId": "openrouter-nemotron-super", "fallbacks": [...], "autoFallback": false, "allowPaid": false,
+"confirmPaid": false }` (all but `modelId` optional; a missing value keeps the current one) → 200
+`{ "assignment": { purpose, modelId, fallbacks, autoFallback, allowPaid, updatedAt, updatedBy }, "warning": null }`.
+Errors: 400 `UNKNOWN_MODEL` (model or a fallback not in the registry), 400 `VALIDATION_FAILED` (blank
+`modelId`), 409 `MODEL_UNUSABLE` (status `ERROR`, e.g. missing key). A manual switch to a PAID model is
 allowed (`allowPaid` only limits auto-fallback); the response then includes
-`"warning": "PAID model: counts against the monthly budget"`.
+`"warning": "PAID model: counts against the monthly budget"`. Paid consent (ADR-0009): switching to a
+different PAID model, or turning `allowPaid` on, needs `confirmPaid: true`, otherwise 409
+`PAID_CONFIRMATION_REQUIRED` with the extensions `modelId`, `modelLabel`, `tier` and
+`estimatedCostPerCallUsd` (null without cost history); while `app.llm.allow-paid-calls=false` it is
+refused with 409 `PAID_CALLS_DISABLED` even when confirmed.
 Switching writes `llm_assignment_event` (reason `USER`) and un-pauses that purpose: its
 Analyze/Score buttons work again. Nothing runs by itself (ADR-0010); there is no `runNow`.
 
 ### `POST /api/admin/llm/models/{modelId}/test`
-Sends one tiny prompt ("Reply with {\"ok\":true}") → 200 `{ ok, latencyMs, status }`; a
-success clears `ERROR`/expired statuses. Logged in `llm_call` with purpose `TEST`.
+Sends one tiny prompt (`docs/ai/prompts/test-v1.md`, "Reply with {\"ok\":true}") → 200
+`{ ok, latencyMs, status, detail }` (`status` = the model's status after the call, `detail` = why it
+failed). The model is called even in `ERROR`, `EXHAUSTED` or `RATE_LIMITED`, and a success clears that
+status; a missing key, the budget guard and paid consent still apply. Logged in `llm_call` with purpose
+`TEST`. Optional body `{ "confirmPaid": true }`, required for a PAID model (409
+`PAID_CONFIRMATION_REQUIRED` / `PAID_CALLS_DISABLED` as above). 404 `UNKNOWN_MODEL`.
 
 ### `POST /api/admin/eval/export`
 Writes `data/eval-candidates.jsonl` (T-016) → `{ "path": "...", "count": 80 }`. Until T-016: 501

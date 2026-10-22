@@ -27,6 +27,7 @@ import io.github.quanghung304.jobhunter.ingest.JobNotFoundException;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
 import io.github.quanghung304.jobhunter.ingest.JobStatus;
 import io.github.quanghung304.jobhunter.ingest.JobView;
+import io.github.quanghung304.jobhunter.llm.LlmAlertService;
 import io.github.quanghung304.jobhunter.llm.BudgetReachedException;
 import io.github.quanghung304.jobhunter.llm.LlmPausedException;
 import io.github.quanghung304.jobhunter.llm.LlmPurpose;
@@ -102,6 +103,9 @@ class AdminControllerTest {
 
     @MockitoBean
     ProfileProvider profileProvider;
+
+    @MockitoBean
+    LlmAlertService llmAlerts;
 
     @MockitoBean
     Clock clock;

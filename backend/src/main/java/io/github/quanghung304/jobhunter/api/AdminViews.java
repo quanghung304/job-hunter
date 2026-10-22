@@ -7,6 +7,7 @@ import io.github.quanghung304.jobhunter.enrich.ExtractionService;
 import io.github.quanghung304.jobhunter.enrich.FailedWork;
 import io.github.quanghung304.jobhunter.ingest.JobQueryService;
 import io.github.quanghung304.jobhunter.ingest.JobView;
+import io.github.quanghung304.jobhunter.llm.LlmAlertService;
 import io.github.quanghung304.jobhunter.llm.LlmPurpose;
 import io.github.quanghung304.jobhunter.llm.LlmUsage;
 import io.github.quanghung304.jobhunter.llm.LlmUsageService;
@@ -47,11 +48,12 @@ class AdminViews {
     private final JobQueryService jobs;
     private final JobBoardQuery board;
     private final ProfileProvider profiles;
+    private final LlmAlertService alerts;
 
     AdminViews(CollectorRegistry collectors, CollectorRunner runner, CompanyService companies,
             PipelineOrchestrator pipeline, PipelineSchedule schedule, ProgressBoard progressBoard,
             LlmUsageService llmUsage, ExtractionService extraction, AssessmentService assessments,
-            JobQueryService jobs, JobBoardQuery board, ProfileProvider profiles) {
+            JobQueryService jobs, JobBoardQuery board, ProfileProvider profiles, LlmAlertService alerts) {
         this.collectors = collectors;
         this.runner = runner;
         this.companies = companies;
@@ -64,6 +66,7 @@ class AdminViews {
         this.jobs = jobs;
         this.board = board;
         this.profiles = profiles;
+        this.alerts = alerts;
     }
 
     AdminOverviewResponse overview() {
@@ -98,7 +101,7 @@ class AdminViews {
                 new AdminOverviewResponse.Schedule(schedule.nextRunAt().orElse(null),
                         schedule.nextDigestAt().orElse(null), schedule.zone().getId()),
                 kpis,
-                List.of()); // LLM alerts come with T-022
+                llmAlerts());
     }
 
     StatusResponse status() {
@@ -106,7 +109,11 @@ class AdminViews {
         StatusResponse.LastRun lastRun = pipeline.lastReport()
                 .map(report -> lastRun(report, profileId))
                 .orElse(null);
-        return new StatusResponse(lastRun, pipeline.isRunning(), List.of()); // LLM alerts come with T-022
+        return new StatusResponse(lastRun, pipeline.isRunning(), llmAlerts());
+    }
+
+    List<LlmAlertResponse> llmAlerts() {
+        return alerts.alerts().stream().map(LlmAlertResponse::of).toList();
     }
 
     List<CompanyResponse> companies() {

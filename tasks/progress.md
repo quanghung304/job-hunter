@@ -10,6 +10,29 @@ Newest entry on top. Each entry, max ~10 lines:
 - Next suggested task
 ```
 
+## 2026-10-22 — T-022 LLM quota alerts and model switching — backend — DONE
+- V9: `notification.ref`, kind `LLM_QUOTA`, nullable `profile_id`, unique `ref` for successful rows.
+- llm: `LlmAlertService` (alert per purpose whose model is not AVAILABLE, `paused` from the router's
+  availability, suggestions: fallbacks, then FREE/LOCAL before PAID, no ERROR/EXHAUSTED/missing key; plus a
+  "switch back" alert after auto-fallback once the old model works, `switchedFrom`), `LlmAdminService` (overview with
+  usage today in UTC and the last 10 switches; `switchModel` with UNKNOWN_MODEL, MODEL_UNUSABLE, paid consent:
+  PAID_CALLS_DISABLED / PAID_CONFIRMATION_REQUIRED with the cost per call; `test` via `LlmRouter.probe`, which calls
+  even an ERROR/EXHAUSTED model so a success clears it), `AssignmentService.update` (USER event) and
+  `LlmAssignmentSwitched` events, prompt `test-v1` (+ fake answer), `LlmUsageService.usageByModel`.
+- notify: `TelegramGateway` (one client for digest and alerts), `LlmQuotaNotifier` (NEAR_LIMIT, EXHAUSTED, ERROR,
+  recovery after EXHAUSTED/ERROR that day, auto-fallback; once per ref; only models serving a purpose; sends on
+  its own thread so LLM calls never wait), `LlmQuotaMessages` (vi/en).
+- api: `GET /api/admin/llm`, `PUT …/assignments/{purpose}` (`{assignment, warning}`), `POST …/models/{id}/test`;
+  `llmAlerts` filled in `/api/status` and the overview; `LLM_PAUSED` carries `alert`; `PAID_CONFIRMATION_REQUIRED`
+  carries model and cost; openapi.json + schema.d.ts regenerated. ArchitectureTest: notify may read llm (overview.md).
+- Decisions (docs updated: api-spec, data-model, runbook, prompts README): confirmation needed only when a switch
+  adds paid exposure (new PAID model or `allowPaid` turned on); `lastEval` null until T-016 (`eval_run` does not
+  exist); the fake model is suggested only when the current model is fake; status tests live in
+  `MetaControllerTest` (the endpoint is there) instead of a separate `StatusControllerTest`.
+- Tests: `LlmAlertServiceIT` (8), `PaidSwitchConsentIT`, `LlmQuotaAlertIT` (2: one message per 429 day, paused +
+  suggestions), `AutoFallbackIT`, `LlmQuotaTelegramTest` (9), `LlmAdminControllerTest` (6), status alert case.
+- Next: T-023 (LLM banner and model switcher — frontend).
+
 ## 2026-10-22 — T-015 Telegram digest — DONE
 - notify: `TelegramClient` (Bot API `sendMessage`, HTML, split at line breaks into ≤ 4096-char messages, one retry
   on 429 after `retry_after` capped at 60 s, errors never contain the token), `DigestBuilder` (waiting count, scored

@@ -73,8 +73,9 @@ class NotificationServiceIT {
 
     private NotificationService service(boolean enabled) {
         var telegram = new NotifyProperties.Telegram(enabled, "TOKEN", "-1001", URI.create(wm.baseUrl()));
-        return new NotificationService(new NotifyProperties("-", telegram), duration -> { }, new ObjectMapper(),
-                profiles, digests, notifications, clock, ZoneId.of("Europe/Rome"), "http://localhost:8080");
+        var gateway = new TelegramGateway(new NotifyProperties("-", telegram), duration -> { }, new ObjectMapper());
+        return new NotificationService(gateway, profiles, digests, notifications, clock, ZoneId.of("Europe/Rome"),
+                "http://localhost:8080");
     }
 
     private long scoredJob(String title, int score) {

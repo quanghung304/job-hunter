@@ -1,11 +1,15 @@
 package io.github.quanghung304.jobhunter.api;
 
 import io.github.quanghung304.jobhunter.common.JobHunterException;
+import io.github.quanghung304.jobhunter.llm.LlmAlertService;
 import io.github.quanghung304.jobhunter.llm.LlmPausedException;
+import io.github.quanghung304.jobhunter.llm.PaidConfirmationRequiredException;
 import io.github.quanghung304.jobhunter.profile.ProfileValidationException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -34,7 +38,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /** Extra property of an invalid profile: {@code [{path, message}]} (api-spec "Profile"). */
     static final String ERRORS = "errors";
 
+    /** Extra property of {@code LLM_PAUSED}: the {@code LlmAlert} of the paused purpose (T-022). */
+    static final String ALERT = "alert";
+
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    private final ObjectProvider<LlmAlertService> alerts;
+
+    /** Without alerts (standalone controller tests). */
+    public GlobalExceptionHandler() {
+        this.alerts = null;
+    }
+
+    @Autowired
+    public GlobalExceptionHandler(ObjectProvider<LlmAlertService> alerts) {
+        this.alerts = alerts;
+    }
 
     @ExceptionHandler(JobHunterException.class)
     ResponseEntity<ProblemDetail> handleJobHunter(JobHunterException ex) {
@@ -46,6 +65,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         problem.setProperty(CODE, ex.code());
         if (ex instanceof LlmPausedException paused) {
             problem.setProperty(PURPOSE, paused.purpose().name());
+            LlmAlertService service = alerts == null ? null : alerts.getIfAvailable();
+            if (service != null) {
+                service.alert(paused.purpose()).map(LlmAlertResponse::of)
+                        .ifPresent(alert -> problem.setProperty(ALERT, alert));
+            }
+        }
+        if (ex instanceof PaidConfirmationRequiredException confirm) {
+            problem.setProperty("modelId", confirm.model().modelId());
+            problem.setProperty("modelLabel", confirm.model().label());
+            problem.setProperty("tier", confirm.model().tier().name());
+            problem.setProperty("estimatedCostPerCallUsd", confirm.estimatedCostPerCallUsd());
         }
         if (ex instanceof ProfileValidationException invalid) {
             problem.setProperty(ERRORS, invalid.problems().stream()
